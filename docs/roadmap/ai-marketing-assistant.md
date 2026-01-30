@@ -5,6 +5,19 @@
 > **Roadmap:** [ROADMAP.md](../../ROADMAP.md) — Section: LATER  
 > **Location:** `docs/roadmap/ai-marketing-assistant.md`  
 
+### Entitlements
+
+| Feature Key | Description | Availability |
+|-------------|-------------|--------------|
+| `ai:assistant` | Chat with AI for campaign ideas | Pro tier, or AI Add-on |
+| `ai:insights` | Proactive weekly recommendations | Pro tier, or AI Add-on |
+| `ai:copywriting` | AI-generated marketing copy | Enterprise, or AI Add-on |
+| `limit:ai_queries_month` | Monthly query limit | Pro: 500, Add-on: 1000 |
+
+See [ENTITLEMENTS.md](../ENTITLEMENTS.md) for implementation details.
+
+---
+
 ## Overview
 
 An AI-powered assistant that helps business owners create effective marketing campaigns, design reward structures, and optimize their loyalty program. Acts as a virtual marketing consultant available 24/7.
@@ -261,6 +274,7 @@ To make good recommendations, the AI needs:
 - [Marketing Messages](marketing-messages.md) — What AI helps create
 - [User Journeys](user-journeys.md) — AI-assisted journey design
 - [Time-Bound Promos](time-bound-promos.md) — AI-suggested promotions
+- [Entitlements](../ENTITLEMENTS.md) — Feature gating
 
 ---
 
