@@ -615,7 +615,7 @@ router.get('/preview', extractBusinessId, async (req, res) => {
       }
 
       summary = describeRule(rule, businessLocations);
-      content = generateMarketingSummary('rule', rule, businessLocations);
+      content = generateMarketingSummary('rule', rule, businessLocations, [], business?.name);
       console.log('[MARKETING] Generated content:', { summaryLen: summary?.length, contentLen: content?.length, contentPreview: content?.substring(0, 100) });
     } else if (source_type === 'voyage') {
       const [voyage] = await db
@@ -641,7 +641,7 @@ router.get('/preview', extractBusinessId, async (req, res) => {
         .orderBy(rules.sequenceOrder);
 
       summary = describeVoyage(voyage, steps, businessLocations);
-      content = generateMarketingSummary('voyage', { ...voyage, steps }, businessLocations);
+      content = generateMarketingSummary('voyage', { ...voyage, steps }, businessLocations, [], business?.name);
     } else {
       return res.status(400).json({
         success: false,

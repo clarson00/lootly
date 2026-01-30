@@ -470,27 +470,36 @@ function describeVoyage(voyage, steps = [], locations = [], locationGroups = [])
  * @param {Object} data - The rule or voyage object (with steps for voyage)
  * @param {Array} locations - Array of location objects
  * @param {Array} locationGroups - Array of location group objects
+ * @param {string} businessName - The business name to include
  * @returns {string} Marketing-ready post content
  */
-function generateMarketingSummary(type, data, locations = [], locationGroups = []) {
+function generateMarketingSummary(type, data, locations = [], locationGroups = [], businessName = '') {
   const parts = [];
 
-  // Header with emoji
+  // Header with emoji and promo name
   const name = data.displayName || data.name || 'Special Offer';
   parts.push(`🏴‍☠️ ${name.toUpperCase()} 🏴‍☠️`);
   parts.push('');
 
-  if (type === 'rule') {
-    // Rule-based marketing content
-    const conditionsText = describeConditionsWithLocations(data.conditions, locations, locationGroups, true);
-    const awardsText = describeAwardsWithLocations(data.awards, locations, true);
+  // Extract location names from conditions
+  const conditionLocations = extractLocationNames(data.conditions, locations, locationGroups);
 
-    if (conditionsText) {
-      parts.push(`📍 ${conditionsText}`);
+  if (type === 'rule') {
+    // Show where this applies
+    if (conditionLocations.length > 0) {
+      parts.push(`📍 Visit us at: ${conditionLocations.join(', ')}`);
+    } else if (locations.length > 0) {
+      // Show all locations if no specific ones in conditions
+      const allLocationNames = locations.map(l => l.name).slice(0, 4);
+      if (allLocationNames.length > 0) {
+        parts.push(`📍 Available at: ${allLocationNames.join(', ')}${locations.length > 4 ? ` and ${locations.length - 4} more` : ''}`);
+      }
     }
 
+    // Describe what you earn
+    const awardsText = describeAwardsForMarketing(data.awards, locations);
     if (awardsText) {
-      parts.push(`🎁 Earn: ${awardsText}`);
+      parts.push(`🎁 ${awardsText}`);
     }
 
     parts.push('');
@@ -506,39 +515,167 @@ function generateMarketingSummary(type, data, locations = [], locationGroups = [
       parts.push('');
     }
 
-    // Show steps summary
+    // Show steps summary with location names
     const steps = data.steps || [];
     if (steps.length > 0) {
-      parts.push(`Complete ${steps.length} quests to win big!`);
+      parts.push(`🗺️ Complete ${steps.length} stops to claim your treasure!`);
       parts.push('');
 
-      // Show first few steps
-      steps.slice(0, 3).forEach((step, index) => {
-        const stepName = step.displayName || step.name || `Quest ${index + 1}`;
-        parts.push(`${index + 1}. ${stepName}`);
+      // Show first few steps with locations
+      steps.slice(0, 4).forEach((step, index) => {
+        const stepName = step.displayName || step.name || `Stop ${index + 1}`;
+        const stepLocations = extractLocationNames(step.conditions, locations, locationGroups);
+        const locationHint = stepLocations.length > 0 ? ` @ ${stepLocations[0]}` : '';
+        parts.push(`${index + 1}. ${stepName}${locationHint}`);
       });
 
-      if (steps.length > 3) {
-        parts.push(`...and ${steps.length - 3} more!`);
+      if (steps.length > 4) {
+        parts.push(`   ...and ${steps.length - 4} more stops!`);
       }
       parts.push('');
     }
   }
 
-  // Time urgency
+  // Time bounds
+  const timeInfo = [];
+  if (data.startsAt) {
+    const startDate = new Date(data.startsAt);
+    if (startDate > new Date()) {
+      timeInfo.push(`Starts ${formatDate(data.startsAt)}`);
+    }
+  }
   if (data.endsAt) {
-    parts.push(`⏰ Hurry - ends ${formatDate(data.endsAt)}!`);
+    timeInfo.push(`Ends ${formatDate(data.endsAt)}`);
+  }
+  if (timeInfo.length > 0) {
+    parts.push(`⏰ ${timeInfo.join(' • ')}`);
     parts.push('');
   }
 
-  // CTA
-  parts.push('Join our rewards program and start earning today! 🏆');
+  // CTA with business name
+  if (businessName) {
+    parts.push(`Join ${businessName}'s rewards program and start earning today! 🏆`);
+  } else {
+    parts.push('Join our rewards program and start earning today! 🏆');
+  }
   parts.push('');
 
-  // Hashtags placeholder
-  parts.push('#Rewards #LocalLoyalty #EarnRewards');
+  // Hashtags
+  const hashtags = ['#Rewards', '#LocalLoyalty', '#EarnRewards'];
+  if (businessName) {
+    const businessTag = businessName.replace(/[^a-zA-Z0-9]/g, '');
+    if (businessTag) hashtags.unshift(`#${businessTag}`);
+  }
+  parts.push(hashtags.join(' '));
 
   return parts.join('\n');
+}
+
+/**
+ * Extract location names from conditions
+ * Returns { names: [...], scope: 'all'|'specific'|'group' }
+ */
+function extractLocationNames(conditions, locations = [], locationGroups = []) {
+  const names = [];
+  let foundScope = null;
+
+  if (!conditions) return names;
+
+  function extractFromCondition(cond) {
+    if (!cond) return;
+
+    if (cond.operator && cond.items) {
+      cond.items.forEach(item => extractFromCondition(item));
+      return;
+    }
+
+    if (cond.type === 'location_visit' && cond.params) {
+      const { scope, locationId, locationGroupId } = cond.params;
+      foundScope = scope;
+
+      if (scope === 'all') {
+        // Add all locations
+        locations.forEach(loc => names.push(loc.name));
+      } else if (scope === 'specific' && locationId) {
+        const location = locations.find(l => l.id === locationId);
+        if (location) {
+          names.push(location.name);
+        }
+      } else if (scope === 'group' && locationGroupId) {
+        const group = locationGroups.find(g => g.id === locationGroupId);
+        if (group) {
+          names.push(`${group.name} locations`);
+        }
+      }
+    }
+  }
+
+  extractFromCondition(conditions);
+  return [...new Set(names)]; // Remove duplicates
+}
+
+/**
+ * Describe awards in a marketing-friendly way
+ */
+function describeAwardsForMarketing(awards, locations = []) {
+  if (!awards) return '';
+
+  // Handle composable awards with OR choices
+  if (awards.operator === 'OR' && awards.groups) {
+    const options = awards.groups.map(group => {
+      const desc = group.awards?.map(a => describeAwardMarketing(a)).join(' + ') || 'rewards';
+      if (group.locationId) {
+        const loc = locations.find(l => l.id === group.locationId);
+        return loc ? `${desc} (redeemable at ${loc.name})` : desc;
+      }
+      return desc;
+    });
+    return `Choose your reward: ${options.join(' OR ')}`;
+  }
+
+  // Handle AND awards
+  if (awards.operator === 'AND' && awards.groups) {
+    const descs = awards.groups.map(group => {
+      const desc = group.awards?.map(a => describeAwardMarketing(a)).join(' + ') || 'rewards';
+      if (group.locationId) {
+        const loc = locations.find(l => l.id === group.locationId);
+        return loc ? `${desc} at ${loc.name}` : desc;
+      }
+      return desc;
+    });
+    return `Earn: ${descs.join(' + ')}`;
+  }
+
+  // Handle simple array
+  if (Array.isArray(awards) && awards.length > 0) {
+    return `Earn: ${awards.map(a => describeAwardMarketing(a)).join(' + ')}`;
+  }
+
+  return '';
+}
+
+/**
+ * Describe a single award for marketing
+ */
+function describeAwardMarketing(award) {
+  if (!award) return '';
+
+  const { type, value } = award;
+
+  switch (type) {
+    case 'points':
+      return `${value} bonus doubloons`;
+    case 'points_per_dollar':
+      return `${value}x points per dollar`;
+    case 'multiplier':
+      return `${value}x points multiplier`;
+    case 'reward':
+      return 'a special reward';
+    case 'tag':
+      return 'VIP status';
+    default:
+      return 'rewards';
+  }
 }
 
 /**
