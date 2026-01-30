@@ -181,6 +181,17 @@ CREATE TABLE marketing_posts (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- AI usage tracking (for tiered add-on)
+CREATE TABLE ai_usage (
+  id TEXT PRIMARY KEY DEFAULT 'aiuse_' || nanoid(),
+  business_id TEXT NOT NULL REFERENCES businesses(id),
+  user_id TEXT REFERENCES users(id),
+  feature TEXT NOT NULL, -- 'marketing', 'rule_builder', 'voyage_builder', etc.
+  action TEXT NOT NULL, -- 'generate', 'improve', 'shorten', etc.
+  tokens_used INTEGER,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 ```
 
 ---
@@ -206,6 +217,7 @@ GET    /api/admin/marketing/preview         // Generate preview content for rule
 // AI (future)
 POST   /api/admin/marketing/ai/generate     // Generate post content
 POST   /api/admin/marketing/ai/improve      // Improve existing content
+GET    /api/admin/ai/usage                  // Get current month's usage & limits
 ```
 
 ---
@@ -273,18 +285,12 @@ Future:
 | Engagement stats | ❌ | ❌ | ✅ | ✅ |
 | AI content assist | ❌ | 💰 Add-on | 💰 Add-on | 💰 Add-on |
 
-**AI Content Assist Add-on:**
-- Available to any paid tier (Starter, Pro, Enterprise)
-- Not available on Free tier
-- Priced separately (usage-based or flat monthly fee TBD)
-- Includes: content generation, improvement suggestions, tone adjustment, hashtag suggestions
-
 ---
 
 ## 🤖 AI Agent Integration (Planned)
 
 > **Status:** Future enhancement - will be part of broader AI agent for the admin app
-> **Availability:** Paid add-on for Starter+ tiers
+> **Availability:** Paid add-on for Starter+ tiers (tiered usage)
 > **Note:** Design the MVP with AI in mind so it's easy to add later
 
 ### Vision
@@ -306,7 +312,7 @@ An AI agent will assist admins throughout the app. For marketing specifically:
 │  │                                                 │   │
 │  └─────────────────────────────────────────────────┘   │
 │                                                         │
-│  🤖 AI ASSIST                                          │
+│  🤖 AI ASSIST                          12/25 used      │
 │  ┌─────────────────────────────────────────────────┐   │
 │  │ [✨ Make it exciting]  [📝 Make it shorter]     │   │
 │  │ [🎯 Add urgency]       [😄 Make it fun]         │   │
@@ -314,8 +320,6 @@ An AI agent will assist admins throughout the app. For marketing specifically:
 │  │                                                 │   │
 │  │ Or describe what you want:                      │   │
 │  │ [____________________________________] [Go]     │   │
-│  │                                                 │   │
-│  │ ⭐ AI Assist Add-on: $X/mo  [Upgrade]          │   │
 │  └─────────────────────────────────────────────────┘   │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
@@ -396,7 +400,12 @@ Who's in? Tag your crew! 👇
   content: '🚨 ALERT: HAPPY HOUR HERO MODE ACTIVATED!...',
   hashtags: ['#JoesCoffee', '#HappyHour', ...],
   character_count: 342,
-  variations: [...] // optional: multiple options
+  variations: [...], // optional: multiple options
+  usage: {
+    used_this_month: 13,
+    limit: 25,
+    resets_at: '2026-02-01T00:00:00Z'
+  }
 }
 ```
 
@@ -412,18 +421,57 @@ The AI agent will eventually be used across the admin app:
 | **Analytics** | "What's working? What should I try?" |
 | **Customer Support** | "Draft a response to this feedback" |
 
-All AI features across the app will be part of the same add-on subscription.
+All AI features across the app share the same usage pool from the add-on subscription.
 
-### Add-on Pricing Considerations
+### Add-on Pricing Tiers
 
-| Model | Pros | Cons |
-|-------|------|------|
-| **Flat monthly fee** | Predictable revenue, simple | Heavy users subsidized |
-| **Usage-based** | Fair, scales with value | Unpredictable bills |
-| **Credits/tokens** | Balance of both | More complex UX |
-| **Tiered usage** | "100 AI assists/mo" | Sweet spot? |
+| Tier | Generations/Month | Use Case | Price |
+|------|-------------------|----------|-------|
+| **Lite** | 25 | ~1/day, casual posting | $X/mo |
+| **Standard** | 50 | ~2/day, active social presence | $X/mo |
+| **Pro** | 100 | ~3/day, multiple platforms/campaigns | $X/mo |
+| **Unlimited** | ∞ | Agencies, power users, heavy automation | $X/mo |
 
-Recommendation: Start with tiered usage (e.g., "50 AI generations/month for $X") to control costs while LLM pricing stabilizes.
+**Why these numbers:**
+- **25/month** = Just under daily - forces intentional use, good starting point
+- **50/month** = Room for iteration (try 2 variations per post)
+- **100/month** = Serious marketers, A/B testing, multi-platform
+- **Unlimited** = Premium tier for agencies or power users who need it
+
+**What counts as a "generation":**
+- Each AI button click (Make it exciting, Shorten, etc.) = 1 generation
+- Each custom prompt submission = 1 generation
+- NOT counted: viewing previous results, copying text, editing manually
+
+**Rollover policy:** No rollover - use it or lose it each month (keeps it simple, encourages regular engagement)
+
+**Upgrade path:** Users can upgrade mid-month; difference prorated. Downgrade takes effect next billing cycle.
+
+### Usage Display in UI
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  🤖 AI ASSIST                                          │
+│                                                         │
+│  ████████████░░░░░░░░  12/25 generations used          │
+│                        Resets Feb 1                     │
+│                                                         │
+│  [Need more? Upgrade to Standard →]                    │
+└─────────────────────────────────────────────────────────┘
+```
+
+When limit reached:
+```
+┌─────────────────────────────────────────────────────────┐
+│  🤖 AI ASSIST                                          │
+│                                                         │
+│  ████████████████████  25/25 generations used          │
+│                        Resets Feb 1 (3 days)           │
+│                                                         │
+│  You've used all your AI generations this month.       │
+│  [Upgrade to Standard (50/mo) →]                       │
+└─────────────────────────────────────────────────────────┘
+```
 
 ### MVP Prep for AI
 
@@ -433,7 +481,9 @@ Even in MVP (no AI), design for easy AI addition:
 2. **Add API endpoint stubs** - `/api/admin/marketing/ai/*` returns 501 for now
 3. **UI placeholder** - "AI Assist coming soon" or "Upgrade for AI" in the editor
 4. **Store business context** - Tone, type, branding for future AI use
-5. **Add-on flag in subscription** - `has_ai_addon` boolean on business record
+5. **Add-on tracking in DB:**
+   - `ai_addon_tier` on business record ('none', 'lite', 'standard', 'pro', 'unlimited')
+   - `ai_usage` table to track generations per month
 
 ---
 
@@ -447,7 +497,7 @@ Even in MVP (no AI), design for easy AI addition:
 6. **AI content generation** - See section above (add-on)
 7. **A/B testing** - Post variations, track performance
 8. **Best time recommendations** - When to post based on past engagement
-9. **AI image generation** - Generate promotional graphics (add-on)
+9. **AI image generation** - Generate promotional graphics (add-on, counts toward usage)
 
 ---
 
@@ -457,7 +507,7 @@ Even in MVP (no AI), design for easy AI addition:
 2. **Approval workflow:** For teams, should there be draft → approve → publish?
 3. **Link in bio:** Should we help manage their "link in bio" for IG?
 4. **AI model:** Which LLM for content generation? (Claude API, OpenAI, etc.)
-5. **AI pricing:** Flat fee vs usage-based vs tiered?
+5. **AI pricing:** What $ amounts for each tier?
 
 ---
 
@@ -472,4 +522,5 @@ Even in MVP (no AI), design for easy AI addition:
 7. Post builder - publish step (platform selector + API calls)
 8. Post to Meta API (backend)
 9. Post history display
-10. [Future] AI assist integration (add-on)
+10. [Future] AI usage tracking table + API
+11. [Future] AI assist integration (add-on tiers)
