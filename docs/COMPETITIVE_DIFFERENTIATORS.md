@@ -299,6 +299,7 @@ Notification: "Crew bonus unlocked!"
 ### Why It Works
 
 - **Higher spend:** Groups spend more than individuals
+- **Higher spend:** Groups spend more than individuals
 - **Social proof:** Full tables attract more customers
 - **Word of mouth:** "Let's go to Joe's, we all get bonus"
 - **Habit formation:** Regular crew meetups
@@ -546,6 +547,235 @@ They just see their points growing. Magic.
 
 ---
 
+## 🪙 DIFFERENTIATOR #10: THE DOUBLOON ECONOMY
+
+### What It Is
+
+Doubloons aren't points. They're a **local commerce currency**.
+
+- Spend at any network business
+- Spend ANYWHERE crypto is accepted
+- Stake for yield and governance
+- Trade, transfer, hold
+- Backed by real assets
+
+### The Three Layers
+
+**Layer 1: Network Currency**
+```
+Earn at Joe's Coffee → Spend at Harbor Books
+Standard loyalty, but unified across the network
+```
+
+**Layer 2: Universal Currency**
+```
+Earn at Joe's Coffee → Spend at Target
+Via crypto payment rails, doubloons convert to USD
+Customer spends "points" anywhere
+```
+
+**Layer 3: Investment Currency**
+```
+Earn at Joe's Coffee → Stake for yield → Grow forever
+Doubloons become appreciating assets
+```
+
+### Tenant Buy-In & Governance
+
+Businesses can stake to become network stakeholders:
+
+| Tier | Stake | Benefits |
+|------|-------|----------|
+| **Deckhand** | $0 | Standard features, 3% fee |
+| **First Mate** | $500 | 2% fee, 1 governance vote |
+| **Captain** | $2,000 | 1.5% fee, 3 votes, premium features |
+| **Admiral** | $10,000 | 1% fee, revenue share, 10 votes |
+| **Fleet Commander** | $50,000+ | 0.5% fee, treasury oversight, veto power |
+
+**The more you stake, the more yield you earn, the more you govern.**
+
+### Yield Points: The Self-Funding Engine
+
+**The breakthrough:** Rewards that cost the business NOTHING.
+
+```
+HOW YIELD POINTS WORK
+
+Tenant stakes $2,000 (Captain tier)
+    ↓
+Stake generates ~6% APY = ~$120/year in yield
+    ↓
+Yield converts to "Yield Points" (special doubloons)
+    ↓
+Tenant can:
+    • Award to customers (FREE rewards!)
+    • Cash out to USD
+    • Stake for more yield
+    • Credit against subscription
+    ↓
+Customer receives rewards that cost business $0
+```
+
+**This is revolutionary:**
+
+| Traditional Rewards | Yield-Funded Rewards |
+|--------------------|---------------------|
+| Every point = real cost | Points generated from yield |
+| Margin hit on redemption | Zero cost to business |
+| Limited by budget | Limited by stake size |
+| Feels like expense | Feels like free money |
+
+### How Yield Points Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   YIELD POINTS FLOW                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   TENANT STAKE          REWARDSPIRATE STAKE                │
+│   ($2,000)              (% of revenue)                      │
+│       ↓                      ↓                              │
+│       └──────────┬───────────┘                              │
+│                  ↓                                          │
+│           YIELD POOL (stablecoins)                          │
+│                  ↓                                          │
+│           Generates ~5-8% APY                               │
+│                  ↓                                          │
+│   ┌──────────────┼──────────────┐                           │
+│   ↓              ↓              ↓                           │
+│ TENANT        CUSTOMER      REWARDSPIRATE                   │
+│ YIELD         PASSIVE       TREASURY                        │
+│ POINTS        GROWTH        (operations)                    │
+│   ↓              ↓                                          │
+│ Options:      Auto-added                                    │
+│ • Award       to balance                                    │
+│ • Cash out                                                  │
+│ • Re-stake                                                  │
+│ • Sub credit                                                │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Subscription Credits
+
+Tenants can use yield points to offset subscription costs:
+
+```
+📊 MONTHLY STATEMENT
+
+Subscription: $99/month
+Yield earned: 45 yield points (~$4.50)
+
+Option A: Apply to subscription → Pay $94.50
+Option B: Award to customers → 450 doubloons to distribute
+Option C: Re-stake → Compound your yield
+```
+
+**At higher stakes, subscription could be FREE:**
+
+| Stake | Monthly Yield | Subscription | Net Cost |
+|-------|---------------|--------------|----------|
+| $500 | ~$2.50 | $49 | $46.50 |
+| $2,000 | ~$10 | $99 | $89 |
+| $10,000 | ~$50 | $149 | $99 |
+| $50,000 | ~$250 | $199 | **-$51** (profit!) |
+
+**At $50k stake, they're making money just to be in the network.**
+
+### RewardsPirate Treasury Strategy
+
+Like MicroStrategy with Bitcoin, we stake our own revenue:
+
+```
+REWARDSPIRATE TREASURY MODEL
+
+Monthly Revenue: $100,000
+    ↓
+Operating Costs: $60,000 (60%)
+    ↓
+Treasury Allocation: $20,000 (20%)
+    ↓
+Profit: $20,000 (20%)
+
+Treasury over time:
+Year 1: $240,000 staked → $12,000 yield
+Year 2: $480,000 staked → $24,000 yield
+Year 3: $720,000 staked → $36,000 yield
+
+Yield funds:
+• Network bonuses
+• Customer growth rewards
+• Platform improvements
+• Reserve backing
+```
+
+**The company becomes crypto-backed:**
+
+| Traditional SaaS | RewardsPirate |
+|------------------|---------------|
+| Valued on P&L only | Valued on P&L + Treasury |
+| Revenue dependent | Revenue + yield |
+| Cash burns | Cash grows |
+| Exit = revenue multiple | Exit = revenue + assets |
+
+### Spend Anywhere
+
+Doubloons work beyond the network:
+
+```
+CUSTOMER AT TARGET (non-tenant)
+
+Cashier: "That'll be $15.00"
+Customer: [Opens RewardsPirate app]
+App: "Pay $15.00 with 1,500 doubloons?"
+Customer: [Confirms]
+App: [Converts via crypto rails]
+Target: [Receives $15 USD]
+
+Customer just spent "loyalty points" at a random store.
+```
+
+**Options:**
+- **Crypto payment rails** (BitPay, Coinbase Commerce)
+- **Doubloon debit card** (partner with card issuer)
+- **Direct merchant integration** (our API)
+
+### Why Competitors CAN'T Do This
+
+| Barrier | Why It Stops Them |
+|---------|-------------------|
+| **Treasury management** | They're software companies, not asset managers |
+| **Crypto infrastructure** | They'd have to rebuild from scratch |
+| **Regulatory expertise** | Different compliance requirements |
+| **Mindset** | They see loyalty as feature, not economy |
+| **Incentive** | Doesn't help them sell more payments |
+
+### The Positioning
+
+**Their model:** Software you pay for.
+
+**Our model:** Economy you own a piece of.
+
+**Their pitch:** "Here's a loyalty tool."
+
+**Our pitch:** "Here's a stake in a growing economy. The more it grows, the more you earn."
+
+### Why This Changes Everything
+
+```
+TRADITIONAL LOYALTY
+Business pays → Software does thing → Customers get points → Points cost money
+
+DOUBLOON ECONOMY  
+Business stakes → Stake generates yield → Yield funds rewards → Rewards cost nothing
+       ↑                                                              ↓
+       └──────────────── Value returns to business ←──────────────────┘
+```
+
+**It's not a cost center. It's an investment that pays for itself.**
+
+---
+
 ## 📊 SUMMARY: THE MOAT
 
 | Differentiator | Square | Toast | Stripe | RewardsPirate |
@@ -560,6 +790,9 @@ They just see their points growing. Magic.
 | Physical status items | ❌ | ❌ | ❌ | ✅ |
 | Multi-tenant discovery | ❌ | ❌ | ❌ | ✅ |
 | Passive yield/growth | ❌ | ❌ | ❌ | ✅ |
+| Token economy & governance | ❌ | ❌ | ❌ | ✅ |
+| Spend anywhere | ❌ | ❌ | ❌ | ✅ |
+| Self-funding rewards | ❌ | ❌ | ❌ | ✅ |
 
 ---
 
@@ -579,13 +812,13 @@ They just see their points growing. Magic.
 
 **Their product:** Data collection disguised as loyalty.
 
-**Our product:** A community platform that happens to drive sales.
+**Our product:** A community-owned economy that happens to drive sales.
 
 ---
 
 **Their value:** "See what your customers bought."
 
-**Our value:** "Make your customers want to come back."
+**Our value:** "Make your customers want to come back. And own a piece of what you're building."
 
 ---
 
@@ -593,10 +826,10 @@ They just see their points growing. Magic.
 
 Stripe/Square/Toast help businesses **understand** yesterday.
 
-RewardsPirate helps businesses **create** tomorrow.
+RewardsPirate helps businesses **own** tomorrow.
 
 **That's not a feature difference. That's a category difference.**
 
 ---
 
-🏴‍☠️ **We're not competing with loyalty programs. We're replacing them.**
+🏴‍☠️ **We're not building a loyalty program. We're building an economy.**
