@@ -3,9 +3,22 @@
 > **OWNERSHIP:** Claude Code owns the actual schema in `backend/db/schema.ts`.  
 > This doc is a **reference spec**, not a constraint. Modify the schema as needed—add columns, change types, add tables, refactor. Just keep seed data working and update this doc if making major changes.
 
-> **Database:** SQLite (MVP) → PostgreSQL (production)  
+> **Database:** PostgreSQL (Neon serverless)  
 > **ORM:** Drizzle ORM  
 > **Location:** `backend/db/schema.ts`
+
+---
+
+## Database Setup
+
+**Provider:** [Neon](https://neon.tech) - Serverless PostgreSQL
+
+**Connection:** Use `DATABASE_URL` environment variable
+```
+DATABASE_URL=postgres://user:pass@ep-xxx.us-east-1.aws.neon.tech/lootly?sslmode=require
+```
+
+**Local Dev:** Can use local PostgreSQL or Neon dev branch
 
 ---
 
@@ -56,11 +69,11 @@ Top-level entity representing a business owner or organization. One business can
 | logo_url | TEXT | | Business logo |
 | subscription_tier | TEXT | DEFAULT 'free' | 'free', 'pro', 'enterprise' |
 | subscription_status | TEXT | DEFAULT 'active' | 'active', 'past_due', 'cancelled' |
-| settings | JSON | | Business-wide settings |
-| created_at | DATETIME | DEFAULT NOW | |
-| updated_at | DATETIME | | |
+| settings | JSONB | | Business-wide settings |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | | |
 
-**Settings JSON structure:**
+**Settings JSONB structure:**
 ```json
 {
   "points_name": "points",
@@ -93,15 +106,15 @@ Individual physical locations belonging to a business.
 | country | TEXT | DEFAULT 'US' | |
 | phone | TEXT | | Location phone |
 | email | TEXT | | Location email |
-| latitude | REAL | | For geo features |
-| longitude | REAL | | For geo features |
+| latitude | DOUBLE PRECISION | | For geo features |
+| longitude | DOUBLE PRECISION | | For geo features |
 | timezone | TEXT | | Override business timezone |
-| hours | JSON | | Operating hours |
+| hours | JSONB | | Operating hours |
 | is_active | BOOLEAN | DEFAULT true | Soft disable |
-| created_at | DATETIME | DEFAULT NOW | |
-| updated_at | DATETIME | | |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | | |
 
-**Hours JSON structure:**
+**Hours JSONB structure:**
 ```json
 {
   "monday": { "open": "11:00", "close": "21:00" },
@@ -126,7 +139,7 @@ Logical groupings of locations for rules targeting.
 | business_id | TEXT | FK → businesses | |
 | name | TEXT | NOT NULL | "All Locations", "Mexican Restaurants" |
 | description | TEXT | | |
-| created_at | DATETIME | DEFAULT NOW | |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
 ---
 
@@ -139,7 +152,7 @@ Join table for location groups.
 | id | TEXT | PK | |
 | group_id | TEXT | FK → location_groups | |
 | location_id | TEXT | FK → locations | |
-| created_at | DATETIME | DEFAULT NOW | |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
 **Unique constraint:** (group_id, location_id)
 
@@ -154,15 +167,13 @@ Staff members who can operate the tablet app.
 | id | TEXT | PK | `staff_` prefix |
 | location_id | TEXT | FK → locations | Primary location |
 | name | TEXT | NOT NULL | Display name |
-| pin | TEXT | NOT NULL | 4-6 digit PIN |
+| pin | TEXT | NOT NULL | 4-6 digit PIN (hashed) |
 | role | TEXT | DEFAULT 'staff' | 'staff', 'manager', 'admin' |
 | can_void | BOOLEAN | DEFAULT false | Can void transactions |
 | can_adjust_points | BOOLEAN | DEFAULT false | Can manually adjust |
 | is_active | BOOLEAN | DEFAULT true | |
-| created_at | DATETIME | DEFAULT NOW | |
-| updated_at | DATETIME | | |
-
-**Note:** PIN should be hashed in production.
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | | |
 
 ---
 
@@ -178,8 +189,8 @@ Global customer records (cross-business).
 | name | TEXT | | Optional display name |
 | email | TEXT | | Optional email |
 | avatar_url | TEXT | | Profile picture |
-| created_at | DATETIME | DEFAULT NOW | |
-| updated_at | DATETIME | | |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | | |
 
 ---
 
@@ -197,10 +208,10 @@ Customer enrollment in a specific business's loyalty program. This is the join b
 | lifetime_spend | INTEGER | DEFAULT 0 | Cents |
 | visit_count | INTEGER | DEFAULT 0 | Total visits |
 | tier | TEXT | DEFAULT 'member' | 'member', 'silver', 'gold', etc. |
-| points_multiplier | REAL | DEFAULT 1.0 | Active multiplier |
-| multiplier_expires_at | DATETIME | | When multiplier resets |
-| enrolled_at | DATETIME | DEFAULT NOW | |
-| last_visit_at | DATETIME | | |
+| points_multiplier | DOUBLE PRECISION | DEFAULT 1.0 | Active multiplier |
+| multiplier_expires_at | TIMESTAMPTZ | | When multiplier resets |
+| enrolled_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| last_visit_at | TIMESTAMPTZ | | |
 | is_active | BOOLEAN | DEFAULT true | |
 
 **Unique constraint:** (customer_id, business_id)
@@ -223,12 +234,12 @@ Every check-in, purchase, or point-earning event.
 | points_spent | INTEGER | DEFAULT 0 | Points redeemed |
 | points_balance_after | INTEGER | | Snapshot of balance |
 | notes | TEXT | | Staff notes |
-| metadata | JSON | | Additional data |
+| metadata | JSONB | | Additional data |
 | voided | BOOLEAN | DEFAULT false | |
-| voided_at | DATETIME | | |
+| voided_at | TIMESTAMPTZ | | |
 | voided_by | TEXT | FK → staff | |
 | void_reason | TEXT | | |
-| created_at | DATETIME | DEFAULT NOW | |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
 ---
 
@@ -242,7 +253,7 @@ Composable rules engine for earning points and unlocking rewards.
 | business_id | TEXT | FK → businesses | |
 | name | TEXT | NOT NULL | "Double Points Tuesday" |
 | description | TEXT | | Customer-facing description |
-| conditions | JSON | NOT NULL | Rule conditions |
+| conditions | JSONB | NOT NULL | Rule conditions |
 | award_type | TEXT | NOT NULL | 'points', 'points_per_dollar', 'multiplier', 'reward' |
 | award_value | TEXT | NOT NULL | Amount or reward_id |
 | priority | INTEGER | DEFAULT 0 | Higher = evaluated first |
@@ -250,12 +261,12 @@ Composable rules engine for earning points and unlocking rewards.
 | is_repeatable | BOOLEAN | DEFAULT true | Can trigger multiple times |
 | cooldown_days | INTEGER | | Min days between triggers |
 | max_triggers | INTEGER | | Lifetime max (NULL = unlimited) |
-| start_date | DATETIME | | Time-bound start |
-| end_date | DATETIME | | Time-bound end |
-| created_at | DATETIME | DEFAULT NOW | |
-| updated_at | DATETIME | | |
+| start_date | TIMESTAMPTZ | | Time-bound start |
+| end_date | TIMESTAMPTZ | | Time-bound end |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | | |
 
-**Conditions JSON structure:** See TECHNICAL_SPEC.md for full rules engine spec.
+**Conditions JSONB structure:** See rules engine documentation.
 
 ---
 
@@ -269,7 +280,7 @@ Track when rules have fired for a customer (for cooldowns, max triggers).
 | rule_id | TEXT | FK → rules | |
 | enrollment_id | TEXT | FK → enrollments | |
 | transaction_id | TEXT | FK → transactions | |
-| triggered_at | DATETIME | DEFAULT NOW | |
+| triggered_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
 ---
 
@@ -289,14 +300,14 @@ Redeemable rewards.
 | reward_type | TEXT | NOT NULL | 'points_redemption', 'milestone', 'birthday' |
 | value_type | TEXT | | 'fixed_discount', 'percent_discount', 'free_item', 'multiplier' |
 | value_amount | TEXT | | Dollar amount, percent, or item name |
-| valid_locations | JSON | | Array of location_ids (NULL = all) |
+| valid_locations | JSONB | | Array of location_ids (NULL = all) |
 | terms | TEXT | | Fine print |
 | is_active | BOOLEAN | DEFAULT true | |
 | is_hidden | BOOLEAN | DEFAULT false | Don't show until unlocked |
 | sort_order | INTEGER | DEFAULT 0 | Display order |
 | expires_days | INTEGER | | Days until reward expires after earning |
-| created_at | DATETIME | DEFAULT NOW | |
-| updated_at | DATETIME | | |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | | |
 
 ---
 
@@ -313,9 +324,9 @@ Rewards earned by customers (their "wallet").
 | source_id | TEXT | | rule_id or staff_id |
 | points_spent | INTEGER | DEFAULT 0 | Points used to redeem |
 | status | TEXT | DEFAULT 'available' | 'available', 'redeemed', 'expired', 'voided' |
-| earned_at | DATETIME | DEFAULT NOW | |
-| expires_at | DATETIME | | |
-| redeemed_at | DATETIME | | |
+| earned_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| expires_at | TIMESTAMPTZ | | |
+| redeemed_at | TIMESTAMPTZ | | |
 | redeemed_location_id | TEXT | FK → locations | |
 | redeemed_staff_id | TEXT | FK → staff | |
 | redeemed_transaction_id | TEXT | FK → transactions | |
@@ -333,9 +344,9 @@ QR codes for customer identification.
 | code | TEXT | UNIQUE, NOT NULL | The scannable value |
 | type | TEXT | DEFAULT 'primary' | 'primary', 'temporary', 'card' |
 | is_active | BOOLEAN | DEFAULT true | |
-| created_at | DATETIME | DEFAULT NOW | |
-| expires_at | DATETIME | | For temporary codes |
-| last_used_at | DATETIME | | |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| expires_at | TIMESTAMPTZ | | For temporary codes |
+| last_used_at | TIMESTAMPTZ | | |
 
 ---
 
@@ -348,10 +359,10 @@ SMS verification codes for phone auth.
 | id | TEXT | PK | |
 | phone | TEXT | NOT NULL | |
 | code | TEXT | NOT NULL | 6-digit code |
-| expires_at | DATETIME | NOT NULL | |
+| expires_at | TIMESTAMPTZ | NOT NULL | |
 | verified | BOOLEAN | DEFAULT false | |
 | attempts | INTEGER | DEFAULT 0 | Failed attempts |
-| created_at | DATETIME | DEFAULT NOW | |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
 ---
 
@@ -366,9 +377,9 @@ Auth sessions for customers and staff.
 | type | TEXT | NOT NULL | 'customer', 'staff' |
 | customer_id | TEXT | FK → customers | |
 | staff_id | TEXT | FK → staff | |
-| device_info | JSON | | User agent, etc. |
-| expires_at | DATETIME | NOT NULL | |
-| created_at | DATETIME | DEFAULT NOW | |
+| device_info | JSONB | | User agent, etc. |
+| expires_at | TIMESTAMPTZ | NOT NULL | |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 
 ---
 
@@ -390,13 +401,28 @@ CREATE INDEX idx_qr_codes_code ON qr_codes(code);
 CREATE INDEX idx_qr_codes_customer ON qr_codes(customer_id);
 CREATE INDEX idx_verification_phone ON verification_codes(phone);
 CREATE INDEX idx_sessions_token ON sessions(token);
+
+-- JSONB indexes for rules engine
+CREATE INDEX idx_rules_conditions ON rules USING GIN(conditions);
 ```
 
 ---
 
-## Drizzle Schema Location
+## Drizzle Setup
 
-The schema should be implemented in:
+**Package:** `drizzle-orm` with `@neondatabase/serverless`
+
+```typescript
+// backend/db/index.ts
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool } from '@neondatabase/serverless';
+import * as schema from './schema';
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const db = drizzle(pool, { schema });
+```
+
+**File structure:**
 ```
 backend/
 └── db/
@@ -411,20 +437,10 @@ backend/
 ## Notes for Implementation
 
 1. **ID Generation:** Use nanoid or cuid2 with prefixes (`biz_`, `loc_`, etc.)
-2. **Timestamps:** Use ISO 8601 strings in SQLite, proper TIMESTAMP in Postgres
-3. **JSON columns:** SQLite stores as TEXT, Postgres uses JSONB
+2. **Timestamps:** Use `TIMESTAMPTZ` for all datetime columns
+3. **JSON columns:** Use `JSONB` for indexable JSON data
 4. **Soft deletes:** Use `is_active` flags, don't delete records
 5. **Audit trail:** Consider adding `created_by` and `updated_by` columns
-
----
-
-## Migration Path (MVP → Production)
-
-SQLite → PostgreSQL changes:
-- JSON → JSONB
-- TEXT dates → TIMESTAMP WITH TIME ZONE
-- Add connection pooling
-- Add read replicas for scale
 
 ---
 
