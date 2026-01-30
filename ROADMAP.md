@@ -6,6 +6,21 @@
 
 ---
 
+## ⚠️ Required Reading
+
+**Before building ANY feature, read these docs:**
+
+| Document | Purpose |
+|----------|---------|
+| [ENTITLEMENTS.md](docs/ENTITLEMENTS.md) | **Feature gating architecture.** Every feature must be entitlement-aware. |
+| [TECHNICAL_SPEC.md](docs/TECHNICAL_SPEC.md) | Core technical architecture |
+| [DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) | Database schema reference |
+| [SEED_DATA.md](docs/SEED_DATA.md) | Pilot customer (Freddie's) setup |
+
+**Key rule:** Every new feature needs a feature key in `FEATURES` and must use `requireFeature()` middleware on API routes and `<FeatureGate>` in UI.
+
+---
+
 ## Roadmap Overview
 
 ```
@@ -146,11 +161,15 @@
 2. Update status to 🔷 Specified
 3. Link spec in the Spec column
 4. Add to the Spec Index below
+5. **Add entitlement info** (feature keys, tier, limits) — see [ENTITLEMENTS.md](docs/ENTITLEMENTS.md)
 
 ### Starting Work
 1. Update status to 🚧 In Progress
 2. Add to PROGRESS.md
-3. Build it
+3. **Register feature keys** in `FEATURES` constant
+4. **Add `requireFeature()` middleware** to API routes
+5. **Add `<FeatureGate>` wrapper** to UI components
+6. Build it
 
 ### Completing
 1. Update status to ✅ Complete
@@ -165,6 +184,7 @@
 - [Technical Spec](docs/TECHNICAL_SPEC.md)
 - [Architecture Guidelines](docs/ARCHITECTURE.md)
 - [Progress Tracker](PROGRESS.md)
+- [**Entitlements & Feature Gating**](docs/ENTITLEMENTS.md) ⚠️ Required
 
 ---
 
@@ -196,6 +216,21 @@
 - When creating a new spec, add it to this index immediately
 - When a feature is completed or dropped, update status but keep the link
 - Orphaned specs are not allowed
+- **Every feature spec must include Entitlements section** (feature keys, tier, limits)
+
+---
+
+## Architecture Docs Index
+
+> **Core architecture docs that apply across all features.**
+
+| Document | Purpose | Required Reading |
+|----------|---------|------------------|
+| [ENTITLEMENTS.md](docs/ENTITLEMENTS.md) | Feature gating, subscription tiers, add-ons | ⚠️ **YES** |
+| [FEATURE_FLAGS.md](docs/FEATURE_FLAGS.md) | Implementation guide for feature flags | ⚠️ **YES** |
+| [DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) | Database tables and relationships | Yes |
+| [SEED_DATA.md](docs/SEED_DATA.md) | Pilot customer data (Freddie's) | Yes |
+| [TECHNICAL_SPEC.md](docs/TECHNICAL_SPEC.md) | API routes, components, architecture | Yes |
 
 ---
 
