@@ -60,6 +60,138 @@ One account. One balance. One community.
 
 ---
 
+## 🗺️ TREASURE HUNTS (GEOCACHING-STYLE)
+
+### The Big Idea
+
+Admins create real-world scavenger hunts across their locations. Customers follow clues, check in at waypoints, race to finish first. Winners get grand prizes, participants get rewards just for playing.
+
+**Think geocaching meets loyalty rewards.**
+
+### How It Could Work
+
+```
+🏴‍☠️ ACTIVE TREASURE HUNT
+
+"The Lost Doubloons of Captain Morgan"
+
+Legend says Captain Morgan buried his treasure 
+across downtown before he sailed away forever...
+
+📍 Waypoint 1/5: UNLOCKED
+   Clue: "Where the morning brew flows and pirates refuel..."
+   [Check in at Joe's Coffee]
+
+📍 Waypoint 2/5: LOCKED
+   Complete waypoint 1 to reveal...
+
+🏆 GRAND PRIZE: $100 gift card + Legendary Badge
+🎖️ PARTICIPATION: 500 doubloons for finishing
+
+⏱️ Hunt ends: Sunday 6pm
+👥 47 pirates hunting | 12 have finished
+```
+
+### Why This Is Huge
+
+| Benefit | How |
+|---------|-----|
+| Drives foot traffic | "Waypoint 3 is at the bookstore!" |
+| Cross-promotes network | Hunt spans multiple businesses |
+| Creates urgency | Race to win grand prize |
+| Viral potential | People share clues, compete publicly |
+| Community events | "Saturday morning treasure hunt!" |
+| Tourism angle | Towns could sponsor hunts |
+
+### Reward Structure
+
+- **Winner(s):** Grand prize (gift card, exclusive merch, big point bonus)
+- **Top 10:** Secondary prizes
+- **All finishers:** Participation reward (everyone who completes gets something)
+- **Per-waypoint:** Small bonus at each stop
+
+### Admin Controls
+
+- Set waypoint locations (own locations or partner locations)
+- Write clues (fun, cryptic, on-brand)
+- Set prizes and participation rewards
+- Set time limits
+- Cap number of winners
+- Require purchase at waypoint or just check-in
+
+---
+
+## 🐙 CREATURE COLLECTION (POKÉMON-STYLE)
+
+### The Big Idea
+
+Digital "creatures" spawn at partner locations. Customers must physically visit to capture them. Build collections, catch rare spawns, trade with other crew members.
+
+**Think Pokémon GO meets local business loyalty.**
+
+### How It Could Work
+
+```
+🐙 CREATURE SPOTTED!
+
+A wild SEA SERPENT appeared at Harbor Books!
+
+Rarity: ⭐⭐⭐ RARE
+Available until: 3pm today
+Distance: 0.4 miles
+
+"The elusive Sea Serpent only surfaces near 
+places of great knowledge..."
+
+[Get Directions] [View My Collection]
+```
+
+### Creature Types
+
+| Rarity | Spawn Rules | Examples |
+|--------|-------------|----------|
+| Common | Always available at locations | Deck Rat, Barnacle Crab |
+| Uncommon | Certain days/times | Ghost Gull, Tide Walker |
+| Rare | Limited windows, announced | Sea Serpent, Storm Hawk |
+| Epic | Special events only | Kraken Spawn, Golden Whale |
+| Legendary | One-time drops, competitions | Captain's Phoenix, The Leviathan |
+
+### Collection Mechanics
+
+- **Capture:** Check in at location while creature is active
+- **Collection book:** Track all caught creatures
+- **Sets:** Complete themed sets for bonus rewards
+- **Trading:** Swap duplicates with other crew members?
+- **Evolution:** Some creatures evolve after multiple catches?
+
+### Why This Works
+
+| Benefit | Impact |
+|---------|--------|
+| Repeat visits | "New spawn at the coffee shop!" |
+| Discovery | "There's a rare at a place I've never been" |
+| FOMO | Limited time spawns create urgency |
+| Social | Compare collections, trade, compete |
+| Network value | More locations = more creatures = stickier |
+| Fits theme | Pirates + sea creatures = perfect |
+
+### Admin Controls
+
+- Enable/disable for their location
+- Set which creatures can spawn there
+- Trigger special spawns for events
+- Create location-exclusive creatures
+
+### Future Possibilities
+
+- AR camera integration (see creatures through phone)
+- Creature battles between customers?
+- Seasonal creature releases
+- Physical creature cards/merchandise
+- "Creature of the month" at each location
+
+---
+
 ## 🌦️ WEATHER-BASED REWARDS
 
 ### The Idea
@@ -540,6 +672,8 @@ They'll get recognized on the Staff Leaderboard.
 | Feature | Why Stripe Can't | Why We Can |
 |---------|-----------------|------------|
 | Local Network | Siloed to their merchants | POS-agnostic |
+| Treasure Hunts | No location awareness | We control check-ins & geofences |
+| Creature Collection | No gamification layer | Built for engagement |
 | Weather triggers | No context awareness | We control the app |
 | Sports tie-ins | No local awareness | We serve local businesses |
 | Live events | Just a payment processor | We're a community platform |
