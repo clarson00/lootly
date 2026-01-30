@@ -5,6 +5,7 @@ import { api } from '../api/client';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import ConditionBuilder from '../components/rules/ConditionBuilder';
 import AwardBuilder from '../components/rules/AwardBuilder';
+import WalkthroughDrawer from '../components/rules/WalkthroughDrawer';
 
 const CONDITION_TEMPLATES = [
   {
@@ -64,6 +65,16 @@ export default function RuleBuilderPage() {
     queryFn: () => api.getRule(businessId, id),
     enabled: isEditing && !!businessId,
   });
+
+  // Load locations for walkthrough
+  const { data: businessData } = useQuery({
+    queryKey: ['business', businessId],
+    queryFn: () => api.getLocations(businessId),
+    enabled: !!businessId,
+  });
+
+  const locations = businessData?.data?.locations || [];
+  const locationGroups = businessData?.data?.locationGroups || [];
 
   useEffect(() => {
     if (existingRule?.data?.rule) {
@@ -131,20 +142,22 @@ export default function RuleBuilderPage() {
   }
 
   return (
-    <div className="max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {isEditing ? 'Edit Rule' : 'Create Rule'}
-        </h1>
-        <p className="text-gray-500">
-          {isEditing
-            ? 'Update the rule configuration'
-            : 'Build a new loyalty rule for your customers'}
-        </p>
-      </div>
+    <div className="flex">
+      {/* Main content */}
+      <div className="flex-1 max-w-4xl lg:pr-4">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isEditing ? 'Edit Rule' : 'Create Rule'}
+          </h1>
+          <p className="text-gray-500">
+            {isEditing
+              ? 'Update the rule configuration'
+              : 'Build a new loyalty rule for your customers'}
+          </p>
+        </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
         {/* Basic Info */}
         <section className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
@@ -404,6 +417,22 @@ export default function RuleBuilderPage() {
           )}
         </section>
       </form>
+      </div>
+
+      {/* Walkthrough Drawer */}
+      <WalkthroughDrawer
+        name={formData.name}
+        icon={formData.icon}
+        description={formData.description}
+        conditions={formData.conditions}
+        awards={formData.awards}
+        startDate={formData.startsAt}
+        endDate={formData.endsAt}
+        isRepeatable={formData.isRepeatable}
+        cooldownDays={formData.cooldownDays}
+        locations={locations}
+        locationGroups={locationGroups}
+      />
     </div>
   );
 }

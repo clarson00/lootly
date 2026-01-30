@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '../api/client';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { describeConditions, describeAwards, describeAwardsAsText } from '../lib/plainLanguage';
 
 export default function SimulatorPage() {
   const { businessId } = useAdminAuth();
 
   const [selectedRuleId, setSelectedRuleId] = useState('');
+  const [selectedVoyageId, setSelectedVoyageId] = useState('');
+  const [selectionType, setSelectionType] = useState('rule'); // 'rule' | 'voyage'
   const [customerId, setCustomerId] = useState('');
   const [scenario, setScenario] = useState({
     locationId: '',
@@ -20,6 +23,49 @@ export default function SimulatorPage() {
     queryFn: () => api.getRules(businessId),
     enabled: !!businessId,
   });
+
+  const { data: voyagesData } = useQuery({
+    queryKey: ['rulesets', businessId],
+    queryFn: () => api.getRulesets(businessId),
+    enabled: !!businessId,
+  });
+
+  const { data: businessData } = useQuery({
+    queryKey: ['business', businessId],
+    queryFn: () => api.getLocations(businessId),
+    enabled: !!businessId,
+  });
+
+  const { data: selectedVoyageData } = useQuery({
+    queryKey: ['ruleset', businessId, selectedVoyageId],
+    queryFn: () => api.getRuleset(businessId, selectedVoyageId),
+    enabled: !!businessId && !!selectedVoyageId && selectionType === 'voyage',
+  });
+
+  const rules = rulesData?.data?.rules || [];
+  const voyages = voyagesData?.data?.rulesets || [];
+  const standaloneRules = rules.filter(r => !r.rulesetId);
+  const locations = businessData?.data?.locations || [];
+  const locationGroups = businessData?.data?.locationGroups || [];
+
+  // Get selected rule details
+  const selectedRule = useMemo(() => {
+    if (selectionType === 'rule' && selectedRuleId) {
+      return rules.find(r => r.id === selectedRuleId);
+    }
+    return null;
+  }, [selectionType, selectedRuleId, rules]);
+
+  // Get selected voyage with steps
+  const selectedVoyage = useMemo(() => {
+    if (selectionType === 'voyage' && selectedVoyageData?.data) {
+      return {
+        ...selectedVoyageData.data.ruleset,
+        steps: (selectedVoyageData.data.rules || []).sort((a, b) => (a.sequenceOrder || 0) - (b.sequenceOrder || 0)),
+      };
+    }
+    return null;
+  }, [selectionType, selectedVoyageData]);
 
   const bulkMutation = useMutation({
     mutationFn: () => api.simulateBulk(businessId, selectedRuleId),
@@ -39,8 +85,21 @@ export default function SimulatorPage() {
   const handleSimulate = () => {
     setResults(null);
 
-    if (!selectedRuleId) {
+    const ruleId = selectionType === 'rule' ? selectedRuleId : null;
+
+    if (selectionType === 'rule' && !selectedRuleId) {
       alert('Please select a rule');
+      return;
+    }
+
+    if (selectionType === 'voyage' && !selectedVoyageId) {
+      alert('Please select a voyage');
+      return;
+    }
+
+    // For voyages, we'd need a different API - for now just show the walkthrough
+    if (selectionType === 'voyage') {
+      setResults({ voyageWalkthrough: true });
       return;
     }
 
@@ -66,7 +125,6 @@ export default function SimulatorPage() {
   };
 
   const isLoading = bulkMutation.isPending || customerMutation.isPending || whatIfMutation.isPending;
-  const rules = rulesData?.data?.rules || [];
 
   return (
     <div className="space-y-8">
@@ -85,24 +143,84 @@ export default function SimulatorPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Configuration</h2>
 
             <div className="space-y-4">
-              {/* Rule Selection */}
+              {/* Selection Type Toggle */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Rule *
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  What to Simulate
                 </label>
-                <select
-                  value={selectedRuleId}
-                  onChange={(e) => setSelectedRuleId(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="">Choose a rule...</option>
-                  {rules.map((rule) => (
-                    <option key={rule.id} value={rule.id}>
-                      {rule.icon || '📜'} {rule.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectionType('rule');
+                      setSelectedVoyageId('');
+                    }}
+                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                      selectionType === 'rule'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    📜 Rule
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectionType('voyage');
+                      setSelectedRuleId('');
+                    }}
+                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                      selectionType === 'voyage'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    🗺️ Voyage
+                  </button>
+                </div>
               </div>
+
+              {/* Rule Selection */}
+              {selectionType === 'rule' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Rule *
+                  </label>
+                  <select
+                    value={selectedRuleId}
+                    onChange={(e) => setSelectedRuleId(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="">Choose a rule...</option>
+                    {standaloneRules.map((rule) => (
+                      <option key={rule.id} value={rule.id}>
+                        {rule.icon || '📜'} {rule.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Voyage Selection */}
+              {selectionType === 'voyage' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Voyage *
+                  </label>
+                  <select
+                    value={selectedVoyageId}
+                    onChange={(e) => setSelectedVoyageId(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  >
+                    <option value="">Choose a voyage...</option>
+                    {voyages.map((voyage) => (
+                      <option key={voyage.id} value={voyage.id}>
+                        {voyage.icon || '🗺️'} {voyage.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Simulation Type */}
               <div>
@@ -205,8 +323,10 @@ export default function SimulatorPage() {
 
               <button
                 onClick={handleSimulate}
-                disabled={isLoading || !selectedRuleId}
-                className="w-full py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 transition-colors"
+                disabled={isLoading || (selectionType === 'rule' && !selectedRuleId) || (selectionType === 'voyage' && !selectedVoyageId)}
+                className={`w-full py-3 text-white rounded-lg font-medium disabled:opacity-50 transition-colors ${
+                  selectionType === 'voyage' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-primary-600 hover:bg-primary-700'
+                }`}
               >
                 {isLoading ? 'Running Simulation...' : 'Run Simulation'}
               </button>
@@ -215,9 +335,129 @@ export default function SimulatorPage() {
         </div>
 
         {/* Results */}
-        <div>
-          <section className="bg-white rounded-xl border border-gray-200 p-6 min-h-[400px]">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Results</h2>
+        <div className="space-y-6">
+          {/* Walkthrough Panel - Always visible when something is selected */}
+          {(selectedRule || selectedVoyage) && (
+            <section className={`rounded-xl border p-6 ${
+              selectionType === 'voyage'
+                ? 'bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200'
+                : 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200'
+            }`}>
+              <h2 className={`text-lg font-semibold mb-4 ${
+                selectionType === 'voyage' ? 'text-purple-900' : 'text-amber-900'
+              }`}>
+                {selectionType === 'voyage' ? '🗺️ Voyage Walkthrough' : '📜 Rule Walkthrough'}
+              </h2>
+
+              {/* Rule Walkthrough */}
+              {selectedRule && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{selectedRule.icon || '📜'}</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{selectedRule.name}</h3>
+                      {selectedRule.description && (
+                        <p className="text-sm text-gray-600">{selectedRule.description}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-white/70 rounded-lg p-4 space-y-3">
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">When</p>
+                      <p className="text-sm text-gray-800">{describeConditions(selectedRule.conditions, locations, locationGroups)}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Then</p>
+                      <p className="text-sm text-gray-800">{describeAwardsAsText(selectedRule.awards, locations)}</p>
+                    </div>
+
+                    {(selectedRule.startDate || selectedRule.endDate) && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Active Period</p>
+                        <p className="text-sm text-gray-800">
+                          {selectedRule.startDate && `From ${new Date(selectedRule.startDate).toLocaleDateString()}`}
+                          {selectedRule.startDate && selectedRule.endDate && ' '}
+                          {selectedRule.endDate && `Until ${new Date(selectedRule.endDate).toLocaleDateString()}`}
+                          {!selectedRule.startDate && !selectedRule.endDate && 'Always active'}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-4 text-xs text-gray-500 pt-2 border-t border-gray-200">
+                      <span>{selectedRule.isRepeatable ? '🔄 Repeatable' : '1️⃣ One-time only'}</span>
+                      {selectedRule.cooldownDays && <span>⏰ {selectedRule.cooldownDays} day cooldown</span>}
+                      <span>{selectedRule.isActive ? '✅ Active' : '⏸️ Inactive'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Voyage Walkthrough */}
+              {selectedVoyage && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{selectedVoyage.icon || '🗺️'}</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{selectedVoyage.name}</h3>
+                      {selectedVoyage.description && (
+                        <p className="text-sm text-gray-600">{selectedVoyage.description}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-white/70 rounded-lg p-4">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      {selectedVoyage.sequenceType === 'ordered' ? '📍 Journey Steps (in order)' : '📍 Journey Steps (any order)'}
+                    </p>
+
+                    {selectedVoyage.steps?.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedVoyage.steps.map((step, index) => (
+                          <div key={step.id} className="relative pl-8">
+                            {/* Step number/connector */}
+                            <div className="absolute left-0 top-0 flex flex-col items-center">
+                              <div className="w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-bold flex items-center justify-center">
+                                {index + 1}
+                              </div>
+                              {index < selectedVoyage.steps.length - 1 && (
+                                <div className="w-0.5 h-full bg-purple-200 mt-1" />
+                              )}
+                            </div>
+
+                            <div className="bg-white rounded-lg p-3 border border-purple-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span>{step.icon || '📍'}</span>
+                                <span className="font-medium text-gray-900">{step.name}</span>
+                              </div>
+                              <p className="text-xs text-gray-600 mb-1">
+                                <span className="font-medium">When:</span> {describeConditions(step.conditions, locations, locationGroups)}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                <span className="font-medium">Then:</span> {describeAwardsAsText(step.awards, locations)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">No steps defined yet</p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-4 text-xs text-gray-500 pt-2">
+                    <span>{selectedVoyage.sequenceType === 'ordered' ? '📋 Sequential voyage' : '🔀 Flexible voyage'}</span>
+                    <span>{selectedVoyage.isActive ? '✅ Active' : '⏸️ Inactive'}</span>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Simulation Results */}
+          <section className="bg-white rounded-xl border border-gray-200 p-6 min-h-[300px]">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Simulation Results</h2>
 
             {!results && !isLoading && (
               <div className="flex flex-col items-center justify-center py-12 text-gray-400">
@@ -335,6 +575,16 @@ export default function SimulatorPage() {
                     </pre>
                   </div>
                 )}
+              </div>
+            )}
+
+            {results && results.voyageWalkthrough && (
+              <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                <span className="text-4xl mb-3">✨</span>
+                <p className="font-medium">Voyage walkthrough displayed above</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Customer simulation for voyages coming soon!
+                </p>
               </div>
             )}
           </section>

@@ -5,6 +5,7 @@ import { api } from '../api/client';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import StepBuilder from '../components/voyages/StepBuilder';
 import AddStepModal from '../components/voyages/AddStepModal';
+import WalkthroughDrawer from '../components/rules/WalkthroughDrawer';
 
 const THEMES = [
   { value: 'voyage', label: 'Voyage', icon: '⛵' },
@@ -161,6 +162,16 @@ export default function VoyageBuilderPage() {
     queryFn: () => api.getRuleset(businessId, id),
     enabled: isEditing && !!businessId,
   });
+
+  // Load locations for walkthrough
+  const { data: businessData } = useQuery({
+    queryKey: ['business', businessId],
+    queryFn: () => api.getLocations(businessId),
+    enabled: !!businessId,
+  });
+
+  const locations = businessData?.data?.locations || [];
+  const locationGroups = businessData?.data?.locationGroups || [];
 
   useEffect(() => {
     if (existingRuleset?.data?.ruleset) {
@@ -346,18 +357,20 @@ export default function VoyageBuilderPage() {
   }
 
   return (
-    <div className="max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {isEditing ? 'Edit Voyage' : 'Create Voyage'}
-        </h1>
-        <p className="text-gray-500">
-          Build a multi-step journey for your customers
-        </p>
-      </div>
+    <div className="flex">
+      {/* Main content */}
+      <div className="flex-1 max-w-4xl lg:pr-4">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isEditing ? 'Edit Voyage' : 'Create Voyage'}
+          </h1>
+          <p className="text-gray-500">
+            Build a multi-step journey for your customers
+          </p>
+        </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
         {/* Basic Info */}
         <section className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
@@ -711,15 +724,28 @@ export default function VoyageBuilderPage() {
         </section>
       </form>
 
-      {/* Add Step Modal */}
-      {showAddModal && (
-        <AddStepModal
-          onClose={() => setShowAddModal(false)}
-          onCreateNew={() => handleAddStep('new')}
-          onCloneRule={(rule) => handleAddStep('clone', rule)}
-          existingRuleIds={steps.filter(s => s.id).map(s => s.id)}
-        />
-      )}
+        {/* Add Step Modal */}
+        {showAddModal && (
+          <AddStepModal
+            onClose={() => setShowAddModal(false)}
+            onCreateNew={() => handleAddStep('new')}
+            onCloneRule={(rule) => handleAddStep('clone', rule)}
+            existingRuleIds={steps.filter(s => s.id).map(s => s.id)}
+          />
+        )}
+      </div>
+
+      {/* Walkthrough Drawer */}
+      <WalkthroughDrawer
+        isVoyage={true}
+        voyageName={formData.name}
+        voyageIcon={formData.icon}
+        voyageDescription={formData.description}
+        sequenceType={formData.chainType === 'sequential' ? 'ordered' : 'unordered'}
+        steps={steps}
+        locations={locations}
+        locationGroups={locationGroups}
+      />
     </div>
   );
 }

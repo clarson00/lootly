@@ -44,7 +44,8 @@ async function seed() {
       id: 'biz_pilot',
       name: "Tony's Restaurant Group",
       logoUrl: null,
-      primaryColor: '#f59e0b'
+      primaryColor: '#f59e0b',
+      subscriptionTier: 'pro', // Pro tier for testing all features
     };
 
     await db.insert(businesses).values(business);
