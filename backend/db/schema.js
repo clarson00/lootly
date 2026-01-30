@@ -155,34 +155,189 @@ const transactions = pgTable('transactions', {
 // RULES ENGINE
 // ============================================
 
+// Rulesets (Voyages) - Collections of rules with dependencies
+const rulesets = pgTable('rulesets', {
+  id: text('id').primaryKey(), // rset_ prefix
+  businessId: text('business_id').notNull().references(() => businesses.id),
+
+  // Identity
+  name: text('name').notNull(),
+  description: text('description'),
+
+  // Gamification Theme (Pirate-themed by default)
+  theme: text('theme').default('voyage'), // 'voyage', 'treasure_hunt', 'quest', 'expedition'
+  displayName: text('display_name'), // Customer-facing: 'The Grand Voyage'
+  tagline: text('tagline'), // 'Chart yer course to riches!'
+  narrativeIntro: text('narrative_intro'), // 'Ahoy! Yer adventure begins...'
+  narrativeComplete: text('narrative_complete'), // 'Shiver me timbers! Ye did it!'
+
+  // Visual
+  icon: text('icon'), // Emoji or icon name: '🗺️'
+  color: text('color'), // Hex color: '#FF6B35'
+  badgeImageUrl: text('badge_image_url'), // URL to completion badge
+  backgroundImageUrl: text('background_image_url'), // Quest card background
+
+  // Chain Configuration
+  chainType: text('chain_type').default('parallel'), // 'sequential', 'parallel', 'branching', 'progressive'
+  timeLimitValue: integer('time_limit_value'),
+  timeLimitUnit: text('time_limit_unit'), // 'days', 'weeks', 'months'
+
+  // Customer Visibility
+  isVisibleToCustomer: boolean('is_visible_to_customer').default(true),
+  showProgress: boolean('show_progress').default(true),
+  showLockedSteps: boolean('show_locked_steps').default(true),
+
+  // Status
+  isActive: boolean('is_active').default(false),
+  priority: integer('priority').default(0),
+
+  // Scheduling
+  startsAt: timestamp('starts_at'),
+  endsAt: timestamp('ends_at'),
+
+  // Metadata
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at'),
+}, (table) => ({
+  businessIdx: index('idx_rulesets_business').on(table.businessId),
+}));
+
+// Rules - Individual rule definitions with conditions and awards
 const rules = pgTable('rules', {
   id: text('id').primaryKey(), // rule_ prefix
   businessId: text('business_id').notNull().references(() => businesses.id),
+  rulesetId: text('ruleset_id').references(() => rulesets.id), // Optional: link to voyage
+
+  // Identity
   name: text('name').notNull(),
   description: text('description'),
+
+  // Customer-Facing (pirate-themed)
+  displayName: text('display_name'), // 'Port o\' Call: Tony\'s Pizza'
+  displayDescription: text('display_description'), // 'Drop anchor at Tony\'s'
+  hint: text('hint'), // 'Hint: The pepperoni be legendary!'
+  icon: text('icon'), // '🍕'
+
+  // Conditions (JSONB tree with AND/OR logic)
   conditions: jsonb('conditions').notNull(),
-  awardType: text('award_type').notNull(), // 'points', 'points_per_dollar', 'multiplier', 'reward'
-  awardValue: text('award_value').notNull(),
-  priority: integer('priority').default(0),
-  isActive: boolean('is_active').default(true),
-  isRepeatable: boolean('is_repeatable').default(true),
+
+  // Awards (array of award objects)
+  awards: jsonb('awards').notNull().default('[]'),
+
+  // Legacy fields (backward compatibility)
+  awardType: text('award_type'), // 'points', 'points_per_dollar', 'multiplier', 'reward'
+  awardValue: text('award_value'),
+
+  // Behavior
+  isRepeatable: boolean('is_repeatable').default(false),
   cooldownDays: integer('cooldown_days'),
-  maxTriggers: integer('max_triggers'),
-  startDate: timestamp('start_date'),
-  endDate: timestamp('end_date'),
+  maxTriggersPerCustomer: integer('max_triggers_per_customer'),
+
+  // Chaining (within ruleset)
+  sequenceOrder: integer('sequence_order'),
+  dependsOnRuleIds: jsonb('depends_on_rule_ids'), // TEXT[] as JSONB array
+
+  // Status
+  isActive: boolean('is_active').default(false),
+  priority: integer('priority').default(0),
+
+  // Scheduling
+  startsAt: timestamp('starts_at'),
+  endsAt: timestamp('ends_at'),
+
+  // Feature gating
+  requiredFeature: text('required_feature'),
+
+  // Metadata
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at'),
 }, (table) => ({
   businessIdx: index('idx_rules_business').on(table.businessId),
+  rulesetIdx: index('idx_rules_ruleset').on(table.rulesetId),
 }));
 
+// Rule Triggers - Audit log of when rules are triggered
 const ruleTriggers = pgTable('rule_triggers', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey(), // rtrig_ prefix
   ruleId: text('rule_id').notNull().references(() => rules.id),
-  enrollmentId: text('enrollment_id').notNull().references(() => enrollments.id),
-  transactionId: text('transaction_id').references(() => transactions.id),
+  rulesetId: text('ruleset_id').references(() => rulesets.id),
+  customerId: text('customer_id').notNull().references(() => customers.id),
+  enrollmentId: text('enrollment_id').references(() => enrollments.id),
+  businessId: text('business_id').notNull().references(() => businesses.id),
+
+  // What triggered it
+  triggerTransactionId: text('trigger_transaction_id').references(() => transactions.id),
+  triggerType: text('trigger_type').notNull(), // 'transaction', 'visit', 'manual', 'scheduled'
+
+  // Awards given
+  awardsGiven: jsonb('awards_given').notNull(),
+  pointsAwarded: integer('points_awarded').default(0),
+  rewardIdUnlocked: text('reward_id_unlocked').references(() => rewards.id),
+
+  // Metadata
   triggeredAt: timestamp('triggered_at').defaultNow(),
-});
+  conditionSnapshot: jsonb('condition_snapshot'),
+  evaluationContext: jsonb('evaluation_context'),
+}, (table) => ({
+  ruleIdx: index('idx_rule_triggers_rule').on(table.ruleId),
+  customerIdx: index('idx_rule_triggers_customer').on(table.customerId),
+  businessIdx: index('idx_rule_triggers_business').on(table.businessId),
+}));
+
+// Ruleset Progress - Customer progress through voyages
+const rulesetProgress = pgTable('ruleset_progress', {
+  id: text('id').primaryKey(), // rsprog_ prefix
+  rulesetId: text('ruleset_id').notNull().references(() => rulesets.id),
+  customerId: text('customer_id').notNull().references(() => customers.id),
+  businessId: text('business_id').notNull().references(() => businesses.id),
+
+  // Progress State
+  status: text('status').default('not_started'), // 'not_started', 'in_progress', 'completed', 'expired'
+
+  // Tracking
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  expiresAt: timestamp('expires_at'),
+
+  // Progress Data
+  completedRuleIds: jsonb('completed_rule_ids').default('[]'), // TEXT[] as JSONB array
+  currentStep: integer('current_step').default(0),
+
+  // Stats
+  totalPointsEarned: integer('total_points_earned').default(0),
+  totalRewardsUnlocked: integer('total_rewards_unlocked').default(0),
+
+  // Metadata
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at'),
+}, (table) => ({
+  uniqueRulesetCustomer: unique().on(table.rulesetId, table.customerId),
+  rulesetIdx: index('idx_ruleset_progress_ruleset').on(table.rulesetId),
+  customerIdx: index('idx_ruleset_progress_customer').on(table.customerId),
+  businessIdx: index('idx_ruleset_progress_business').on(table.businessId),
+}));
+
+// Customer Tags - Tags applied to customers (from rules or manual)
+const customerTags = pgTable('customer_tags', {
+  id: text('id').primaryKey(), // ctag_ prefix
+  customerId: text('customer_id').notNull().references(() => customers.id),
+  businessId: text('business_id').notNull().references(() => businesses.id),
+
+  tag: text('tag').notNull(),
+
+  // Source
+  sourceType: text('source_type').notNull(), // 'rule', 'manual', 'import'
+  sourceRuleId: text('source_rule_id').references(() => rules.id),
+
+  // Metadata
+  createdAt: timestamp('created_at').defaultNow(),
+  expiresAt: timestamp('expires_at'),
+}, (table) => ({
+  uniqueCustomerBusinessTag: unique().on(table.customerId, table.businessId, table.tag),
+  customerIdx: index('idx_customer_tags_customer').on(table.customerId),
+  businessIdx: index('idx_customer_tags_business').on(table.businessId),
+  tagIdx: index('idx_customer_tags_tag').on(table.tag),
+}));
 
 // ============================================
 // REWARDS
@@ -342,23 +497,35 @@ const visits = pgTable('visits', {
 }));
 
 module.exports = {
+  // Businesses & Locations
   businesses,
   locations,
   locationGroups,
   locationGroupMembers,
+  // Staff
   staff,
+  // Customers & Enrollments
   customers,
   enrollments,
+  // Transactions
   transactions,
+  // Rules Engine
+  rulesets,
   rules,
   ruleTriggers,
+  rulesetProgress,
+  customerTags,
+  // Rewards
   rewards,
   customerRewards,
+  // QR Codes & Auth
   qrCodes,
   verificationCodes,
   sessions,
+  // Feature Gating
   businessFeatures,
   featureUsage,
+  // Legacy Support
   earningRules,
   visits,
 };
