@@ -271,13 +271,20 @@ Future:
 | Post history | ❌ | ✅ | ✅ | ✅ |
 | Scheduled posts | ❌ | ❌ | ✅ | ✅ |
 | Engagement stats | ❌ | ❌ | ✅ | ✅ |
-| AI content assist | ❌ | ❌ | ✅ | ✅ |
+| AI content assist | ❌ | 💰 Add-on | 💰 Add-on | 💰 Add-on |
+
+**AI Content Assist Add-on:**
+- Available to any paid tier (Starter, Pro, Enterprise)
+- Not available on Free tier
+- Priced separately (usage-based or flat monthly fee TBD)
+- Includes: content generation, improvement suggestions, tone adjustment, hashtag suggestions
 
 ---
 
 ## 🤖 AI Agent Integration (Planned)
 
 > **Status:** Future enhancement - will be part of broader AI agent for the admin app
+> **Availability:** Paid add-on for Starter+ tiers
 > **Note:** Design the MVP with AI in mind so it's easy to add later
 
 ### Vision
@@ -307,6 +314,8 @@ An AI agent will assist admins throughout the app. For marketing specifically:
 │  │                                                 │   │
 │  │ Or describe what you want:                      │   │
 │  │ [____________________________________] [Go]     │   │
+│  │                                                 │   │
+│  │ ⭐ AI Assist Add-on: $X/mo  [Upgrade]          │   │
 │  └─────────────────────────────────────────────────┘   │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
@@ -403,14 +412,28 @@ The AI agent will eventually be used across the admin app:
 | **Analytics** | "What's working? What should I try?" |
 | **Customer Support** | "Draft a response to this feedback" |
 
+All AI features across the app will be part of the same add-on subscription.
+
+### Add-on Pricing Considerations
+
+| Model | Pros | Cons |
+|-------|------|------|
+| **Flat monthly fee** | Predictable revenue, simple | Heavy users subsidized |
+| **Usage-based** | Fair, scales with value | Unpredictable bills |
+| **Credits/tokens** | Balance of both | More complex UX |
+| **Tiered usage** | "100 AI assists/mo" | Sweet spot? |
+
+Recommendation: Start with tiered usage (e.g., "50 AI generations/month for $X") to control costs while LLM pricing stabilizes.
+
 ### MVP Prep for AI
 
 Even in MVP (no AI), design for easy AI addition:
 
 1. **Separate content generation logic** - Don't hardcode the template generation
 2. **Add API endpoint stubs** - `/api/admin/marketing/ai/*` returns 501 for now
-3. **UI placeholder** - "AI Assist coming soon" in the editor
+3. **UI placeholder** - "AI Assist coming soon" or "Upgrade for AI" in the editor
 4. **Store business context** - Tone, type, branding for future AI use
+5. **Add-on flag in subscription** - `has_ai_addon` boolean on business record
 
 ---
 
@@ -421,10 +444,10 @@ Even in MVP (no AI), design for easy AI addition:
 3. **Engagement tracking** - Pull likes/comments from APIs
 4. **Twitter/X** - Additional platform
 5. **Email integration** - Mailchimp, Constant Contact
-6. **AI content generation** - See section above
+6. **AI content generation** - See section above (add-on)
 7. **A/B testing** - Post variations, track performance
 8. **Best time recommendations** - When to post based on past engagement
-9. **AI image generation** - Generate promotional graphics
+9. **AI image generation** - Generate promotional graphics (add-on)
 
 ---
 
@@ -434,6 +457,7 @@ Even in MVP (no AI), design for easy AI addition:
 2. **Approval workflow:** For teams, should there be draft → approve → publish?
 3. **Link in bio:** Should we help manage their "link in bio" for IG?
 4. **AI model:** Which LLM for content generation? (Claude API, OpenAI, etc.)
+5. **AI pricing:** Flat fee vs usage-based vs tiered?
 
 ---
 
@@ -448,4 +472,4 @@ Even in MVP (no AI), design for easy AI addition:
 7. Post builder - publish step (platform selector + API calls)
 8. Post to Meta API (backend)
 9. Post history display
-10. [Future] AI assist integration
+10. [Future] AI assist integration (add-on)
