@@ -7,8 +7,8 @@
 | Component | Status | Notes |
 |-----------|--------|-------|
 | Project Setup | ✅ Complete | Folder structure, docs organized |
-| Backend API | 🟡 In Progress | Starting now |
-| Customer App | 🔲 Not Started | |
+| Backend API | ✅ Complete | All routes working, database seeded |
+| Customer App | 🟡 In Progress | Starting now |
 | Staff App | 🔲 Not Started | |
 | Integration Testing | 🔲 Not Started | |
 
@@ -26,19 +26,19 @@
 - [x] Set up docs folder with spec files
 
 ### Backend
-- [ ] package.json and dependencies
-- [ ] Database schema (schema.sql)
-- [ ] Database connection (database.js)
-- [ ] Seed data (seed.js)
-- [ ] Auth routes (request-code, verify-code, me)
-- [ ] Customer routes (profile, qr-code)
-- [ ] Business routes (list, get, locations)
-- [ ] Enrollment routes (create, list, get)
-- [ ] Transaction routes (check-in, history)
-- [ ] Rewards routes (list, unlock, redemption)
-- [ ] Staff routes (login, customer lookup, record-visit, redeem)
-- [ ] Rules engine (evaluation logic)
-- [ ] JWT middleware
+- [x] package.json and dependencies
+- [x] Database schema (schema.sql)
+- [x] Database connection (database.js)
+- [x] Seed data (seed.js)
+- [x] Auth routes (request-code, verify-code, me)
+- [x] Customer routes (profile, qr-code)
+- [x] Business routes (list, get, locations)
+- [x] Enrollment routes (create, list, get)
+- [x] Transaction routes (check-in, history)
+- [x] Rewards routes (list, unlock, redemption)
+- [x] Staff routes (login, customer lookup, record-visit, redeem)
+- [x] Rules engine (evaluation logic)
+- [x] JWT middleware
 
 ### Customer App
 - [ ] Vite + React setup
@@ -80,14 +80,11 @@
 ## Next Steps
 
 1. ~~**Initialize project structure**~~ ✅ Done
-2. **Set up backend** (In Progress)
-   - Initialize package.json
-   - Install dependencies
-   - Create database schema
-   - Create seed data
-   - Build API endpoints
-
-3. **Build Customer App**
+2. ~~**Set up backend**~~ ✅ Done
+3. **Build Customer App** (In Progress)
+   - Set up Vite + React + Tailwind
+   - Create PWA manifest
+   - Build all pages
 4. **Build Staff App**
 5. **Integration Testing**
 
@@ -97,7 +94,7 @@
 
 | Date | Decision | Reason |
 |------|----------|--------|
-| | | |
+| 2026-01-29 | Use sql.js instead of better-sqlite3 | better-sqlite3 requires native compilation with Visual Studio, sql.js is pure JS |
 
 *Record any decisions that deviate from or clarify the specs here.*
 
@@ -114,14 +111,21 @@
 ## Session Log
 
 ### Session 1 - 2026-01-29
-**Started:** Project setup
+**Started:** Project setup and backend
 **Completed:**
 - Created folder structure (backend, customer-app, staff-app, docs)
 - Organized spec files into docs folder
 - Created .gitignore
 - Updated README.md
+- Built complete backend API:
+  - Express server with all routes
+  - SQLite database with sql.js (pure JS, no native deps)
+  - All API endpoints working
+  - Database seeded with pilot data
+  - JWT authentication for customers and staff
+  - Rules engine for milestones
 
-**Notes:** Starting backend build next.
+**Notes:** Backend complete and tested. Starting customer app next.
 
 ---
 
