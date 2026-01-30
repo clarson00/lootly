@@ -9,7 +9,7 @@ const { eq, and, desc, gte, lte, or, isNull, sql } = require('drizzle-orm');
 const { decrypt } = require('../../lib/crypto');
 const { describeRule, describeVoyage, generateMarketingSummary } = require('../../lib/rules/plain-language');
 
-const { marketingPosts, socialIntegrations, rules, rulesets, locations, businesses } = schema;
+const { marketingPosts, socialIntegrations, rules, rulesets, locations, businesses, rewards } = schema;
 
 // Middleware to extract businessId from query (consistent with rules routes)
 const extractBusinessId = (req, res, next) => {
@@ -614,9 +614,22 @@ router.get('/preview', extractBusinessId, async (req, res) => {
         });
       }
 
-      summary = describeRule(rule, businessLocations);
-      content = generateMarketingSummary('rule', rule, businessLocations, [], business?.name);
-      console.log('[MARKETING] Generated content:', { summaryLen: summary?.length, contentLen: content?.length, contentPreview: content?.substring(0, 100) });
+      // Look up reward name if awardType is 'reward'
+      let rewardName = null;
+      if (rule.awardType === 'reward' && rule.awardValue) {
+        const [reward] = await db
+          .select()
+          .from(rewards)
+          .where(eq(rewards.id, rule.awardValue));
+        rewardName = reward?.name;
+      }
+
+      // Add rewardName to rule object for plain language generation
+      const ruleWithReward = { ...rule, rewardName };
+
+      summary = describeRule(ruleWithReward, businessLocations);
+      content = generateMarketingSummary('rule', ruleWithReward, businessLocations, [], business?.name);
+      console.log('[MARKETING] Generated content:', { summaryLen: summary?.length, contentLen: content?.length, rewardName, contentPreview: content?.substring(0, 100) });
     } else if (source_type === 'voyage') {
       const [voyage] = await db
         .select()

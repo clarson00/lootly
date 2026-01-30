@@ -512,7 +512,7 @@ function generateMarketingSummary(type, data, locations = [], locationGroups = [
     parts.push('');
 
     // Describe what you earn with AND/OR logic
-    const awardsText = describeAwardsForMarketing(data.awards, locations, data.awardType, data.awardValue);
+    const awardsText = describeAwardsForMarketing(data.awards, locations, data.awardType, data.awardValue, data.rewardName);
     if (awardsText) {
       parts.push(awardsText);
     }
@@ -648,10 +648,10 @@ function extractLocationNames(conditions, locations = [], locationGroups = []) {
  * Describe awards in a marketing-friendly way
  * Handles both new composable format and legacy awardType/awardValue format
  */
-function describeAwardsForMarketing(awards, locations = [], legacyAwardType = null, legacyAwardValue = null) {
+function describeAwardsForMarketing(awards, locations = [], legacyAwardType = null, legacyAwardValue = null, rewardName = null) {
   // Handle legacy format first
   if (legacyAwardType && legacyAwardValue) {
-    return `🎁 Earn: ${describeLegacyAward(legacyAwardType, legacyAwardValue)}`;
+    return `🎁 Earn: ${describeLegacyAward(legacyAwardType, legacyAwardValue, rewardName)}`;
   }
 
   if (!awards) return '';
@@ -739,14 +739,19 @@ function describeAwardMarketing(award) {
 
   switch (type) {
     case 'points':
+    case 'bonus_points':
       return `${value || 0} bonus doubloons`;
     case 'points_per_dollar':
       return `${value || 1}x points per dollar`;
     case 'multiplier':
+    case 'points_multiplier':
       return `${value || 2}x points multiplier`;
     case 'reward':
-      return 'a special reward';
+    case 'unlock_reward':
+      // rewardId might be the reward name directly in some cases
+      return rewardId ? `🎁 ${rewardId}` : 'a special reward';
     case 'tag':
+    case 'add_tag':
       return 'VIP status';
     default:
       return null;
@@ -755,8 +760,11 @@ function describeAwardMarketing(award) {
 
 /**
  * Describe legacy award format (awardType/awardValue)
+ * @param {string} awardType - The type of award
+ * @param {string} awardValue - The value or ID of the award
+ * @param {string} rewardName - Optional: the looked-up reward name
  */
-function describeLegacyAward(awardType, awardValue) {
+function describeLegacyAward(awardType, awardValue, rewardName = null) {
   switch (awardType) {
     case 'points':
       return `${awardValue} bonus doubloons`;
@@ -765,7 +773,7 @@ function describeLegacyAward(awardType, awardValue) {
     case 'multiplier':
       return `${awardValue}x points multiplier`;
     case 'reward':
-      return 'a special reward unlocked!';
+      return rewardName ? `🎁 ${rewardName}` : 'a special reward';
     case 'tag':
       return 'VIP status earned!';
     default:
