@@ -5,6 +5,18 @@
 > **Roadmap:** [ROADMAP.md](../../ROADMAP.md) — Section: NEXT / LATER  
 > **Location:** `docs/roadmap/analytics-reporting.md`  
 
+### Entitlements
+
+| Feature Key | Description | Availability |
+|-------------|-------------|--------------|
+| `analytics:basic` | Dashboard, key metrics, basic charts | All tiers (Free+) |
+| `analytics:advanced` | Deep reports, exports, segmentation | Pro tier, or Analytics Add-on |
+| `analytics:realtime` | Live updating dashboards | Enterprise, or Analytics Add-on |
+
+See [ENTITLEMENTS.md](../ENTITLEMENTS.md) for implementation details.
+
+---
+
 ## Overview
 
 Comprehensive analytics and reporting to help business owners understand what's working in their loyalty program. Essential for making data-driven decisions and for feeding the AI Marketing Assistant.
@@ -269,19 +281,19 @@ CREATE TABLE journey_analytics (
 
 ## Implementation Phases
 
-### Phase 1: Basic (v1.1)
+### Phase 1: Basic (v1.1) — `analytics:basic`
 - Dashboard with key metrics
 - Simple charts (visits over time)
 - Basic campaign performance
 - CSV export
 
-### Phase 2: Intermediate (v1.2)
+### Phase 2: Intermediate (v1.2) — `analytics:advanced`
 - Journey funnel analytics
 - Customer segmentation
 - Location comparison
 - Scheduled email reports
 
-### Phase 3: Advanced (v2.0)
+### Phase 3: Advanced (v2.0) — `analytics:realtime`
 - Predictive analytics
 - AI-powered insights
 - Cohort analysis
@@ -319,6 +331,7 @@ const recommendations = await ai.generateRecommendations(insights);
 - [Marketing Messages](marketing-messages.md) — Campaign performance tracking
 - [User Journeys](user-journeys.md) — Journey funnel analytics
 - [Admin Dashboard](admin-dashboard.md) — Where analytics live
+- [Entitlements](../ENTITLEMENTS.md) — Feature gating
 
 ---
 
