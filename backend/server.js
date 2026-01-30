@@ -39,6 +39,7 @@ app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/rewards', require('./routes/rewards'));
 app.use('/api/staff', require('./routes/staff'));
 app.use('/api/entitlements', require('./routes/entitlements'));
+app.use('/api/voyages', require('./routes/voyages'));
 
 // Admin routes (rules engine)
 app.use('/api/admin', require('./routes/admin'));

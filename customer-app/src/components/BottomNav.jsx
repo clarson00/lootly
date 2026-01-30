@@ -2,19 +2,23 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 const navItems = [
   { path: '/home', icon: '🏠', label: 'Home' },
-  { path: '/code', icon: '📱', label: 'My Code' },
-  { path: '/rewards', icon: '🎁', label: 'Rewards' },
-  { path: '/profile', icon: '👤', label: 'Profile' }
+  { path: '/voyages', icon: '🗺️', label: 'Map' },
+  { path: '/code', icon: '📱', label: 'Code' },
+  { path: '/rewards', icon: '🎁', label: 'Loot' },
+  { path: '/profile', icon: '👤', label: 'Crew' }
 ];
 
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Check if current path matches (including sub-paths for rewards)
+  // Check if current path matches (including sub-paths for rewards and voyages)
   const isActive = (path) => {
     if (path === '/rewards') {
       return location.pathname.startsWith('/rewards');
+    }
+    if (path === '/voyages') {
+      return location.pathname.startsWith('/voyages');
     }
     return location.pathname === path;
   };

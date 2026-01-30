@@ -137,6 +137,22 @@ class ApiClient {
     return this.request(`/entitlements/check/${encodeURIComponent(feature)}?businessId=${businessId}`);
   }
 
+  // Voyages
+  async getVoyages(businessId) {
+    return this.request(`/voyages?business_id=${businessId}`);
+  }
+
+  async getVoyage(businessId, voyageId) {
+    return this.request(`/voyages/${voyageId}?business_id=${businessId}`);
+  }
+
+  async startVoyage(businessId, voyageId) {
+    return this.request(`/voyages/${voyageId}/start`, {
+      method: 'POST',
+      body: JSON.stringify({ business_id: businessId })
+    });
+  }
+
   // Logout
   logout() {
     this.setToken(null);

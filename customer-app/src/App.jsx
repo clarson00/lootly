@@ -6,6 +6,8 @@ import Home from './pages/Home';
 import MyCode from './pages/MyCode';
 import Rewards from './pages/Rewards';
 import RewardDetail from './pages/RewardDetail';
+import TreasureMap from './pages/TreasureMap';
+import VoyageDetail from './pages/VoyageDetail';
 import Profile from './pages/Profile';
 import BottomNav from './components/BottomNav';
 import LootDrop from './components/LootDrop';
@@ -74,6 +76,16 @@ export default function App() {
             <RewardDetail />
           </PrivateRoute>
         } />
+        <Route path="/voyages" element={
+          <PrivateRoute>
+            <TreasureMap />
+          </PrivateRoute>
+        } />
+        <Route path="/voyages/:id" element={
+          <PrivateRoute>
+            <VoyageDetail />
+          </PrivateRoute>
+        } />
         <Route path="/profile" element={
           <PrivateRoute>
             <Profile />
@@ -88,6 +100,8 @@ export default function App() {
         <Route path="/code" element={<BottomNav />} />
         <Route path="/rewards" element={<BottomNav />} />
         <Route path="/rewards/:id" element={<BottomNav />} />
+        <Route path="/voyages" element={<BottomNav />} />
+        <Route path="/voyages/:id" element={<BottomNav />} />
         <Route path="/profile" element={<BottomNav />} />
       </Routes>
 
