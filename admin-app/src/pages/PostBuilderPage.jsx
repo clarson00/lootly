@@ -41,6 +41,8 @@ export default function PostBuilderPage() {
   const [voyages, setVoyages] = useState([]);
   const [locations, setLocations] = useState([]);
   const [step, setStep] = useState(1); // 1: Source, 2: Edit, 3: Publish
+  const [showRuleModal, setShowRuleModal] = useState(false);
+  const [selectedSource, setSelectedSource] = useState(null); // The full rule/voyage object
 
   // Character limits
   const FB_LIMIT = 63206;
@@ -117,9 +119,10 @@ export default function PostBuilderPage() {
     }
   }
 
-  async function handleSourceSelect(type, id) {
+  async function handleSourceSelect(type, id, sourceObj = null) {
     setSourceType(type);
     setSourceId(id);
+    setSelectedSource(sourceObj);
     setStep(2);
 
     // Generate content from the selected source
@@ -136,6 +139,7 @@ export default function PostBuilderPage() {
   function handleCustomSelect() {
     setSourceType('custom');
     setSourceId('');
+    setSelectedSource(null);
     setStep(2);
   }
 
@@ -263,7 +267,7 @@ export default function PostBuilderPage() {
                 {rules.slice(0, 5).map(rule => (
                   <button
                     key={rule.id}
-                    onClick={() => handleSourceSelect('rule', rule.id)}
+                    onClick={() => handleSourceSelect('rule', rule.id, rule)}
                     className="text-left p-3 border rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
                   >
                     <p className="font-medium">{rule.displayName || rule.name}</p>
@@ -286,7 +290,7 @@ export default function PostBuilderPage() {
                 {voyages.slice(0, 5).map(voyage => (
                   <button
                     key={voyage.id}
-                    onClick={() => handleSourceSelect('voyage', voyage.id)}
+                    onClick={() => handleSourceSelect('voyage', voyage.id, voyage)}
                     className="text-left p-3 border rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
                   >
                     <p className="font-medium">{voyage.displayName || voyage.name}</p>
@@ -315,7 +319,36 @@ export default function PostBuilderPage() {
 
       {/* Step 2: Edit Content */}
       {step === 2 && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="space-y-4">
+          {/* Selected Source Banner */}
+          {selectedSource && sourceType !== 'custom' && (
+            <div className="bg-gradient-to-r from-primary-50 to-orange-50 rounded-lg border border-primary-200 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{sourceType === 'rule' ? '📋' : '🗺️'}</span>
+                  <div>
+                    <p className="text-xs font-medium text-primary-600 uppercase tracking-wide">
+                      Promoting {sourceType === 'rule' ? 'Rule' : 'Voyage'}
+                    </p>
+                    <p className="font-semibold text-gray-900">
+                      {selectedSource.displayName || selectedSource.name}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowRuleModal(true)}
+                  className="px-3 py-1.5 text-sm font-medium text-primary-700 bg-white border border-primary-300 rounded-lg hover:bg-primary-50 transition-colors"
+                >
+                  View Details →
+                </button>
+              </div>
+              {selectedSource.description && (
+                <p className="mt-2 text-sm text-gray-600 ml-11">{selectedSource.description}</p>
+              )}
+            </div>
+          )}
+
+          <div className="bg-white rounded-lg shadow-sm border p-6">
           {/* Content Editor */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
@@ -414,6 +447,7 @@ export default function PostBuilderPage() {
             >
               Next: Publish Options →
             </button>
+          </div>
           </div>
         </div>
       )}
@@ -536,6 +570,119 @@ export default function PostBuilderPage() {
                 className="btn-primary"
               >
                 {saving ? 'Publishing...' : 'Publish Now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rule/Voyage Details Modal */}
+      {showRuleModal && selectedSource && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b bg-gradient-to-r from-primary-50 to-orange-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{sourceType === 'rule' ? '📋' : '🗺️'}</span>
+                  <div>
+                    <p className="text-xs font-medium text-primary-600 uppercase tracking-wide">
+                      {sourceType === 'rule' ? 'Rule' : 'Voyage'} Details
+                    </p>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {selectedSource.displayName || selectedSource.name}
+                    </h2>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowRuleModal(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              {selectedSource.description && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Description</h3>
+                  <p className="text-gray-900">{selectedSource.description}</p>
+                </div>
+              )}
+
+              {selectedSource.displayDescription && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Customer Message</h3>
+                  <p className="text-gray-900 italic">"{selectedSource.displayDescription}"</p>
+                </div>
+              )}
+
+              {selectedSource.hint && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Hint</h3>
+                  <p className="text-gray-900">💡 {selectedSource.hint}</p>
+                </div>
+              )}
+
+              {/* Time bounds */}
+              {(selectedSource.startsAt || selectedSource.endsAt) && (
+                <div className="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                  <h3 className="text-sm font-medium text-amber-800 mb-1">⏰ Time-Bound</h3>
+                  <div className="text-sm text-amber-700">
+                    {selectedSource.startsAt && (
+                      <p>Starts: {new Date(selectedSource.startsAt).toLocaleDateString()}</p>
+                    )}
+                    {selectedSource.endsAt && (
+                      <p>Ends: {new Date(selectedSource.endsAt).toLocaleDateString()}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Awards (if available) */}
+              {selectedSource.awardType && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Reward</h3>
+                  <p className="text-gray-900">
+                    {selectedSource.awardType === 'points' && `${selectedSource.awardValue} bonus points`}
+                    {selectedSource.awardType === 'reward' && 'Unlocks a special reward'}
+                    {selectedSource.awardType === 'multiplier' && `${selectedSource.awardValue}x points multiplier`}
+                  </p>
+                </div>
+              )}
+
+              {/* Status */}
+              <div className="flex items-center gap-4 mt-4 pt-4 border-t">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  selectedSource.isActive !== false
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {selectedSource.isActive !== false ? '✓ Active' : '○ Inactive'}
+                </span>
+                {selectedSource.isRepeatable && (
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                    🔄 Repeatable
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t bg-gray-50 flex justify-between items-center">
+              <a
+                href={sourceType === 'rule' ? `/rules/${selectedSource.id}` : `/voyages/${selectedSource.id}`}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              >
+                Open in {sourceType === 'rule' ? 'Rules' : 'Voyages'} →
+              </a>
+              <button
+                onClick={() => setShowRuleModal(false)}
+                className="btn-primary"
+              >
+                Close
               </button>
             </div>
           </div>
