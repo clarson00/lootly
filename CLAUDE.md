@@ -12,6 +12,7 @@ Lootly is a white-label loyalty rewards platform for small businesses (restauran
 
 | Priority | Document | Why |
 |----------|----------|-----|
+| 🔴 **MUST** | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, core principles, patterns. |
 | 🔴 **MUST** | [docs/ENTITLEMENTS.md](docs/ENTITLEMENTS.md) | Feature gating architecture. Every feature must be entitlement-aware. |
 | 🔴 **MUST** | [docs/FEATURE_FLAGS.md](docs/FEATURE_FLAGS.md) | How to implement feature checks in code. |
 | 🟡 HIGH | [docs/TECHNICAL_SPEC.md](docs/TECHNICAL_SPEC.md) | API routes, database schema, architecture. |
@@ -43,22 +44,37 @@ import { FeatureGate } from '@/components/FeatureGate';
 </FeatureGate>
 ```
 
-### 2. When Adding a New Feature
+### 2. Multi-Tenant Queries (CRITICAL)
 
-1. **Add feature key** to `FEATURES` in `lib/features/registry.ts`
-2. **Assign to tier** in `TIER_FEATURES`
-3. **Add middleware** `requireFeature()` to API routes
-4. **Add UI gate** `<FeatureGate>` to components
-5. **Update spec** with Entitlements section
+Every database query must be scoped to a business:
 
-### 3. Tech Stack
+```typescript
+// ❌ WRONG - No tenant scope
+const customers = await db.query.customers.findMany();
+
+// ✅ RIGHT - Tenant scoped
+const customers = await db.query.customers.findMany({
+  where: eq(customers.business_id, businessId)
+});
+```
+
+### 3. When Adding a New Feature
+
+1. **Read the spec** in `docs/roadmap/` (if exists)
+2. **Add feature key** to `FEATURES` in `lib/features/registry.ts`
+3. **Assign to tier** in `TIER_FEATURES`
+4. **Add middleware** `requireFeature()` to API routes
+5. **Add UI gate** `<FeatureGate>` to components
+6. **Update spec** with Entitlements section
+
+### 4. Tech Stack
 
 - **Backend:** Hono (TypeScript), Drizzle ORM, PostgreSQL (Neon)
 - **Frontend:** React, TailwindCSS, PWA
 - **Auth:** Phone number + SMS code
 - **Hosting:** Cloudflare Workers (backend), Vercel (frontend)
 
-### 4. Database
+### 5. Database
 
 - Schema in `docs/DATABASE_SCHEMA.md`
 - Use Drizzle migrations
@@ -71,8 +87,9 @@ lootly/
 ├── CLAUDE.md           # This file (read first!)
 ├── ROADMAP.md          # Feature roadmap
 ├── docs/
+│   ├── ARCHITECTURE.md # ⚠️ System design (MUST READ)
 │   ├── ENTITLEMENTS.md # ⚠️ Feature gating (MUST READ)
-│   ├── FEATURE_FLAGS.md # ⚠️ Implementation guide
+│   ├── FEATURE_FLAGS.md # ⚠️ Implementation guide (MUST READ)
 │   ├── TECHNICAL_SPEC.md
 │   ├── DATABASE_SCHEMA.md
 │   ├── SEED_DATA.md
@@ -116,9 +133,10 @@ cd frontend && npm run dev     # Start dev server
 ## Questions?
 
 If unclear on architecture decisions, check:
-1. `docs/ENTITLEMENTS.md` for feature gating
-2. `docs/TECHNICAL_SPEC.md` for API/DB questions
-3. `ROADMAP.md` for feature priorities
+1. `docs/ARCHITECTURE.md` for system design and patterns
+2. `docs/ENTITLEMENTS.md` for feature gating
+3. `docs/TECHNICAL_SPEC.md` for API/DB questions
+4. `ROADMAP.md` for feature priorities
 
 ---
 
