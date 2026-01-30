@@ -157,21 +157,21 @@ function SingleAwardEditor({ award, onChange, onRemove }) {
 }
 
 function AwardGroupEditor({ group, groupIndex, locations, onChange, onRemove, showLocationPicker }) {
+  const awards = group.awards || [];
+
   const updateAward = (index, newAward) => {
-    const newAwards = [...(group.awards || [])];
+    const newAwards = [...awards];
     newAwards[index] = newAward;
     onChange({ ...group, awards: newAwards });
   };
 
   const addAward = () => {
-    const newAwards = [...(group.awards || []), { type: 'bonus_points', value: 50 }];
+    const newAwards = [...awards, { type: 'bonus_points', value: 50 }];
     onChange({ ...group, awards: newAwards });
   };
 
   const removeAward = (index) => {
-    if ((group.awards || []).length > 1) {
-      onChange({ ...group, awards: group.awards.filter((_, i) => i !== index) });
-    }
+    onChange({ ...group, awards: awards.filter((_, i) => i !== index) });
   };
 
   return (
@@ -208,14 +208,20 @@ function AwardGroupEditor({ group, groupIndex, locations, onChange, onRemove, sh
       </div>
 
       <div className="space-y-3">
-        {(group.awards || []).map((award, index) => (
-          <SingleAwardEditor
-            key={index}
-            award={award}
-            onChange={(a) => updateAward(index, a)}
-            onRemove={(group.awards || []).length > 1 ? () => removeAward(index) : null}
-          />
-        ))}
+        {awards.length === 0 ? (
+          <div className="bg-white/50 rounded-lg p-4 border border-dashed border-amber-300 text-center">
+            <p className="text-sm text-amber-700">No awards (checkpoint only)</p>
+          </div>
+        ) : (
+          awards.map((award, index) => (
+            <SingleAwardEditor
+              key={index}
+              award={award}
+              onChange={(a) => updateAward(index, a)}
+              onRemove={() => removeAward(index)}
+            />
+          ))
+        )}
 
         <button
           type="button"
@@ -283,7 +289,7 @@ export default function AwardBuilder({ awards, onChange }) {
 
   // Simple mode: just an array of awards
   if (mode === 'simple') {
-    const simpleAwards = Array.isArray(awards) ? awards : [{ type: 'bonus_points', value: 50 }];
+    const simpleAwards = Array.isArray(awards) ? awards : [];
 
     const addAward = () => {
       onChange([...simpleAwards, { type: 'bonus_points', value: 50 }]);
@@ -296,9 +302,7 @@ export default function AwardBuilder({ awards, onChange }) {
     };
 
     const removeAward = (index) => {
-      if (simpleAwards.length > 1) {
-        onChange(simpleAwards.filter((_, i) => i !== index));
-      }
+      onChange(simpleAwards.filter((_, i) => i !== index));
     };
 
     return (
@@ -316,17 +320,27 @@ export default function AwardBuilder({ awards, onChange }) {
           </button>
         </div>
 
-        <div className="space-y-3">
-          {simpleAwards.map((award, index) => (
-            <div key={index} className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-              <SingleAwardEditor
-                award={award}
-                onChange={(a) => updateAward(index, a)}
-                onRemove={simpleAwards.length > 1 ? () => removeAward(index) : null}
-              />
-            </div>
-          ))}
-        </div>
+        {simpleAwards.length === 0 ? (
+          <div className="bg-gray-50 rounded-lg p-6 border-2 border-dashed border-gray-300 text-center">
+            <span className="text-3xl">🎯</span>
+            <p className="mt-2 text-sm font-medium text-gray-600">No Awards (Checkpoint)</p>
+            <p className="text-xs text-gray-500 mt-1">
+              This step tracks progress without giving rewards
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {simpleAwards.map((award, index) => (
+              <div key={index} className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                <SingleAwardEditor
+                  award={award}
+                  onChange={(a) => updateAward(index, a)}
+                  onRemove={() => removeAward(index)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         <button
           type="button"
@@ -336,9 +350,11 @@ export default function AwardBuilder({ awards, onChange }) {
           + Add Award
         </button>
 
-        <p className="text-xs text-gray-500">
-          All awards will be given when the rule triggers.
-        </p>
+        {simpleAwards.length > 0 && (
+          <p className="text-xs text-gray-500">
+            All awards will be given when the rule triggers.
+          </p>
+        )}
       </div>
     );
   }
