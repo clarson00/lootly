@@ -23,8 +23,8 @@
 │                           │                                                 │
 │                           ▼                                                 │
 │                    ┌──────────────┐                                        │
-│                    │   Hono API   │                                        │
-│                    │  (Workers)   │                                        │
+│                    │ Express API  │                                        │
+│                    │  (Node.js)   │                                        │
 │                    └──────┬───────┘                                        │
 │                           │                                                 │
 │          ┌────────────────┼────────────────┐                               │
@@ -131,13 +131,14 @@ const points = await rulesEngine.evaluate({
 
 | Layer | Technology | Why |
 |-------|------------|-----|
-| **API** | Hono | Fast, TypeScript-native, runs on Workers |
+| **API** | Express | Industry standard, massive ecosystem, proven reliability |
+| **Runtime** | Node.js | Battle-tested, every developer knows it |
 | **Database** | PostgreSQL (Neon) | Serverless, scales to zero, branching |
 | **ORM** | Drizzle | Type-safe, lightweight, good DX |
 | **Cache** | Redis (Upstash) | Session storage, rate limiting |
 | **Frontend** | React + Vite | PWA support, fast builds |
 | **Styling** | TailwindCSS | Utility-first, consistent |
-| **Hosting** | Cloudflare Workers | Edge deployment, cheap, fast |
+| **Backend Host** | Railway / Render / Fly.io | Simple deployment, auto-scaling, proven |
 | **Frontend Host** | Vercel | Easy PWA deployment |
 | **SMS** | Twilio | Reliable, good API |
 | **Payments** | Stripe | Industry standard |
@@ -357,7 +358,7 @@ lootly/
 │   │   │   ├── features/  # Feature gating
 │   │   │   └── rules/     # Rules engine
 │   │   ├── middleware/    # Auth, feature gates
-│   │   └── index.ts       # Hono app entry
+│   │   └── app.ts         # Express app entry
 │   ├── drizzle/           # Migrations
 │   └── package.json
 │
@@ -383,7 +384,8 @@ lootly/
 | Date | Decision | Rationale |
 |------|----------|----------|
 | Jan 2025 | Feature gating from day 1 | Avoid painful retrofit for monetization |
-| Jan 2025 | Hono over Express | Better TypeScript, runs on edge |
+| Jan 2025 | Express over Hono | Industry standard, proven reliability, larger ecosystem, AI coders won't struggle |
+| Jan 2025 | Railway/Render/Fly over Cloudflare Workers | Full Node.js compatibility, no edge constraints |
 | Jan 2025 | Drizzle over Prisma | Lighter, faster, better SQL control |
 | Jan 2025 | PostgreSQL over MySQL | Better JSON support, Neon serverless |
 | Jan 2025 | PWA over native apps | Faster to build, easier updates |
