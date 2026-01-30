@@ -23,6 +23,14 @@ Lootly (branded as **Rewards Pirate** 🏴‍☠️) is a white-label loyalty re
 | 🟢 REF | [ROADMAP.md](ROADMAP.md) | Feature roadmap and specs index |
 | 🟢 REF | [docs/SEED_DATA.md](docs/SEED_DATA.md) | Pilot customer (Tony's) configuration |
 
+### Feature-Specific Specs
+
+When working on a specific feature, also read:
+
+| Feature | Document |
+|---------|----------|
+| Marketing & Social Posting | [docs/roadmap/marketing-social-posting.md](docs/roadmap/marketing-social-posting.md) |
+
 ## Key Architecture Rules
 
 ### 1. Feature Gating (CRITICAL)
@@ -78,10 +86,13 @@ All IDs are prefixed strings:
 | Rule Trigger | `rtrig_` | `rtrig_456` |
 | Ruleset Progress | `rsprog_` | `rsprog_789` |
 | Customer Tag | `ctag_` | `ctag_abc` |
+| Social Integration | `sint_` | `sint_abc123` |
+| Marketing Post | `mpost_` | `mpost_xyz789` |
+| AI Usage | `aiuse_` | `aiuse_123` |
 
 ### 4. When Adding a New Feature
 
-1. **Read the spec** in `docs/` (if exists)
+1. **Read the spec** in `docs/` or `docs/roadmap/` (if exists)
 2. **Add feature key** to `FEATURES` in `lib/features/registry.ts`
 3. **Assign to tier** in `TIER_FEATURES`
 4. **Add middleware** `requireFeature()` to API routes
@@ -113,6 +124,7 @@ lootly/
 │   ├── DATABASE_SCHEMA.md # Database reference
 │   ├── SEED_DATA.md       # Test data
 │   └── roadmap/           # Feature specs
+│       └── marketing-social-posting.md  # Marketing feature spec
 ├── backend/               # Express API
 │   ├── db/                # Drizzle schema, seed
 │   ├── routes/            # API route handlers
@@ -127,6 +139,10 @@ lootly/
 ├── customer-app/          # React PWA for customers (Rewards Pirate themed)
 ├── staff-app/             # React PWA for tablet check-in
 └── admin-app/             # React PWA for business owners (Captain's Quarters)
+    └── src/
+        └── pages/
+            ├── SimulatorPage.jsx       # Contains plain language rule preview
+            └── WalkthroughDrawer.jsx   # Contains plain language walkthrough
 ```
 
 ## Pirate Theme Reference
@@ -183,6 +199,7 @@ If unclear on architecture decisions, check:
 3. `docs/RULES_ENGINE.md` for rules engine details
 4. `docs/TECHNICAL_SPEC.md` for API/DB questions
 5. `ROADMAP.md` for feature priorities
+6. `docs/roadmap/` for feature-specific specs
 
 ---
 
