@@ -265,7 +265,31 @@ function describeRuleTriggered(params, pirateTheme) {
  * Describe awards in plain language
  */
 function describeAwards(awards, pirateTheme = false) {
-  if (!awards || awards.length === 0) {
+  if (!awards) {
+    return pirateTheme ? 'treasure' : 'rewards';
+  }
+
+  // Handle composable awards structure (OR/AND groups)
+  if (awards.operator && awards.groups) {
+    const groupDescriptions = awards.groups.map(group => {
+      const awardsDesc = group.awards && group.awards.length > 0
+        ? group.awards.map(a => describeAward(a, pirateTheme)).join(' + ')
+        : (pirateTheme ? 'treasure' : 'rewards');
+
+      if (group.locationId) {
+        return `(${awardsDesc} at specific location)`;
+      }
+      return awardsDesc;
+    });
+
+    if (awards.operator === 'OR') {
+      return groupDescriptions.join(' OR ');
+    }
+    return groupDescriptions.join(' + ');
+  }
+
+  // Handle simple array format
+  if (!Array.isArray(awards) || awards.length === 0) {
     return pirateTheme ? 'treasure' : 'rewards';
   }
 

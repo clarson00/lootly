@@ -309,13 +309,16 @@ export default function ConditionBuilder({ conditions, onChange }) {
   const isCompound = conditions?.operator;
 
   // Fetch locations for location picker
-  const { data: businessData } = useQuery({
+  const { data: businessData, isLoading: locationsLoading, error: locationsError } = useQuery({
     queryKey: ['business', businessId],
     queryFn: () => api.getLocations(businessId),
     enabled: !!businessId,
   });
 
   const locations = businessData?.data?.locations || [];
+
+  // Debug logging
+  console.log('ConditionBuilder - businessId:', businessId, 'locations:', locations.length, 'loading:', locationsLoading, 'error:', locationsError);
 
   const addCondition = () => {
     if (isCompound) {
