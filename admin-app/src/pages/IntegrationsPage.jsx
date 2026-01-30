@@ -38,7 +38,7 @@ export default function IntegrationsPage() {
     try {
       setLoading(true);
       setError(null);
-      const result = await api.getIntegrations();
+      const result = await api.getIntegrations(businessId);
       setIntegrations(result.data?.integrations || []);
     } catch (err) {
       setError(err.message);

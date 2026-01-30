@@ -42,7 +42,7 @@ export default function MarketingPage() {
       if (filter.status) options.status = filter.status;
       if (filter.platform) options.platform = filter.platform;
 
-      const result = await api.getMarketingPosts(options);
+      const result = await api.getMarketingPosts(businessId, options);
       setPosts(result.data?.posts || []);
     } catch (err) {
       setError(err.message);
@@ -58,7 +58,7 @@ export default function MarketingPage() {
       const startDate = new Date(year, month, 1).toISOString();
       const endDate = new Date(year, month + 1, 0).toISOString();
 
-      const result = await api.getMarketingCalendar(startDate, endDate);
+      const result = await api.getMarketingCalendar(businessId, startDate, endDate);
       setCalendarEvents(result.data?.events || []);
     } catch (err) {
       console.error('Failed to load calendar:', err);
@@ -69,7 +69,7 @@ export default function MarketingPage() {
     if (!confirm('Are you sure you want to delete this post?')) return;
 
     try {
-      await api.deleteMarketingPost(postId);
+      await api.deleteMarketingPost(businessId, postId);
       loadPosts();
     } catch (err) {
       setError(err.message);
@@ -80,7 +80,7 @@ export default function MarketingPage() {
     if (!confirm('Publish this post now?')) return;
 
     try {
-      await api.publishMarketingPost(postId);
+      await api.publishMarketingPost(businessId, postId);
       loadPosts();
     } catch (err) {
       setError(err.message);

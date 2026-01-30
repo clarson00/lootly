@@ -6,11 +6,26 @@ const express = require('express');
 const router = express.Router();
 const { db, schema, generateId } = require('../../db');
 const { eq, and, desc, gte, lte, or, isNull, sql } = require('drizzle-orm');
-const { authenticateStaff } = require('../../middleware/auth');
 const { decrypt } = require('../../lib/crypto');
 const { describeRule, describeVoyage, generateMarketingSummary } = require('../../lib/rules/plain-language');
 
 const { marketingPosts, socialIntegrations, rules, rulesets, locations, businesses } = schema;
+
+// Middleware to extract businessId from query (consistent with rules routes)
+const extractBusinessId = (req, res, next) => {
+  req.staff = {
+    business_id: req.query.business_id || req.body?.business_id
+  };
+
+  if (!req.staff.business_id) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'MISSING_BUSINESS', message: 'business_id is required' }
+    });
+  }
+
+  next();
+};
 
 // ============================================
 // LIST POSTS
@@ -20,7 +35,7 @@ const { marketingPosts, socialIntegrations, rules, rulesets, locations, business
  * GET /api/admin/marketing/posts
  * List marketing posts with filters
  */
-router.get('/posts', authenticateStaff, async (req, res) => {
+router.get('/posts', extractBusinessId, async (req, res) => {
   try {
     const { business_id } = req.staff;
     const { status, platform, location_id, limit = 50, offset = 0 } = req.query;
@@ -86,7 +101,7 @@ router.get('/posts', authenticateStaff, async (req, res) => {
  * GET /api/admin/marketing/posts/:id
  * Get single post details
  */
-router.get('/posts/:id', authenticateStaff, async (req, res) => {
+router.get('/posts/:id', extractBusinessId, async (req, res) => {
   try {
     const { id } = req.params;
     const { business_id } = req.staff;
@@ -127,7 +142,7 @@ router.get('/posts/:id', authenticateStaff, async (req, res) => {
  * POST /api/admin/marketing/posts
  * Create a new marketing post (draft or scheduled)
  */
-router.post('/posts', authenticateStaff, async (req, res) => {
+router.post('/posts', extractBusinessId, async (req, res) => {
   try {
     const { business_id, id: staff_id } = req.staff;
     const {
@@ -254,7 +269,7 @@ router.post('/posts', authenticateStaff, async (req, res) => {
  * PATCH /api/admin/marketing/posts/:id
  * Update a draft or scheduled post
  */
-router.patch('/posts/:id', authenticateStaff, async (req, res) => {
+router.patch('/posts/:id', extractBusinessId, async (req, res) => {
   try {
     const { id } = req.params;
     const { business_id } = req.staff;
@@ -373,7 +388,7 @@ router.patch('/posts/:id', authenticateStaff, async (req, res) => {
  * DELETE /api/admin/marketing/posts/:id
  * Delete a marketing post
  */
-router.delete('/posts/:id', authenticateStaff, async (req, res) => {
+router.delete('/posts/:id', extractBusinessId, async (req, res) => {
   try {
     const { id } = req.params;
     const { business_id } = req.staff;
@@ -418,7 +433,7 @@ router.delete('/posts/:id', authenticateStaff, async (req, res) => {
  * POST /api/admin/marketing/posts/:id/publish
  * Publish a draft or scheduled post immediately
  */
-router.post('/posts/:id/publish', authenticateStaff, async (req, res) => {
+router.post('/posts/:id/publish', extractBusinessId, async (req, res) => {
   try {
     const { id } = req.params;
     const { business_id } = req.staff;
@@ -485,7 +500,7 @@ router.post('/posts/:id/publish', authenticateStaff, async (req, res) => {
  * POST /api/admin/marketing/posts/:id/clone
  * Clone a post (optionally to a different location)
  */
-router.post('/posts/:id/clone', authenticateStaff, async (req, res) => {
+router.post('/posts/:id/clone', extractBusinessId, async (req, res) => {
   try {
     const { id } = req.params;
     const { business_id, id: staff_id } = req.staff;
@@ -551,7 +566,7 @@ router.post('/posts/:id/clone', authenticateStaff, async (req, res) => {
  * GET /api/admin/marketing/preview
  * Generate marketing content preview from a rule or voyage
  */
-router.get('/preview', authenticateStaff, async (req, res) => {
+router.get('/preview', extractBusinessId, async (req, res) => {
   try {
     const { business_id } = req.staff;
     const { source_type, source_id } = req.query;
@@ -587,6 +602,11 @@ router.get('/preview', authenticateStaff, async (req, res) => {
           eq(rules.businessId, business_id)
         ));
 
+      console.log('[MARKETING] Preview rule lookup:', { source_id, business_id, found: !!rule });
+      if (rule) {
+        console.log('[MARKETING] Rule data:', { name: rule.name, displayName: rule.displayName, conditions: rule.conditions, awards: rule.awards });
+      }
+
       if (!rule) {
         return res.status(404).json({
           success: false,
@@ -596,6 +616,7 @@ router.get('/preview', authenticateStaff, async (req, res) => {
 
       summary = describeRule(rule, businessLocations);
       content = generateMarketingSummary('rule', rule, businessLocations);
+      console.log('[MARKETING] Generated content:', { summaryLen: summary?.length, contentLen: content?.length, contentPreview: content?.substring(0, 100) });
     } else if (source_type === 'voyage') {
       const [voyage] = await db
         .select()
@@ -653,7 +674,7 @@ router.get('/preview', authenticateStaff, async (req, res) => {
  * GET /api/admin/marketing/calendar
  * Get scheduled posts for calendar view
  */
-router.get('/calendar', authenticateStaff, async (req, res) => {
+router.get('/calendar', extractBusinessId, async (req, res) => {
   try {
     const { business_id } = req.staff;
     const { start_date, end_date, location_id } = req.query;

@@ -91,7 +91,7 @@ export default function PostBuilderPage() {
   async function loadResources() {
     try {
       const [integrationsRes, rulesRes, voyagesRes, locationsRes] = await Promise.all([
-        api.getIntegrations().catch(() => ({ data: { integrations: [] } })),
+        api.getIntegrations(businessId).catch(() => ({ data: { integrations: [] } })),
         api.getRules(businessId).catch(() => ({ data: { rules: [] } })),
         api.getRulesets(businessId).catch(() => ({ data: { rulesets: [] } })),
         api.getLocations(businessId).catch(() => ({ data: { locations: [] } })),
@@ -108,7 +108,7 @@ export default function PostBuilderPage() {
 
   async function generateFromSource() {
     try {
-      const result = await api.getMarketingPreview(sourceType, sourceId);
+      const result = await api.getMarketingPreview(businessId, sourceType, sourceId);
       if (result.data?.content) {
         setContent(result.data.content);
       }
@@ -124,7 +124,7 @@ export default function PostBuilderPage() {
 
     // Generate content from the selected source
     try {
-      const result = await api.getMarketingPreview(type, id);
+      const result = await api.getMarketingPreview(businessId, type, id);
       if (result.data?.content) {
         setContent(result.data.content);
       }
@@ -181,9 +181,9 @@ export default function PostBuilderPage() {
       };
 
       if (isEditing) {
-        await api.updateMarketingPost(id, postData);
+        await api.updateMarketingPost(businessId, id, postData);
       } else {
-        await api.createMarketingPost(postData);
+        await api.createMarketingPost(businessId, postData);
       }
 
       navigate('/marketing');

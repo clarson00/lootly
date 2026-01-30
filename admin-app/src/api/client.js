@@ -172,8 +172,8 @@ export const api = {
   // Social Integrations
   // ==========================================
 
-  async getIntegrations(locationId = null) {
-    const params = new URLSearchParams();
+  async getIntegrations(businessId, locationId = null) {
+    const params = new URLSearchParams({ business_id: businessId });
     if (locationId) params.append('location_id', locationId);
     return request(`/admin/integrations?${params}`);
   },
@@ -200,55 +200,55 @@ export const api = {
   // Marketing Posts
   // ==========================================
 
-  async getMarketingPosts(options = {}) {
-    const params = new URLSearchParams(options);
+  async getMarketingPosts(businessId, options = {}) {
+    const params = new URLSearchParams({ business_id: businessId, ...options });
     return request(`/admin/marketing/posts?${params}`);
   },
 
-  async getMarketingPost(postId) {
-    return request(`/admin/marketing/posts/${postId}`);
+  async getMarketingPost(businessId, postId) {
+    return request(`/admin/marketing/posts/${postId}?business_id=${businessId}`);
   },
 
-  async createMarketingPost(postData) {
-    return request('/admin/marketing/posts', {
+  async createMarketingPost(businessId, postData) {
+    return request(`/admin/marketing/posts?business_id=${businessId}`, {
       method: 'POST',
       body: JSON.stringify(postData),
     });
   },
 
-  async updateMarketingPost(postId, postData) {
-    return request(`/admin/marketing/posts/${postId}`, {
+  async updateMarketingPost(businessId, postId, postData) {
+    return request(`/admin/marketing/posts/${postId}?business_id=${businessId}`, {
       method: 'PATCH',
       body: JSON.stringify(postData),
     });
   },
 
-  async deleteMarketingPost(postId) {
-    return request(`/admin/marketing/posts/${postId}`, {
+  async deleteMarketingPost(businessId, postId) {
+    return request(`/admin/marketing/posts/${postId}?business_id=${businessId}`, {
       method: 'DELETE',
     });
   },
 
-  async publishMarketingPost(postId) {
-    return request(`/admin/marketing/posts/${postId}/publish`, {
+  async publishMarketingPost(businessId, postId) {
+    return request(`/admin/marketing/posts/${postId}/publish?business_id=${businessId}`, {
       method: 'POST',
     });
   },
 
-  async cloneMarketingPost(postId, locationId = null) {
-    return request(`/admin/marketing/posts/${postId}/clone`, {
+  async cloneMarketingPost(businessId, postId, locationId = null) {
+    return request(`/admin/marketing/posts/${postId}/clone?business_id=${businessId}`, {
       method: 'POST',
       body: JSON.stringify({ location_id: locationId }),
     });
   },
 
-  async getMarketingPreview(sourceType, sourceId) {
-    const params = new URLSearchParams({ source_type: sourceType, source_id: sourceId });
+  async getMarketingPreview(businessId, sourceType, sourceId) {
+    const params = new URLSearchParams({ business_id: businessId, source_type: sourceType, source_id: sourceId });
     return request(`/admin/marketing/preview?${params}`);
   },
 
-  async getMarketingCalendar(startDate, endDate, locationId = null) {
-    const params = new URLSearchParams({ start_date: startDate, end_date: endDate });
+  async getMarketingCalendar(businessId, startDate, endDate, locationId = null) {
+    const params = new URLSearchParams({ business_id: businessId, start_date: startDate, end_date: endDate });
     if (locationId) params.append('location_id', locationId);
     return request(`/admin/marketing/calendar?${params}`);
   },

@@ -6,10 +6,25 @@ const express = require('express');
 const router = express.Router();
 const { db, schema, generateId } = require('../../db');
 const { eq, and, isNull } = require('drizzle-orm');
-const { authenticateStaff } = require('../../middleware/auth');
 const { encrypt, decrypt, generateOAuthState, shouldRefreshToken } = require('../../lib/crypto');
 
 const { socialIntegrations, businesses, locations } = schema;
+
+// Middleware to extract businessId from query (consistent with rules routes)
+const extractBusinessId = (req, res, next) => {
+  req.staff = {
+    business_id: req.query.business_id || req.body?.business_id
+  };
+
+  if (!req.staff.business_id) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 'MISSING_BUSINESS', message: 'business_id is required' }
+    });
+  }
+
+  next();
+};
 
 // Meta (Facebook/Instagram) OAuth configuration
 const META_APP_ID = process.env.META_APP_ID;
@@ -36,7 +51,7 @@ const oauthStates = new Map();
  * GET /api/admin/integrations
  * List all connected social integrations for a business
  */
-router.get('/', authenticateStaff, async (req, res) => {
+router.get('/', extractBusinessId, async (req, res) => {
   try {
     const { business_id } = req.staff;
     const { location_id } = req.query;
@@ -94,7 +109,7 @@ router.get('/', authenticateStaff, async (req, res) => {
  * Initiate Meta (Facebook/Instagram) OAuth flow
  * Returns the OAuth URL to redirect the user to
  */
-router.get('/meta/connect', authenticateStaff, async (req, res) => {
+router.get('/meta/connect', extractBusinessId, async (req, res) => {
   try {
     if (!META_APP_ID) {
       return res.status(503).json({
@@ -322,7 +337,7 @@ router.get('/meta/callback', async (req, res) => {
  * DELETE /api/admin/integrations/:id
  * Disconnect (deactivate) a social integration
  */
-router.delete('/:id', authenticateStaff, async (req, res) => {
+router.delete('/:id', extractBusinessId, async (req, res) => {
   try {
     const { id } = req.params;
     const { business_id } = req.staff;
@@ -376,7 +391,7 @@ router.delete('/:id', authenticateStaff, async (req, res) => {
  * POST /api/admin/integrations/:id/refresh
  * Manually refresh an integration's access token
  */
-router.post('/:id/refresh', authenticateStaff, async (req, res) => {
+router.post('/:id/refresh', extractBusinessId, async (req, res) => {
   try {
     const { id } = req.params;
     const { business_id } = req.staff;
