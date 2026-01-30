@@ -19,7 +19,7 @@
 │ ✓ Basic rewards     │ • Multiple programs │ • Referral system               │
 │ ✓ Staff tablet      │ • Analytics         │ • Gamification (badges, levels) │
 │ ✓ Rules engine core │ • Product bonuses   │ • API for third parties         │
-│ ✓ Milestone rewards │ • Expiring rewards  │ • Enterprise features           │
+│ ✓ Milestone rewards │ • Expiring rewards  │ • AI marketing assistant        │
 └─────────────────────┴─────────────────────┴─────────────────────────────────┘
 ```
 
@@ -70,8 +70,8 @@
 | Time-bound promotions | 🔷 Specified | [roadmap/time-bound-promos.md](docs/roadmap/time-bound-promos.md) | "This week only" rules |
 | Admin dashboard | 📋 Planned | [roadmap/admin-dashboard.md](docs/roadmap/admin-dashboard.md) | Web-based |
 | Visual rule builder | 📋 Planned | [roadmap/visual-rule-builder.md](docs/roadmap/visual-rule-builder.md) | Drag & drop |
+| Analytics & reporting | 🔷 Specified | [roadmap/analytics-reporting.md](docs/roadmap/analytics-reporting.md) | Track what's working |
 | Multiple programs per user | 📋 Planned | — | Already architected |
-| Basic analytics | 📋 Planned | [roadmap/analytics.md](docs/roadmap/analytics.md) | Sign-ups, redemptions |
 | Product-based bonuses | 📋 Planned | [TECHNICAL_SPEC.md](docs/TECHNICAL_SPEC.md#composable-rules-engine) | Part of rules engine |
 | Day of week rules | 📋 Planned | [TECHNICAL_SPEC.md](docs/TECHNICAL_SPEC.md#composable-rules-engine) | Taco Tuesday |
 | Expiring rewards | 📋 Planned | — | |
@@ -87,6 +87,7 @@
 | Feature | Status | Spec | Notes |
 |---------|--------|------|-------|
 | User journeys / Treasure maps | 🔷 Specified | [roadmap/user-journeys.md](docs/roadmap/user-journeys.md) | Multi-step reward quests |
+| AI marketing assistant | 🔷 Specified | [roadmap/ai-marketing-assistant.md](docs/roadmap/ai-marketing-assistant.md) | Guides owners on campaigns & costs |
 | White-label apps | 💡 Idea | [roadmap/white-label.md](docs/roadmap/white-label.md) | Custom branding per business |
 | POS integrations | 💡 Idea | [roadmap/pos-integrations.md](docs/roadmap/pos-integrations.md) | Toast, Square, Clover |
 | Receipt scanning | 💡 Idea | [roadmap/receipt-scanning.md](docs/roadmap/receipt-scanning.md) | OCR-based |
@@ -178,7 +179,8 @@
 | Time-Bound Promos | [time-bound-promos.md](docs/roadmap/time-bound-promos.md) | 🔷 Specified |
 | Admin Dashboard | [admin-dashboard.md](docs/roadmap/admin-dashboard.md) | 📋 Planned |
 | Visual Rule Builder | [visual-rule-builder.md](docs/roadmap/visual-rule-builder.md) | 📋 Planned |
-| Analytics | [analytics.md](docs/roadmap/analytics.md) | 📋 Planned |
+| Analytics & Reporting | [analytics-reporting.md](docs/roadmap/analytics-reporting.md) | 🔷 Specified |
+| AI Marketing Assistant | [ai-marketing-assistant.md](docs/roadmap/ai-marketing-assistant.md) | 🔷 Specified |
 | SMS Integration | [sms-integration.md](docs/roadmap/sms-integration.md) | 📋 Planned |
 | Billing | [billing.md](docs/roadmap/billing.md) | 📋 Planned |
 | User Journeys | [user-journeys.md](docs/roadmap/user-journeys.md) | 🔷 Specified |
