@@ -1,0 +1,428 @@
+# Lootly Database Schema
+
+> **Database:** SQLite (MVP) → PostgreSQL (production)  
+> **ORM:** Drizzle ORM  
+> **Location:** `backend/db/schema.ts`
+
+---
+
+## Entity Relationship Overview
+
+```
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐
+│  businesses │──────<│  locations  │──────<│    staff    │
+└─────────────┘       └─────────────┘       └─────────────┘
+       │                     │
+       │                     │
+       ▼                     ▼
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐
+│    rules    │       │transactions │──────>│  customers  │
+└─────────────┘       └─────────────┘       └─────────────┘
+       │                                           │
+       ▼                                           ▼
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐
+│   rewards   │──────<│  customer   │<──────│ enrollments │
+└─────────────┘       │   rewards   │       └─────────────┘
+                      └─────────────┘
+```
+
+**Key Relationships:**
+- Business → many Locations (one owner, multiple restaurants)
+- Location → many Staff
+- Business → many Rules
+- Business → many Rewards
+- Customer → many Enrollments (one per business)
+- Enrollment tracks points/status per business
+
+---
+
+## Tables
+
+### businesses
+
+Top-level entity representing a business owner or organization. One business can have multiple locations.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `biz_` prefix |
+| name | TEXT | NOT NULL | "Freddie's Restaurant Group" |
+| slug | TEXT | UNIQUE | URL-safe identifier |
+| owner_name | TEXT | | "Freddie Guerrera" |
+| owner_email | TEXT | | Contact email |
+| owner_phone | TEXT | | Contact phone |
+| logo_url | TEXT | | Business logo |
+| subscription_tier | TEXT | DEFAULT 'free' | 'free', 'pro', 'enterprise' |
+| subscription_status | TEXT | DEFAULT 'active' | 'active', 'past_due', 'cancelled' |
+| settings | JSON | | Business-wide settings |
+| created_at | DATETIME | DEFAULT NOW | |
+| updated_at | DATETIME | | |
+
+**Settings JSON structure:**
+```json
+{
+  "points_name": "points",
+  "currency": "USD",
+  "timezone": "America/New_York",
+  "default_points_per_dollar": 1,
+  "qr_style": "default"
+}
+```
+
+---
+
+### locations
+
+Individual physical locations belonging to a business.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `loc_` prefix |
+| business_id | TEXT | FK → businesses | Parent business |
+| name | TEXT | NOT NULL | "Honey Brook Pizza" |
+| slug | TEXT | | URL-safe identifier |
+| icon | TEXT | | Emoji: "🍕" |
+| description | TEXT | | Short description |
+| address_line1 | TEXT | | Street address |
+| address_line2 | TEXT | | Suite, unit, etc. |
+| city | TEXT | | |
+| state | TEXT | | |
+| postal_code | TEXT | | |
+| country | TEXT | DEFAULT 'US' | |
+| phone | TEXT | | Location phone |
+| email | TEXT | | Location email |
+| latitude | REAL | | For geo features |
+| longitude | REAL | | For geo features |
+| timezone | TEXT | | Override business timezone |
+| hours | JSON | | Operating hours |
+| is_active | BOOLEAN | DEFAULT true | Soft disable |
+| created_at | DATETIME | DEFAULT NOW | |
+| updated_at | DATETIME | | |
+
+**Hours JSON structure:**
+```json
+{
+  "monday": { "open": "11:00", "close": "21:00" },
+  "tuesday": { "open": "11:00", "close": "21:00" },
+  "wednesday": { "open": "11:00", "close": "21:00" },
+  "thursday": { "open": "11:00", "close": "22:00" },
+  "friday": { "open": "11:00", "close": "23:00" },
+  "saturday": { "open": "11:00", "close": "23:00" },
+  "sunday": { "open": "12:00", "close": "20:00" }
+}
+```
+
+---
+
+### location_groups
+
+Logical groupings of locations for rules targeting.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `grp_` prefix |
+| business_id | TEXT | FK → businesses | |
+| name | TEXT | NOT NULL | "All Locations", "Mexican Restaurants" |
+| description | TEXT | | |
+| created_at | DATETIME | DEFAULT NOW | |
+
+---
+
+### location_group_members
+
+Join table for location groups.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | |
+| group_id | TEXT | FK → location_groups | |
+| location_id | TEXT | FK → locations | |
+| created_at | DATETIME | DEFAULT NOW | |
+
+**Unique constraint:** (group_id, location_id)
+
+---
+
+### staff
+
+Staff members who can operate the tablet app.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `staff_` prefix |
+| location_id | TEXT | FK → locations | Primary location |
+| name | TEXT | NOT NULL | Display name |
+| pin | TEXT | NOT NULL | 4-6 digit PIN |
+| role | TEXT | DEFAULT 'staff' | 'staff', 'manager', 'admin' |
+| can_void | BOOLEAN | DEFAULT false | Can void transactions |
+| can_adjust_points | BOOLEAN | DEFAULT false | Can manually adjust |
+| is_active | BOOLEAN | DEFAULT true | |
+| created_at | DATETIME | DEFAULT NOW | |
+| updated_at | DATETIME | | |
+
+**Note:** PIN should be hashed in production.
+
+---
+
+### customers
+
+Global customer records (cross-business).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `cust_` prefix |
+| phone | TEXT | UNIQUE, NOT NULL | E.164 format |
+| phone_verified | BOOLEAN | DEFAULT false | |
+| name | TEXT | | Optional display name |
+| email | TEXT | | Optional email |
+| avatar_url | TEXT | | Profile picture |
+| created_at | DATETIME | DEFAULT NOW | |
+| updated_at | DATETIME | | |
+
+---
+
+### enrollments
+
+Customer enrollment in a specific business's loyalty program. This is the join between customers and businesses, holding per-business loyalty state.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `enroll_` prefix |
+| customer_id | TEXT | FK → customers | |
+| business_id | TEXT | FK → businesses | |
+| points_balance | INTEGER | DEFAULT 0 | Current points |
+| lifetime_points | INTEGER | DEFAULT 0 | Total ever earned |
+| lifetime_spend | INTEGER | DEFAULT 0 | Cents |
+| visit_count | INTEGER | DEFAULT 0 | Total visits |
+| tier | TEXT | DEFAULT 'member' | 'member', 'silver', 'gold', etc. |
+| points_multiplier | REAL | DEFAULT 1.0 | Active multiplier |
+| multiplier_expires_at | DATETIME | | When multiplier resets |
+| enrolled_at | DATETIME | DEFAULT NOW | |
+| last_visit_at | DATETIME | | |
+| is_active | BOOLEAN | DEFAULT true | |
+
+**Unique constraint:** (customer_id, business_id)
+
+---
+
+### transactions
+
+Every check-in, purchase, or point-earning event.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `txn_` prefix |
+| enrollment_id | TEXT | FK → enrollments | |
+| location_id | TEXT | FK → locations | Where it happened |
+| staff_id | TEXT | FK → staff | Who processed it |
+| type | TEXT | NOT NULL | 'check_in', 'purchase', 'adjustment', 'redemption' |
+| amount_cents | INTEGER | | Purchase amount (if applicable) |
+| points_earned | INTEGER | DEFAULT 0 | Points added |
+| points_spent | INTEGER | DEFAULT 0 | Points redeemed |
+| points_balance_after | INTEGER | | Snapshot of balance |
+| notes | TEXT | | Staff notes |
+| metadata | JSON | | Additional data |
+| voided | BOOLEAN | DEFAULT false | |
+| voided_at | DATETIME | | |
+| voided_by | TEXT | FK → staff | |
+| void_reason | TEXT | | |
+| created_at | DATETIME | DEFAULT NOW | |
+
+---
+
+### rules
+
+Composable rules engine for earning points and unlocking rewards.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `rule_` prefix |
+| business_id | TEXT | FK → businesses | |
+| name | TEXT | NOT NULL | "Double Points Tuesday" |
+| description | TEXT | | Customer-facing description |
+| conditions | JSON | NOT NULL | Rule conditions |
+| award_type | TEXT | NOT NULL | 'points', 'points_per_dollar', 'multiplier', 'reward' |
+| award_value | TEXT | NOT NULL | Amount or reward_id |
+| priority | INTEGER | DEFAULT 0 | Higher = evaluated first |
+| is_active | BOOLEAN | DEFAULT true | |
+| is_repeatable | BOOLEAN | DEFAULT true | Can trigger multiple times |
+| cooldown_days | INTEGER | | Min days between triggers |
+| max_triggers | INTEGER | | Lifetime max (NULL = unlimited) |
+| start_date | DATETIME | | Time-bound start |
+| end_date | DATETIME | | Time-bound end |
+| created_at | DATETIME | DEFAULT NOW | |
+| updated_at | DATETIME | | |
+
+**Conditions JSON structure:** See TECHNICAL_SPEC.md for full rules engine spec.
+
+---
+
+### rule_triggers
+
+Track when rules have fired for a customer (for cooldowns, max triggers).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | |
+| rule_id | TEXT | FK → rules | |
+| enrollment_id | TEXT | FK → enrollments | |
+| transaction_id | TEXT | FK → transactions | |
+| triggered_at | DATETIME | DEFAULT NOW | |
+
+---
+
+### rewards
+
+Redeemable rewards.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `reward_` prefix |
+| business_id | TEXT | FK → businesses | |
+| name | TEXT | NOT NULL | "Free Appetizer" |
+| description | TEXT | | |
+| icon | TEXT | | Emoji |
+| image_url | TEXT | | |
+| points_required | INTEGER | NOT NULL | 0 for milestone rewards |
+| reward_type | TEXT | NOT NULL | 'points_redemption', 'milestone', 'birthday' |
+| value_type | TEXT | | 'fixed_discount', 'percent_discount', 'free_item', 'multiplier' |
+| value_amount | TEXT | | Dollar amount, percent, or item name |
+| valid_locations | JSON | | Array of location_ids (NULL = all) |
+| terms | TEXT | | Fine print |
+| is_active | BOOLEAN | DEFAULT true | |
+| is_hidden | BOOLEAN | DEFAULT false | Don't show until unlocked |
+| sort_order | INTEGER | DEFAULT 0 | Display order |
+| expires_days | INTEGER | | Days until reward expires after earning |
+| created_at | DATETIME | DEFAULT NOW | |
+| updated_at | DATETIME | | |
+
+---
+
+### customer_rewards
+
+Rewards earned by customers (their "wallet").
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `cr_` prefix |
+| enrollment_id | TEXT | FK → enrollments | |
+| reward_id | TEXT | FK → rewards | |
+| source_type | TEXT | NOT NULL | 'points_redemption', 'rule_unlock', 'manual' |
+| source_id | TEXT | | rule_id or staff_id |
+| points_spent | INTEGER | DEFAULT 0 | Points used to redeem |
+| status | TEXT | DEFAULT 'available' | 'available', 'redeemed', 'expired', 'voided' |
+| earned_at | DATETIME | DEFAULT NOW | |
+| expires_at | DATETIME | | |
+| redeemed_at | DATETIME | | |
+| redeemed_location_id | TEXT | FK → locations | |
+| redeemed_staff_id | TEXT | FK → staff | |
+| redeemed_transaction_id | TEXT | FK → transactions | |
+
+---
+
+### qr_codes
+
+QR codes for customer identification.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `qr_` prefix |
+| customer_id | TEXT | FK → customers | |
+| code | TEXT | UNIQUE, NOT NULL | The scannable value |
+| type | TEXT | DEFAULT 'primary' | 'primary', 'temporary', 'card' |
+| is_active | BOOLEAN | DEFAULT true | |
+| created_at | DATETIME | DEFAULT NOW | |
+| expires_at | DATETIME | | For temporary codes |
+| last_used_at | DATETIME | | |
+
+---
+
+### verification_codes
+
+SMS verification codes for phone auth.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | |
+| phone | TEXT | NOT NULL | |
+| code | TEXT | NOT NULL | 6-digit code |
+| expires_at | DATETIME | NOT NULL | |
+| verified | BOOLEAN | DEFAULT false | |
+| attempts | INTEGER | DEFAULT 0 | Failed attempts |
+| created_at | DATETIME | DEFAULT NOW | |
+
+---
+
+### sessions
+
+Auth sessions for customers and staff.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | |
+| token | TEXT | UNIQUE, NOT NULL | Session token |
+| type | TEXT | NOT NULL | 'customer', 'staff' |
+| customer_id | TEXT | FK → customers | |
+| staff_id | TEXT | FK → staff | |
+| device_info | JSON | | User agent, etc. |
+| expires_at | DATETIME | NOT NULL | |
+| created_at | DATETIME | DEFAULT NOW | |
+
+---
+
+## Indexes
+
+```sql
+-- High-priority lookups
+CREATE INDEX idx_locations_business ON locations(business_id);
+CREATE INDEX idx_staff_location ON staff(location_id);
+CREATE INDEX idx_enrollments_customer ON enrollments(customer_id);
+CREATE INDEX idx_enrollments_business ON enrollments(business_id);
+CREATE INDEX idx_transactions_enrollment ON transactions(enrollment_id);
+CREATE INDEX idx_transactions_location ON transactions(location_id);
+CREATE INDEX idx_transactions_created ON transactions(created_at);
+CREATE INDEX idx_rules_business ON rules(business_id);
+CREATE INDEX idx_rewards_business ON rewards(business_id);
+CREATE INDEX idx_customer_rewards_enrollment ON customer_rewards(enrollment_id);
+CREATE INDEX idx_qr_codes_code ON qr_codes(code);
+CREATE INDEX idx_qr_codes_customer ON qr_codes(customer_id);
+CREATE INDEX idx_verification_phone ON verification_codes(phone);
+CREATE INDEX idx_sessions_token ON sessions(token);
+```
+
+---
+
+## Drizzle Schema Location
+
+The schema should be implemented in:
+```
+backend/
+└── db/
+    ├── schema.ts      # Drizzle schema definitions
+    ├── index.ts       # DB connection & export
+    ├── seed.ts        # Seed data script
+    └── migrations/    # Generated migrations
+```
+
+---
+
+## Notes for Implementation
+
+1. **ID Generation:** Use nanoid or cuid2 with prefixes (`biz_`, `loc_`, etc.)
+2. **Timestamps:** Use ISO 8601 strings in SQLite, proper TIMESTAMP in Postgres
+3. **JSON columns:** SQLite stores as TEXT, Postgres uses JSONB
+4. **Soft deletes:** Use `is_active` flags, don't delete records
+5. **Audit trail:** Consider adding `created_by` and `updated_by` columns
+
+---
+
+## Migration Path (MVP → Production)
+
+SQLite → PostgreSQL changes:
+- JSON → JSONB
+- TEXT dates → TIMESTAMP WITH TIME ZONE
+- Add connection pooling
+- Add read replicas for scale
+
+---
+
+*See [SEED_DATA.md](SEED_DATA.md) for pilot customer data.*
