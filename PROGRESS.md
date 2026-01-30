@@ -11,7 +11,7 @@
 | Customer App | ✅ Complete | All pages built, PWA configured |
 | Staff App | ✅ Complete | All pages built, PWA configured |
 | Architecture Docs | ✅ Complete | ENTITLEMENTS, FEATURE_FLAGS, FEATURE_GATING synced |
-| Backend Migration (Hono/PostgreSQL) | 🔲 Not Started | Target architecture per docs |
+| Backend Migration (PostgreSQL/Drizzle) | 🔲 Not Started | Keep Express, migrate DB to PostgreSQL |
 | Integration Testing | ✅ Complete | All flows verified |
 
 **Legend:** 🔲 Not Started | 🟡 In Progress | ✅ Complete | ⚠️ Blocked
@@ -88,10 +88,10 @@
 5. ~~**Sync architecture docs**~~ ✅ Done
 6. **Backend Migration to Target Architecture** (Next)
    - Set up Neon PostgreSQL database
-   - Create Hono API project with Drizzle ORM
-   - Port routes from Express (same business logic)
+   - Add Drizzle ORM to existing Express backend
+   - Migrate from SQLite to PostgreSQL (same routes, new DB layer)
    - Add feature gating middleware
-   - Deploy to Cloudflare Workers
+   - Deploy to Railway/Render/Fly.io
 7. **Integration Testing**
    - Test full check-in flow
    - Test full redemption flow
@@ -105,8 +105,10 @@
 | Date | Decision | Reason |
 |------|----------|--------|
 | 2026-01-29 | Use sql.js instead of better-sqlite3 | better-sqlite3 requires native compilation with Visual Studio, sql.js is pure JS |
-| 2026-01-29 | Accept remote architecture docs as authoritative | Target Hono + PostgreSQL + Cloudflare Workers for production |
+| 2026-01-29 | Accept remote architecture docs as authoritative | Initially targeted Hono, later revised to Express |
 | 2026-01-29 | Keep Express/SQLite MVP as working prototype | Validates business logic; frontend code transfers directly |
+| 2026-01-29 | Express over Hono | Industry standard, proven reliability, larger ecosystem, AI coders won't struggle |
+| 2026-01-29 | Railway/Render/Fly over Cloudflare Workers | Full Node.js compatibility, no edge constraints |
 
 *Record any decisions that deviate from or clarify the specs here.*
 
@@ -161,9 +163,10 @@
 
 **Architecture Decision:**
 - Current Express + SQLite MVP serves as working prototype
-- Target architecture: Hono + Drizzle ORM + PostgreSQL (Neon) + Cloudflare Workers
+- Target architecture: Express + Drizzle ORM + PostgreSQL (Neon) + Railway/Render/Fly.io
+- Keeping Express (industry standard, proven reliability)
 - Frontend apps (customer-app, staff-app) transfer directly - no changes needed
-- Backend needs migration to new stack with feature gating
+- Backend needs DB migration (SQLite → PostgreSQL) and feature gating
 
 **Integration Testing Results:**
 - Customer auth flow: ✅
