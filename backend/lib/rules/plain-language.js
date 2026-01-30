@@ -512,7 +512,7 @@ function generateMarketingSummary(type, data, locations = [], locationGroups = [
     parts.push('');
 
     // Describe what you earn with AND/OR logic
-    const awardsText = describeAwardsForMarketing(data.awards, locations);
+    const awardsText = describeAwardsForMarketing(data.awards, locations, data.awardType, data.awardValue);
     if (awardsText) {
       parts.push(awardsText);
     }
@@ -646,8 +646,14 @@ function extractLocationNames(conditions, locations = [], locationGroups = []) {
 
 /**
  * Describe awards in a marketing-friendly way
+ * Handles both new composable format and legacy awardType/awardValue format
  */
-function describeAwardsForMarketing(awards, locations = []) {
+function describeAwardsForMarketing(awards, locations = [], legacyAwardType = null, legacyAwardValue = null) {
+  // Handle legacy format first
+  if (legacyAwardType && legacyAwardValue) {
+    return `🎁 Earn: ${describeLegacyAward(legacyAwardType, legacyAwardValue)}`;
+  }
+
   if (!awards) return '';
 
   // Handle composable awards with OR choices (pick one)
@@ -658,7 +664,8 @@ function describeAwardsForMarketing(awards, locations = []) {
       // Different locations offer different rewards
       const lines = ['🎁 CHOOSE YOUR REWARD:'];
       awards.groups.forEach(group => {
-        const desc = group.awards?.map(a => describeAwardMarketing(a)).join(' + ') || 'rewards';
+        const awardDescs = (group.awards || []).map(a => describeAwardMarketing(a)).filter(Boolean);
+        const desc = awardDescs.length > 0 ? awardDescs.join(' + ') : 'special rewards';
         if (group.locationId) {
           const loc = locations.find(l => l.id === group.locationId);
           lines.push(`   • ${loc ? loc.name : 'Location'}: ${desc}`);
@@ -670,7 +677,8 @@ function describeAwardsForMarketing(awards, locations = []) {
     } else {
       // Same location, choose between rewards
       const options = awards.groups.map(group => {
-        return group.awards?.map(a => describeAwardMarketing(a)).join(' + ') || 'rewards';
+        const awardDescs = (group.awards || []).map(a => describeAwardMarketing(a)).filter(Boolean);
+        return awardDescs.length > 0 ? awardDescs.join(' + ') : 'special rewards';
       });
       return `🎁 CHOOSE YOUR REWARD:\n   • ${options.join('\n   • ')}`;
     }
@@ -684,7 +692,8 @@ function describeAwardsForMarketing(awards, locations = []) {
       // Different locations each give rewards (stacked)
       const lines = ['🎁 EARN AT EACH LOCATION:'];
       awards.groups.forEach(group => {
-        const desc = group.awards?.map(a => describeAwardMarketing(a)).join(' + ') || 'rewards';
+        const awardDescs = (group.awards || []).map(a => describeAwardMarketing(a)).filter(Boolean);
+        const desc = awardDescs.length > 0 ? awardDescs.join(' + ') : 'special rewards';
         if (group.locationId) {
           const loc = locations.find(l => l.id === group.locationId);
           lines.push(`   • ${loc ? loc.name : 'Location'}: ${desc}`);
@@ -698,17 +707,20 @@ function describeAwardsForMarketing(awards, locations = []) {
     } else {
       // Stacked rewards at same location
       const allRewards = awards.groups.flatMap(g => g.awards || []);
-      const desc = allRewards.map(a => describeAwardMarketing(a)).join(' + ');
+      const awardDescs = allRewards.map(a => describeAwardMarketing(a)).filter(Boolean);
+      const desc = awardDescs.length > 0 ? awardDescs.join(' + ') : 'special rewards';
       return `🎁 STACKED REWARDS: ${desc}`;
     }
   }
 
   // Handle simple array
   if (Array.isArray(awards) && awards.length > 0) {
-    if (awards.length === 1) {
-      return `🎁 Earn: ${describeAwardMarketing(awards[0])}`;
+    const awardDescs = awards.map(a => describeAwardMarketing(a)).filter(Boolean);
+    if (awardDescs.length === 0) return '';
+    if (awardDescs.length === 1) {
+      return `🎁 Earn: ${awardDescs[0]}`;
     }
-    return `🎁 Earn: ${awards.map(a => describeAwardMarketing(a)).join(' + ')}`;
+    return `🎁 Earn: ${awardDescs.join(' + ')}`;
   }
 
   return '';
@@ -718,23 +730,46 @@ function describeAwardsForMarketing(awards, locations = []) {
  * Describe a single award for marketing
  */
 function describeAwardMarketing(award) {
-  if (!award) return '';
+  if (!award) return null;
 
-  const { type, value } = award;
+  const { type, value, rewardId } = award;
+
+  // Skip if no type defined
+  if (!type) return null;
 
   switch (type) {
     case 'points':
-      return `${value} bonus doubloons`;
+      return `${value || 0} bonus doubloons`;
     case 'points_per_dollar':
-      return `${value}x points per dollar`;
+      return `${value || 1}x points per dollar`;
     case 'multiplier':
-      return `${value}x points multiplier`;
+      return `${value || 2}x points multiplier`;
     case 'reward':
       return 'a special reward';
     case 'tag':
       return 'VIP status';
     default:
-      return 'rewards';
+      return null;
+  }
+}
+
+/**
+ * Describe legacy award format (awardType/awardValue)
+ */
+function describeLegacyAward(awardType, awardValue) {
+  switch (awardType) {
+    case 'points':
+      return `${awardValue} bonus doubloons`;
+    case 'points_per_dollar':
+      return `${awardValue}x points per dollar`;
+    case 'multiplier':
+      return `${awardValue}x points multiplier`;
+    case 'reward':
+      return 'a special reward unlocked!';
+    case 'tag':
+      return 'VIP status earned!';
+    default:
+      return 'special rewards';
   }
 }
 

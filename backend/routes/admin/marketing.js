@@ -604,7 +604,7 @@ router.get('/preview', extractBusinessId, async (req, res) => {
 
       console.log('[MARKETING] Preview rule lookup:', { source_id, business_id, found: !!rule });
       if (rule) {
-        console.log('[MARKETING] Rule data:', { name: rule.name, displayName: rule.displayName, conditions: rule.conditions, awards: rule.awards });
+        console.log('[MARKETING] Rule data:', JSON.stringify({ name: rule.name, displayName: rule.displayName, conditions: rule.conditions, awards: rule.awards }, null, 2));
       }
 
       if (!rule) {
