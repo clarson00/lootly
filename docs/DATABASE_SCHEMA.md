@@ -1,5 +1,8 @@
 # Lootly Database Schema
 
+> **OWNERSHIP:** Claude Code owns the actual schema in `backend/db/schema.ts`.  
+> This doc is a **reference spec**, not a constraint. Modify the schema as needed—add columns, change types, add tables, refactor. Just keep seed data working and update this doc if making major changes.
+
 > **Database:** SQLite (MVP) → PostgreSQL (production)  
 > **ORM:** Drizzle ORM  
 > **Location:** `backend/db/schema.ts`
