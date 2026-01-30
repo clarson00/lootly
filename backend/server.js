@@ -40,6 +40,9 @@ app.use('/api/rewards', require('./routes/rewards'));
 app.use('/api/staff', require('./routes/staff'));
 app.use('/api/entitlements', require('./routes/entitlements'));
 
+// Admin routes (rules engine)
+app.use('/api/admin', require('./routes/admin'));
+
 // Error handling
 app.use((err, req, res, next) => {
   console.error('Error:', err);

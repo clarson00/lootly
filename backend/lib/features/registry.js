@@ -18,6 +18,7 @@ const FEATURES = {
   RULES_ADVANCED: 'rules:advanced',     // Complex conditions, AND/OR
   RULES_TIME_BOUND: 'rules:time_bound', // Limited-time promos
   RULES_PRODUCT: 'rules:product',       // Product-based bonuses
+  RULESETS: 'rules:rulesets',           // Multi-step voyages/quests
 
   // Journeys (Treasure Maps)
   JOURNEYS_BASIC: 'journeys:basic',       // Single journey
@@ -85,6 +86,7 @@ const TIER_FEATURES = {
     // Everything in free, plus:
     FEATURES.RULES_ADVANCED,
     FEATURES.RULES_TIME_BOUND,
+    FEATURES.RULESETS,
     FEATURES.MARKETING_PUSH,
     FEATURES.JOURNEYS_BASIC,
     FEATURES.LOCATIONS_MULTI,
