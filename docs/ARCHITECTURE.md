@@ -37,6 +37,7 @@
 │                                      • Twilio (SMS)                        │
 │                                      • Stripe (Billing)                    │
 │                                      • Claude (AI)                         │
+│                                      • Meta (FB/IG)                        │
 │                                      • FCM (Push)                          │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -82,15 +83,22 @@ All IDs are prefixed strings for debugging and safety:
 
 ```typescript
 // ID prefixes
-biz_    // Business
-loc_    // Location
-cust_   // Customer
-txn_    // Transaction
-rwd_    // Reward
-rule_   // Rule
-jny_    // Journey
-msg_    // Message
-staff_  // Staff member
+biz_     // Business
+loc_     // Location
+grp_     // Location group
+lgm_     // Location group member
+cust_    // Customer
+enroll_  // Enrollment (customer in business)
+txn_     // Transaction
+visit_   // Visit record
+rwd_     // Reward
+cr_      // Customer reward (earned/redeemed)
+rule_    // Rule
+rs_      // Ruleset (Voyage)
+rt_      // Rule trigger (when rule fired)
+qr_      // QR code
+msg_     // Message
+staff_   // Staff member
 ```
 
 ### 4. Immutable Audit Trail
@@ -143,6 +151,7 @@ const points = await rulesEngine.evaluate({
 | **SMS** | Twilio | Reliable, good API |
 | **Payments** | Stripe | Industry standard |
 | **AI** | Claude API | Best reasoning for marketing assistant |
+| **Social** | Meta Graph API | Facebook/Instagram posting |
 | **Push** | Firebase Cloud Messaging | Cross-platform |
 
 ---
@@ -347,35 +356,133 @@ lootly/
 │   ├── TECHNICAL_SPEC.md  # API & DB spec
 │   ├── DATABASE_SCHEMA.md # Schema reference
 │   ├── SEED_DATA.md       # Pilot data
+│   ├── RULES_ENGINE.md    # Rules engine docs
+│   ├── GAMIFICATION.md    # Voyages & gamification
 │   └── roadmap/           # Feature specs
 │
 ├── backend/
-│   ├── src/
-│   │   ├── routes/        # API routes by resource
-│   │   ├── services/      # Business logic
-│   │   ├── lib/
-│   │   │   ├── db/        # Drizzle setup
-│   │   │   ├── features/  # Feature gating
-│   │   │   └── rules/     # Rules engine
-│   │   ├── middleware/    # Auth, feature gates
-│   │   └── app.ts         # Express app entry
-│   ├── drizzle/           # Migrations
+│   ├── server.js          # Express app entry
+│   ├── routes/
+│   │   ├── admin/         # Admin API routes
+│   │   │   ├── rules.js   # Rule CRUD & simulation
+│   │   │   └── rulesets.js # Voyage CRUD
+│   │   ├── auth.js        # Authentication
+│   │   ├── customers.js   # Customer management
+│   │   ├── transactions.js # Points & transactions
+│   │   └── voyages.js     # Customer voyage progress
+│   ├── lib/
+│   │   ├── features/      # Feature gating
+│   │   │   └── registry.js
+│   │   └── rules/         # Rules engine
+│   │       ├── conditions/ # Condition evaluators
+│   │       ├── awards/     # Award handlers
+│   │       ├── evaluator.js
+│   │       ├── simulator.js
+│   │       └── plain-language.js
+│   ├── db/
+│   │   ├── index.js       # Drizzle setup
+│   │   ├── schema.js      # Database schema
+│   │   └── seed.js        # Pilot data seeding
 │   └── package.json
 │
-├── frontend/
+├── admin-app/             # Business admin dashboard
 │   ├── src/
 │   │   ├── pages/         # Route components
-│   │   ├── components/    # Shared components
-│   │   ├── hooks/         # Custom hooks
-│   │   ├── lib/           # Utilities
-│   │   └── App.tsx
-│   ├── public/            # PWA assets
+│   │   │   ├── RulesPage.jsx
+│   │   │   ├── RuleBuilderPage.jsx
+│   │   │   ├── VoyagesPage.jsx
+│   │   │   ├── VoyageBuilderPage.jsx
+│   │   │   └── SimulatorPage.jsx
+│   │   ├── components/
+│   │   │   └── rules/
+│   │   │       ├── ConditionBuilder.jsx
+│   │   │       ├── AwardBuilder.jsx
+│   │   │       └── WalkthroughDrawer.jsx  # Live preview panel
+│   │   ├── lib/
+│   │   │   └── plainLanguage.js  # Shared description utilities
+│   │   ├── api/           # API client
+│   │   └── App.jsx
 │   └── package.json
 │
-└── packages/              # Shared code (if monorepo)
-    └── shared/
-        └── features/      # Feature keys (shared)
+├── customer-app/          # Customer-facing PWA
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── Home.jsx
+│   │   │   ├── TreasureMap.jsx  # Voyage progress
+│   │   │   └── VoyageDetail.jsx
+│   │   ├── components/
+│   │   └── App.jsx
+│   └── package.json
+│
+└── staff-app/             # Staff tablet (future)
+    └── ...
 ```
+
+---
+
+## Key Components
+
+### Rules Engine
+
+The rules engine is the core of Lootly's gamification. It evaluates conditions and awards points/rewards.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      RULES ENGINE                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   Conditions (AND/OR composable)     Awards (composable)    │
+│   ├── location_visit                 ├── bonus_points       │
+│   ├── spend_amount                   ├── multiplier         │
+│   ├── day_of_week                    ├── unlock_reward      │
+│   ├── time_of_day                    └── apply_tag          │
+│   ├── customer_tag                                          │
+│   ├── customer_attribute             Award Groups (OR/AND)  │
+│   └── rule_triggered                 └── Location-targeted  │
+│                                                             │
+│   Evaluator ──► Simulator ──► Plain Language Generator      │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+See [RULES_ENGINE.md](RULES_ENGINE.md) for full documentation.
+
+### Voyages (Rulesets)
+
+Voyages are multi-step customer journeys built from rules:
+
+```typescript
+// Voyage = Ruleset containing ordered/unordered rules
+{
+  id: "rs_grand_tour",
+  name: "Grand Tour",
+  chainType: "sequential",  // or "parallel"
+  rules: [
+    { sequenceOrder: 1, conditions: {...}, awards: [...] },
+    { sequenceOrder: 2, conditions: {...}, awards: [...] },
+    { sequenceOrder: 3, conditions: {...}, awards: [...] },  // Final reward
+  ]
+}
+```
+
+### PlainLanguage Utilities
+
+Shared utilities for converting rules/voyages to human-readable text:
+
+```typescript
+import {
+  describeConditions,    // "Customer visits 🍕 Tony's Pizza"
+  describeAwards,        // "50 bonus points + Apply tag"
+  describeRule,          // Full rule summary
+  describeVoyage,        // Full voyage with steps
+  generateMarketingSummary  // For AI content generation
+} from 'lib/plainLanguage';
+```
+
+Used by:
+- **SimulatorPage** — Walkthrough display
+- **WalkthroughDrawer** — Live preview while building
+- **Marketing component** — AI prompt generation
 
 ---
 
@@ -390,6 +497,11 @@ lootly/
 | Jan 2025 | PostgreSQL over MySQL | Better JSON support, Neon serverless |
 | Jan 2025 | PWA over native apps | Faster to build, easier updates |
 | Jan 2025 | Phone auth over email | Better for restaurant customers |
+| Jan 2025 | Composable conditions (AND/OR) | Flexible rule building without code |
+| Jan 2025 | Composable awards with location targeting | Let customers choose where to claim rewards |
+| Jan 2025 | Voyages as rulesets | Rules abstracted as "steps" for non-technical users |
+| Jan 2025 | PlainLanguage shared utilities | Reuse descriptions in preview, simulator, and marketing |
+| Jan 2025 | WalkthroughDrawer as live preview | Better UX - see what you're building in real-time |
 
 ---
 
@@ -399,6 +511,9 @@ lootly/
 - [FEATURE_FLAGS.md](FEATURE_FLAGS.md) — Implementation guide
 - [TECHNICAL_SPEC.md](TECHNICAL_SPEC.md) — API routes & database
 - [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) — Schema reference
+- [RULES_ENGINE.md](RULES_ENGINE.md) — Rules engine documentation
+- [GAMIFICATION.md](GAMIFICATION.md) — Voyages & gamification
+- [ADMIN_APP.md](ADMIN_APP.md) — Admin dashboard documentation
 
 ---
 
