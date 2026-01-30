@@ -1,7 +1,7 @@
 # Pricing Strategy
 
-> **Purpose:** Business rationale for pricing tiers, add-ons, and monetization strategy.
-> **See also:** [ENTITLEMENTS.md](ENTITLEMENTS.md) for technical implementation.
+> **Purpose:** The business rationale behind our pricing, not the technical implementation.
+> **See also:** [ENTITLEMENTS.md](ENTITLEMENTS.md) for technical feature gating.
 
 ---
 
@@ -9,303 +9,251 @@
 
 ### Value-Based, Not Cost-Based
 
-We don't price based on what it costs us to serve a customer. We price based on the **value we create** for the business.
+We don't price based on what it costs us to serve. We price based on the value we deliver.
 
 ```
-WRONG THINKING
-"It costs us $5/month to serve them, so charge $10"
+WRONG: "It costs us $5/month to serve this customer, so charge $15"
 
-RIGHT THINKING
-"If we help them retain 10 more customers/month worth $50 each,
-that's $500/month in value. $79 is a no-brainer."
+RIGHT: "This business will retain 20% more customers, worth $X,000/year. 
+       $79/month is a no-brainer."
 ```
 
 ### The 10x Rule
 
-Customers should feel they're getting **at least 10x** the value of what they pay.
+Every tier should deliver **at least 10x its cost** in value to the business.
 
-| Tier | Price | Target Value Created |
-|------|-------|---------------------|
-| Free | $0 | Prove the concept works |
-| Starter | $29/mo | $300+/mo in retention value |
-| Pro | $79/mo | $800+/mo in retention value |
-| Enterprise | Custom | Measurable ROI guaranteed |
+| Tier | Price | Target Value Delivered |
+|------|-------|------------------------|
+| Free | $0 | Taste of value, builds habit |
+| Starter | $29/mo | $290+/mo in retention value |
+| Pro | $79/mo | $790+/mo in retention value |
+| Enterprise | Custom | Negotiated based on scale |
 
-### Pricing Anchors
+### Price Anchoring
 
-- **Below $50/mo:** Impulse buy, no committee approval needed
-- **Below $100/mo:** Manager can approve, low friction
-- **Above $100/mo:** Needs justification, ROI conversation
-- **Above $500/mo:** Enterprise sales process
+Position against what they're already spending:
 
-We intentionally keep Starter and Pro under these thresholds.
+> "You spend $500/month on ads to acquire new customers. For $79/month, keep the ones you have."
+
+> "One retained customer per month pays for a year of RewardsPirate."
 
 ---
 
-## Tier Strategy
+## The Tiers
 
 ### Free: The Gateway
 
-**Purpose:** Acquisition, not revenue.
+**Price:** $0
+
+**Purpose:** Acquisition, not charity.
 
 ```
-FREE TIER GOALS
-├── Let them prove it works
-├── Build habit of using the platform
-├── Capture customer data (theirs and their customers')
-├── Create switching costs
-└── Trigger upgrade when they hit limits
+FREE TIER STRATEGY
+
+Goal: Get businesses hooked on seeing customer engagement
+      ↓
+They hit limits naturally
+      ↓
+Upgrade feels like unlocking, not paying
+      ↓
+"I need more rewards" not "I guess I'll pay"
 ```
 
-**What Free includes:**
+**What's included:**
 - 1 location
 - 500 customers
 - 3 active rewards
-- Basic points/check-in
-- Core gamification (streaks, basic achievements)
+- Basic points & check-in
+- Basic analytics
 
-**What Free excludes:**
-- Multiple locations
-- Advanced rules/multipliers
-- Marketing features
-- Analytics beyond basics
-- AI features
+**What's limited (creates upgrade pressure):**
+- Can't add more locations
+- Can't create more rewards
+- No push notifications
+- No advanced rules
+- No milestone rewards
 
-**Free tier philosophy:**
-> Give them enough to succeed and feel the value. Not enough to never need to upgrade.
+**The psychology:**
+- Generous enough to see real value
+- Limited enough to hit walls naturally
+- Limits are VISIBLE ("3/3 rewards used")
+- Upgrade prompts are helpful, not annoying
 
-**Key insight:** Free users who engage are our best leads. They've already proven product-market fit for themselves.
+---
 
-### Starter ($29/mo): The Growing Business
+### Starter: The Commitment
 
-**Target customer:**
-- Single location OR just expanded to 2-3
-- 500-2,000 active customers
-- Starting to think about marketing
-- Owner-operated, budget-conscious
+**Price:** $29/month ($290/year if annual = 2 months free)
+
+**Target business:** Single location, getting serious about loyalty
 
 **Why $29:**
-- Below the "impulse buy" threshold
-- Comparable to other SMB tools they already pay for
-- Easy to justify: "Less than $1/day"
-- Competitive with basic loyalty competitors
+- Below the "needs approval" threshold for most SMBs
+- Owner can expense without thinking
+- Less than a nice dinner
+- Competes with "free" alternatives that suck
 
-**What triggers Starter upgrade:**
-- Hit 500 customer limit
-- Want 2nd or 3rd location
-- Need more than 3 rewards
-- Want time-bound promos
-- Want push notifications
-
-**Starter includes:**
+**What unlocks:**
 - 3 locations
 - 2,000 customers
 - 10 active rewards
-- Advanced rules (time-bound, conditions)
 - Push notifications
-- Basic journey (1 active)
+- Time-bound promotions
+- Basic customer journeys
+- Advanced earning rules
 
-### Pro ($79/mo): The Serious Operator
+**Upgrade triggers to Pro:**
+- Hitting 10 rewards limit
+- Wanting milestone rewards
+- Needing AI assistance
+- Multiple locations growing
 
-**Target customer:**
-- Multiple locations (3-10)
-- 2,000-10,000 active customers
-- Dedicated to loyalty as strategy
-- Willing to invest in growth
-- Wants automation and intelligence
+---
+
+### Pro: The Sweet Spot
+
+**Price:** $79/month ($790/year if annual)
+
+**Target business:** Serious about loyalty, multiple locations or high volume
 
 **Why $79:**
-- Still under $100 (manager approval threshold)
-- 2.7x Starter price for ~5x the value
-- Positions as "professional" tier
-- Room for add-ons without feeling expensive
+- Still impulse-able for established businesses
+- 3x Starter, but WAY more than 3x value
+- Positions us as "professional tool" not "cheap app"
+- Room for add-ons on top
 
-**What triggers Pro upgrade:**
-- Hit location or customer limits
-- Want milestone rewards
-- Want AI assistance
-- Need advanced analytics
-- Running multiple campaigns
-
-**Pro includes:**
+**What unlocks:**
 - 10 locations
 - 10,000 customers
-- Unlimited rewards
-- Milestone rewards & multipliers
-- AI assistant & insights
+- **Unlimited rewards**
+- **Milestone rewards** (key differentiator)
+- **Point multipliers**
+- AI marketing assistant
 - Advanced analytics
-- Unlimited journeys
 - Campaign management
+- Unlimited customer journeys
 
-### Enterprise (Custom): The Big Fish
+**This is where most successful businesses land.**
 
-**Target customer:**
-- 10+ locations OR franchises
+**Upgrade triggers to Enterprise:**
+- 10+ locations
 - 10,000+ customers
-- Need integrations, API, white-label
-- Require SLAs and dedicated support
-- Have procurement/legal process
+- Need API access
+- Need white-label
+- Need SSO
 
-**Why custom pricing:**
-- Value varies dramatically by size
-- Negotiation expected at this level
-- Opportunity for annual contracts
-- Can bundle implementation/support
+---
 
-**Enterprise includes:**
-- Everything in Pro
-- Unlimited locations/customers
+### Enterprise: The Partnership
+
+**Price:** Custom (starting ~$299/month)
+
+**Target business:** Franchises, chains, high-volume operations
+
+**Why custom:**
+- Needs vary wildly
+- Volume discounts make sense
+- Often need custom integration work
+- Relationship-based sales
+
+**What unlocks:**
+- Unlimited everything
 - API access
-- White-label options
+- White-label apps
 - SSO integration
 - Dedicated support
 - Custom integrations
 - SLA guarantees
 
-**Enterprise pricing guidance:**
-- Base: $199-499/mo depending on size
-- Per-location add-on: $29-49/location
-- Annual discount: 20%
-- Implementation fee: $500-2,000 one-time
+**Sales process:**
+- Demo call required
+- Needs assessment
+- Custom proposal
+- Annual contracts typical
 
 ---
 
 ## Add-On Strategy
 
-### Philosophy: Expand, Don't Overwhelm
+### Philosophy: Modular Value
 
-Add-ons should feel like **natural expansions**, not **nickel-and-diming**.
+Add-ons let businesses pay for exactly what they need without forcing tier upgrades.
 
 ```
-GOOD ADD-ON                          BAD ADD-ON
-"I need this specific thing"         "Why isn't this included?"
-"This will help me grow"             "They're trying to squeeze me"
+SCENARIO: Starter business wants AI but not other Pro features
+
+WITHOUT ADD-ONS:
+"Upgrade to Pro for $79/month" → $50/month more for one feature → feels bad
+
+WITH ADD-ONS:
+"Add AI Pack for $29/month" → $29/month for what they want → feels fair
 ```
 
 ### Current Add-Ons
 
-| Add-On | Price | Target | Rationale |
-|--------|-------|--------|-----------|
-| AI Pack | $29/mo | Starter users who want AI | High perceived value, low marginal cost |
-| SMS Marketing | $19/mo | Anyone doing campaigns | Usage-based cost pass-through |
-| Advanced Analytics | $19/mo | Data-driven operators | Clear value for specific need |
-| API Access | $49/mo | Developers, integrators | High value for specific use case |
+| Add-On | Price | What It Unlocks | Target |
+|--------|-------|-----------------|--------|
+| **AI Pack** | $29/mo | AI assistant, insights, copywriting | Businesses wanting help with marketing |
+| **SMS Pack** | $19/mo | SMS marketing, 5,000 msgs/mo | Businesses with SMS-preferred customers |
+| **Analytics Pack** | $19/mo | Advanced reports, exports, realtime | Data-driven owners |
+| **API Access** | $49/mo | Full API, webhooks | Developers, integrations |
 
-### Add-On Stacking Rules
+### Stacking Rules
 
-1. **Add-ons should feel optional** - Core product works great without them
-2. **Add-ons should have clear ROI** - Easy to justify the spend
-3. **Add-ons shouldn't duplicate tier features** - No confusion about what's included
-4. **Add-ons can make lower tiers viable longer** - Starter + AI Pack vs upgrading to Pro
-
-### Add-On vs. Tier Upgrade
-
-When should we offer an add-on vs. push for tier upgrade?
-
-| Situation | Recommendation |
-|-----------|----------------|
-| User wants ONE specific feature | Offer add-on |
-| User hitting multiple limits | Push tier upgrade |
-| User would save money upgrading | Push tier upgrade |
-| User resistant to higher tier | Offer add-on as compromise |
-
-**Example:**
-> Starter user wants AI features but doesn't need more locations.
-> - AI Pack ($29) + Starter ($29) = $58/mo
-> - Pro ($79/mo) includes AI
-> 
-> **Offer both options.** Let them choose based on their needs.
+- Add-ons can be added to ANY paid tier
+- Add-ons stack with tier features (e.g., SMS Pack adds to existing message limits)
+- Some add-ons are included in higher tiers (AI Pack included in Pro)
+- Enterprise includes all add-ons
 
 ### Future Add-Ons (Roadmap)
 
-| Add-On | Est. Price | When |
-|--------|-----------|------|
-| Physical Rewards (metal cards, merch) | Cost + margin | Phase 2 |
-| Advanced Gamification Pack | $19/mo | Phase 2 |
-| Multi-Network Access | $39/mo | Phase 3 |
-| White-Label Lite | $99/mo | Phase 3 |
-| Crypto/Yield Features | TBD | Phase 4 |
+| Add-On | Est. Price | What It Unlocks |
+|--------|------------|-----------------|
+| **Physical Rewards Pack** | $39/mo | Metal cards, merch integration, fulfillment |
+| **Network Pack** | $49/mo | Multi-tenant features, cross-business rewards |
+| **Advanced Gamification** | $29/mo | Boss battles, seasonal events, leaderboards |
+| **Integrations Pack** | $29/mo | POS integrations, CRM sync |
 
 ---
 
-## Free Tier Strategy
+## Staking Tiers (Future)
 
-### Why Free Exists
+When the Doubloon Economy launches, staking creates a parallel value structure:
 
-Free is not charity. Free is **customer acquisition**.
+### Tenant Staking Tiers
 
-```
-FREE TIER FUNNEL
+| Tier | Stake | Monthly Yield | Subscription Credit | Net Cost |
+|------|-------|---------------|---------------------|----------|
+| **Deckhand** | $0 | $0 | $0 | Full price |
+| **First Mate** | $500 | ~$2.50 | $2.50 | -$2.50 |
+| **Captain** | $2,000 | ~$10 | $10 | -$10 |
+| **Admiral** | $10,000 | ~$50 | $50 | -$50 |
+| **Fleet Commander** | $50,000 | ~$250 | $250 | **FREE + $51 profit** |
 
-Awareness → Sign up (free) → Activate → Engage → Hit limits → Upgrade
-                                              ↓
-                              Value proven, switching cost created
-```
-
-### Free Tier Economics
-
-| Metric | Target |
-|--------|--------|
-| Free → Starter conversion | 5-10% within 90 days |
-| Free → Any paid conversion | 15-20% lifetime |
-| Cost to serve free user | < $2/month |
-| Activation rate (1+ check-in) | 60%+ |
-
-### Free Limits Are Features
-
-Limits aren't punishments. They're **graduation markers**.
+### How It Changes Pricing Psychology
 
 ```
-WHEN THEY HIT A LIMIT
+TRADITIONAL: "Pay $79/month forever"
 
-❌ "You've been restricted. Pay us."
-✅ "Congrats! You've outgrown Free. Here's what's next."
+WITH STAKING: "Stake $10,000 once, pay effectively $29/month forever"
+              "Stake $50,000 once, GET PAID $51/month to use us"
 ```
 
-### What Makes Free Sticky
+**This is revolutionary:**
+- Converts expense to investment
+- Aligns incentives (they want us to succeed)
+- Creates switching cost (stake is locked)
+- Generates word-of-mouth ("I get PAID to use this")
 
-Even without paying, free users should:
-- Build customer database (switching cost)
-- Establish reward expectations (customers expect it)
-- Learn the platform (time investment)
-- See real results (proof it works)
+### Staking Benefits Beyond Yield
 
-**The trap:** If they leave, they lose all their customer data and have to start over.
-
----
-
-## Upgrade Triggers
-
-### Automatic Triggers (System-Detected)
-
-| Trigger | Action |
-|---------|--------|
-| 80% of customer limit | Soft notification |
-| 100% of customer limit | Upgrade prompt, can't add new |
-| 80% of location limit | Soft notification |
-| 100% of location limit | Upgrade required to add |
-| Attempts to use gated feature | Upgrade prompt with feature highlight |
-
-### Behavioral Triggers (Signals to Sales/Marketing)
-
-| Signal | Indicates | Action |
-|--------|-----------|--------|
-| High engagement, near limits | Ready to upgrade | Proactive outreach |
-| Viewing Pro features repeatedly | Interested but hesitant | Offer trial/discount |
-| Increased login frequency | Power user emerging | Highlight advanced features |
-| Multiple team members added | Growing operation | Suggest Pro for team features |
-
-### Upgrade Messaging Philosophy
-
-**Don't punish. Celebrate.**
-
-```
-❌ "You've hit your limit. Upgrade to continue."
-
-✅ "Amazing! You've got 500 loyal customers. 
-    You're ready for Starter - unlock more rewards 
-    and keep growing."
-```
+| Tier | Fee Reduction | Governance | Other Perks |
+|------|---------------|------------|-------------|
+| Deckhand | 3% fee | None | — |
+| First Mate | 2% fee | 1 vote | Early features |
+| Captain | 1.5% fee | 3 votes | Priority support |
+| Admiral | 1% fee | 10 votes | Revenue share |
+| Fleet Commander | 0.5% fee | Veto power | Treasury oversight |
 
 ---
 
@@ -313,256 +261,258 @@ Even without paying, free users should:
 
 ### vs. Square Loyalty
 
-| Aspect | Square | RewardsPirate |
-|--------|--------|---------------|
-| Base price | Free (with Square POS) | Free tier available |
-| Paid tier | $45/mo/location | $29-79/mo total |
-| Requires their POS | Yes | No |
-| Multi-location | Per-location pricing | Included in tier |
-| Network features | None | Core differentiator |
+| | Square | RewardsPirate |
+|-|--------|---------------|
+| **Price** | Free (with Square POS) | $0-79/month |
+| **Lock-in** | Must use Square | Works with anything |
+| **Features** | Basic points | Deep gamification |
+| **Network** | None | Multi-business |
 
-**Our angle:** "Square locks you in. We work with everything."
+**Our pitch:** "Square's 'free' loyalty only works if you're all-in on Square. We work with everything."
 
 ### vs. Toast Loyalty
 
-| Aspect | Toast | RewardsPirate |
-|--------|-------|---------------|
-| Base price | Bundled with POS | Standalone |
-| Industry | Restaurants only | Any business |
-| Flexibility | Toast ecosystem only | POS-agnostic |
+| | Toast | RewardsPirate |
+|-|-------|---------------|
+| **Price** | ~$50/month add-on | $29-79/month |
+| **Industry** | Restaurants only | Any SMB |
+| **Features** | Basic | Advanced |
+| **Lock-in** | Toast POS required | None |
 
-**Our angle:** "Toast is for restaurants on Toast. We're for everyone."
+**Our pitch:** "Better features, works anywhere, similar price."
 
-### vs. Stamp/Punch Card Apps
+### vs. Dedicated Loyalty (Fivestars, Belly)
 
-| Aspect | Stamp Apps | RewardsPirate |
-|--------|-----------|---------------|
-| Price | $10-30/mo | $0-79/mo |
-| Features | Basic stamps | Full gamification |
-| Network | Single business | Multi-business |
-| Growth | Limited | Unlimited potential |
+| | Fivestars | RewardsPirate |
+|-|-----------|---------------|
+| **Price** | $200-500/month | $29-79/month |
+| **Hardware** | Required tablet | No hardware |
+| **Contract** | Annual required | Month-to-month |
+| **Network** | Fivestars network | Local pirate networks |
 
-**Our angle:** "Stamp cards are 1990s. This is a loyalty economy."
+**Our pitch:** "Fraction of the price, no hardware, no contract, more features."
 
-### Price Positioning
+### Price Positioning Map
 
 ```
-MARKET POSITIONING
+                    HIGH PRICE
+                        │
+                        │    ┌─────────────┐
+                        │    │  Fivestars  │
+                        │    │   $300+     │
+                        │    └─────────────┘
+                        │
+    ┌─────────────┐     │
+    │   Punchh    │     │
+    │   $500+     │     │
+    └─────────────┘     │
+                        │         ┌───────────────────┐
+                        │         │  REWARDSPIRATE    │
+                        │         │  $29-79 + staking │
+                        │         │  (can be FREE)    │
+                        │         └───────────────────┘
+LOW ────────────────────┼──────────────────────────────── HIGH
+FEATURES                │                              FEATURES
+                        │
+    ┌─────────────┐     │    ┌─────────────┐
+    │   Square    │     │    │   Toast     │
+    │   "Free"    │     │    │   $50       │
+    │  (locked)   │     │    │  (locked)   │
+    └─────────────┘     │    └─────────────┘
+                        │
+                   LOW PRICE
+```
 
-$10-30/mo  →  Basic punch cards, simple loyalty
-$30-50/mo  →  Square, Toast (per location)
-$50-100/mo →  RewardsPirate Pro, full-featured
-$100+/mo   →  Enterprise, custom solutions
+**We're the only option that's high-feature AND can be effectively free (via staking).**
 
-We sit in the "premium but accessible" zone.
-More than punch cards, less than enterprise.
+---
+
+## Free Tier Strategy
+
+### Why Free Matters
+
+```
+FREE USERS ARE NOT FREELOADERS
+
+Free user today → Paid user tomorrow
+Free user today → Referral source
+Free user today → Future enterprise buyer
+Free user today → Network participant (valuable even if free)
+```
+
+### Free Tier Goals
+
+1. **Demonstrate value** before asking for money
+2. **Build habit** of using the product
+3. **Create natural upgrade moments** (not artificial walls)
+4. **Generate network effects** (more businesses = more valuable)
+5. **Word of mouth** (free users talk)
+
+### Free Tier Limits Philosophy
+
+Limits should feel like **unlocking more**, not **paying to remove annoyances**.
+
+| Good Limit | Bad Limit |
+|------------|-----------|
+| "3 rewards" (want more = upgrade) | "Watermark on everything" (annoying) |
+| "500 customers" (growing = upgrade) | "Ads in the app" (degrades experience) |
+| "1 location" (expanding = upgrade) | "Features randomly disabled" (confusing) |
+
+### Conversion Funnel
+
+```
+FREE SIGNUP
+    ↓
+Uses basic features, sees engagement
+    ↓
+Hits a natural limit (rewards, customers, locations)
+    ↓
+Sees upgrade prompt with clear value
+    ↓
+"Unlock unlimited rewards for $29/month"
+    ↓
+STARTER
+    ↓
+Sees Pro features they want (AI, milestones)
+    ↓
+PRO
+    ↓
+Scales to enterprise needs
+    ↓
+ENTERPRISE
 ```
 
 ---
 
-## Future Pricing: Staking & Yield
+## Upgrade Triggers
 
-### Staking Tier Discounts
+### Automated Upgrade Prompts
 
-When staking launches, tenants who stake get fee reductions:
+| Trigger | Message | Offer |
+|---------|---------|-------|
+| 80% of reward limit | "Running low on reward slots" | Upgrade to unlock more |
+| 90% of customer limit | "Almost at customer capacity" | Upgrade before you hit the wall |
+| Tries Pro feature | "Milestone rewards are a Pro feature" | Upgrade or start trial |
+| High engagement, low tier | "Your customers love this! Unlock more" | Personalized upgrade pitch |
+| Multiple locations mentioned | "Managing multiple locations?" | Show multi-location benefits |
 
-| Tier | Stake | Fee Reduction | Effective Subscription |
-|------|-------|---------------|------------------------|
-| Deckhand | $0 | 0% | Full price |
-| First Mate | $500 | 10% | $71/mo (Pro) |
-| Captain | $2,000 | 20% | $63/mo (Pro) |
-| Admiral | $10,000 | 35% | $51/mo (Pro) |
-| Fleet Commander | $50,000 | 50% | $40/mo (Pro) |
+### Human-Touch Upgrade Moments
 
-**The psychology:** "Stake more, pay less, earn yield."
+| Signal | Action |
+|--------|--------|
+| Free user with high engagement | Personal email: "Looks like your program is taking off!" |
+| Starter hitting limits repeatedly | Check-in call: "How can we help you grow?" |
+| Pro user with enterprise signals | Sales outreach: "Let's talk about scaling" |
 
-### Yield Credits Against Subscription
+### What NOT to Do
 
-At higher stake levels, yield can offset or exceed subscription:
-
-| Stake | Monthly Yield (~6% APY) | Pro Subscription | Net Cost |
-|-------|-------------------------|------------------|----------|
-| $500 | ~$2.50 | $79 | $76.50 |
-| $2,000 | ~$10 | $79 | $69 |
-| $10,000 | ~$50 | $79 | $29 |
-| $25,000 | ~$125 | $79 | **-$46** (profit) |
-| $50,000 | ~$250 | $79 | **-$171** (profit) |
-
-**The pitch:** "Stake enough and your loyalty program pays YOU."
-
-### Network Transaction Fees
-
-When Doubloon economy launches:
-
-| Transaction Type | Fee | Who Pays |
-|------------------|-----|----------|
-| Same-tenant redemption | 0% | N/A |
-| Cross-network redemption | 1-2% | Redeeming business |
-| External spend (crypto rails) | 2-3% | Customer |
-| Cash-out to USD | 2% | Customer/tenant |
+❌ Nag constantly about upgrading
+❌ Make free tier feel broken
+❌ Hide features then surprise with paywall
+❌ Pressure tactics ("Upgrade NOW or lose data!")
+❌ Make downgrading feel punishing
 
 ---
 
-## Pricing Principles
-
-### 1. Transparency
-
-No hidden fees. No gotchas. Price is price.
-
-```
-❌ "$29/mo* (*plus $0.10 per transaction)"
-✅ "$29/mo. That's it."
-```
-
-### 2. Predictability
-
-Customers should know what they'll pay each month.
-
-```
-❌ Usage-based pricing that varies wildly
-✅ Flat tiers with clear limits
-```
-
-### 3. Fairness
-
-Pricing should feel fair relative to value received.
-
-```
-❌ Charge more because we can
-✅ Charge based on value delivered
-```
-
-### 4. Simplicity
-
-Easy to understand, easy to explain.
-
-```
-❌ "Pro includes X, Y, Z add-ons at 20% discount 
-    but only if you pay annually and have >3 locations..."
-    
-✅ "Pro is $79/mo. Here's what you get."
-```
-
-### 5. Room to Grow
-
-Leave space for upgrades, add-ons, and new revenue streams.
-
-```
-❌ Everything included at one price (no expansion revenue)
-✅ Core product + add-ons + future features
-```
-
----
-
-## Discounts & Promotions
+## Annual vs. Monthly
 
 ### Annual Discount
 
-Pay annually, save 20%:
+| Tier | Monthly | Annual | Savings |
+|------|---------|--------|---------|
+| Starter | $29/mo | $290/yr ($24.17/mo) | 2 months free |
+| Pro | $79/mo | $790/yr ($65.83/mo) | 2 months free |
 
-| Tier | Monthly | Annual (per month) | Annual Total |
-|------|---------|-------------------|--------------|
-| Starter | $29 | $23 | $276/year |
-| Pro | $79 | $63 | $756/year |
+### Why Offer Annual
 
-**Why 20%:** Industry standard, meaningful enough to matter, not so much we undercut ourselves.
+- **Cash flow:** Money upfront
+- **Commitment:** Lower churn
+- **Planning:** Predictable revenue
 
-### Promotional Discounts
+### Why Not Push Annual Too Hard
 
-| Promotion | Discount | When to Use |
-|-----------|----------|-------------|
-| First month free | 100% off month 1 | Acquisition campaigns |
-| 50% off 3 months | 50% x 3 | Win-back churned users |
-| Network launch bonus | 25% off year 1 | New network formation |
-| Referral credit | $20 credit | Tenant refers tenant |
+- **Barrier:** Higher upfront cost
+- **Trust:** New users haven't proven value yet
+- **Flexibility:** Monthly lets them test
 
-### What We Don't Discount
-
-- Enterprise pricing (negotiated case-by-case)
-- Add-ons (keep them simple)
-- Usage overages (pay for what you use)
+**Strategy:** Offer annual after 3+ months of happy monthly usage.
 
 ---
 
-## Revenue Model Summary
+## Pricing Experiments (Future)
 
-### Current Revenue Streams
+### To Test
 
-| Stream | Source | % of Revenue (Target) |
-|--------|--------|----------------------|
-| Subscriptions | Tier fees | 70% |
-| Add-ons | Feature packs | 15% |
-| Overages | Limit exceeded | 5% |
-| Annual prepay | Cash flow boost | 10% |
+1. **Price points:** Is $79 optimal or would $69 or $99 convert better?
+2. **Annual discount:** Is 2 months free optimal?
+3. **Add-on bundles:** "Marketing Pack" (AI + SMS) at discount?
+4. **Vertical pricing:** Different prices for restaurants vs. retail?
+5. **Usage-based:** Charge per customer instead of flat?
 
-### Future Revenue Streams
+### How to Test
 
-| Stream | Source | Phase |
-|--------|--------|-------|
-| Network transaction fees | Cross-redemption | Phase 2 |
-| Physical rewards margin | Merch, cards | Phase 2 |
-| Staking fee reduction offset | Yield capture | Phase 3 |
-| External payment fees | Crypto rails | Phase 4 |
-| Enterprise services | Custom integration | Ongoing |
+- A/B test new signups
+- Grandfather existing customers
+- Measure conversion AND retention
+- Watch for support load changes
 
 ---
 
-## Metrics to Track
+## Revenue Projections
 
-### Pricing Health Metrics
+### Per-Customer Math
 
-| Metric | Target | Warning Sign |
-|--------|--------|--------------|
-| Free → Paid conversion | 15%+ | < 10% |
-| Starter → Pro upgrade | 20%+ | < 10% |
-| Annual vs Monthly ratio | 40%+ annual | < 25% |
-| Add-on attachment rate | 25%+ | < 15% |
-| Revenue per customer | Growing MoM | Declining |
-| Churn rate | < 5%/month | > 8%/month |
+| Metric | Conservative | Target | Optimistic |
+|--------|--------------|--------|------------|
+| Free → Starter conversion | 5% | 10% | 15% |
+| Starter → Pro conversion | 20% | 30% | 40% |
+| Average revenue/customer | $35/mo | $50/mo | $65/mo |
+| Annual churn | 30% | 20% | 10% |
+| LTV | $840 | $2,000 | $5,200 |
 
-### Price Sensitivity Signals
+### Growth Scenarios
 
-Watch for these signals that pricing may need adjustment:
+**Year 1 (Launch):**
+- 100 free users
+- 20 Starter ($580/mo)
+- 5 Pro ($395/mo)
+- **MRR: ~$1,000**
 
-| Signal | Possible Issue |
-|--------|----------------|
-| High free-to-paid, but high churn | Price too high for value |
-| Low free-to-paid, but low churn | Free too generous |
-| Everyone on Pro, no Enterprise | Pro ceiling too high |
-| Everyone on Starter, few Pro | Pro jump too big |
-| Add-on attachment very low | Add-ons not valuable enough |
-| Add-on attachment very high | Should be in base tier |
+**Year 2 (Traction):**
+- 1,000 free users
+- 150 Starter ($4,350/mo)
+- 50 Pro ($3,950/mo)
+- 5 Enterprise (~$1,500/mo)
+- **MRR: ~$10,000**
+
+**Year 3 (Scale):**
+- 10,000 free users
+- 1,000 Starter ($29,000/mo)
+- 400 Pro ($31,600/mo)
+- 30 Enterprise (~$9,000/mo)
+- Add-ons (~$5,000/mo)
+- **MRR: ~$75,000**
 
 ---
 
 ## Summary
 
-```
-PRICING STRATEGY
+### Pricing Principles
 
-FREE ($0)
-└── Acquisition funnel, prove value, create switching costs
+1. **Value-based:** Price on value delivered, not cost to serve
+2. **Customer-first:** Free tier is generous, upgrades feel like unlocking
+3. **Simple:** Easy to understand, easy to compare
+4. **Flexible:** Add-ons let businesses customize
+5. **Future-proof:** Staking tiers create new paradigm
 
-STARTER ($29/mo)
-└── Growing businesses, below impulse threshold, core features
+### The Vision
 
-PRO ($79/mo)  
-└── Serious operators, full features, under manager approval
+> Traditional pricing: "Pay us money every month forever."
+>
+> RewardsPirate pricing: "Pay us, or stake and pay less, or stake enough and we pay YOU."
 
-ENTERPRISE (Custom)
-└── Big fish, negotiated, high-touch sales
-
-ADD-ONS ($19-49/mo)
-└── Expand specific capabilities without tier jump
-
-FUTURE: STAKING
-└── Stake to reduce fees, yield to offset subscription
-└── At $25k+ stake, subscription becomes profit
-```
-
-**The North Star:**
-> Make pricing so obviously fair that it's never the reason someone doesn't buy.
+**That's not a loyalty platform. That's an economy.**
 
 ---
 
-🏴‍☠️ **We're not selling software. We're selling growth. Price accordingly.**
+🏴‍☠️ **Pricing should feel like joining a crew, not signing a contract.**
