@@ -347,6 +347,7 @@ const pendingAwardChoices = pgTable('pending_award_choices', {
 }));
 
 // Customer Tags - Tags applied to customers (from rules or manual)
+const customerTags = pgTable('customer_tags', {
   id: text('id').primaryKey(), // ctag_ prefix
   customerId: text('customer_id').notNull().references(() => customers.id),
   businessId: text('business_id').notNull().references(() => businesses.id),
