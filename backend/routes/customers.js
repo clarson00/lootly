@@ -1,81 +1,88 @@
 const express = require('express');
 const router = express.Router();
 const QRCode = require('qrcode');
-const { db } = require('../db/database');
+const { db, schema } = require('../db');
+const { eq } = require('drizzle-orm');
 const { authenticateCustomer } = require('../middleware/auth');
+
+const { customers, qrCodes } = schema;
 
 // All routes require customer authentication
 router.use(authenticateCustomer);
 
 // PATCH /api/customers/profile - Update customer profile
-router.patch('/profile', (req, res) => {
+router.patch('/profile', async (req, res) => {
   const { name, email } = req.body;
   const customerId = req.customer.id;
 
-  // Build update query dynamically
-  const updates = [];
-  const values = [];
+  try {
+    // Build update object dynamically
+    const updates = {};
 
-  if (name !== undefined) {
-    updates.push('name = ?');
-    values.push(name);
-  }
+    if (name !== undefined) {
+      updates.name = name;
+    }
 
-  if (email !== undefined) {
-    // Basic email validation
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (email !== undefined) {
+      // Basic email validation
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_EMAIL', message: 'Invalid email format' }
+        });
+      }
+      updates.email = email;
+    }
+
+    if (Object.keys(updates).length === 0) {
       return res.status(400).json({
         success: false,
-        error: { code: 'INVALID_EMAIL', message: 'Invalid email format' }
+        error: { code: 'NO_UPDATES', message: 'No fields to update' }
       });
     }
-    updates.push('email = ?');
-    values.push(email);
-  }
 
-  if (updates.length === 0) {
-    return res.status(400).json({
+    updates.updatedAt = new Date();
+
+    await db.update(customers).set(updates).where(eq(customers.id, customerId));
+
+    const [customer] = await db.select().from(customers).where(eq(customers.id, customerId));
+
+    // Get primary QR code
+    const [qr] = await db.select().from(qrCodes).where(eq(qrCodes.customerId, customerId));
+
+    res.json({
+      success: true,
+      data: {
+        customer: {
+          id: customer.id,
+          phone: customer.phone,
+          name: customer.name,
+          email: customer.email,
+          qr_code: qr?.code || `lootly:customer:${customer.id}`
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error updating customer:', error);
+    res.status(500).json({
       success: false,
-      error: { code: 'NO_UPDATES', message: 'No fields to update' }
+      error: { code: 'SERVER_ERROR', message: 'Failed to update profile' }
     });
   }
-
-  values.push(customerId);
-
-  db.prepare(`UPDATE customers SET ${updates.join(', ')} WHERE id = ?`).run(...values);
-
-  const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(customerId);
-
-  res.json({
-    success: true,
-    data: {
-      customer: {
-        id: customer.id,
-        phone: customer.phone,
-        name: customer.name,
-        email: customer.email,
-        qr_code: customer.qr_code
-      }
-    }
-  });
 });
 
 // GET /api/customers/qr-code - Get customer QR code
 router.get('/qr-code', async (req, res) => {
   const customerId = req.customer.id;
 
-  const customer = db.prepare('SELECT qr_code FROM customers WHERE id = ?').get(customerId);
-
-  if (!customer) {
-    return res.status(404).json({
-      success: false,
-      error: { code: 'NOT_FOUND', message: 'Customer not found' }
-    });
-  }
-
   try {
+    // Get or create QR code
+    let [qr] = await db.select().from(qrCodes).where(eq(qrCodes.customerId, customerId));
+
+    const qrCodeValue = qr?.code || `lootly:customer:${customerId}`;
+
     // Generate QR code data URL
-    const qrDataUrl = await QRCode.toDataURL(customer.qr_code, {
+    const qrDataUrl = await QRCode.toDataURL(qrCodeValue, {
       width: 300,
       margin: 2,
       color: {
@@ -87,7 +94,7 @@ router.get('/qr-code', async (req, res) => {
     res.json({
       success: true,
       data: {
-        qr_code: customer.qr_code,
+        qr_code: qrCodeValue,
         qr_data_url: qrDataUrl
       }
     });

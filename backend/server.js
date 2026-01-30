@@ -2,7 +2,6 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const { initializeDatabase } = require('./db/database');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -39,6 +38,7 @@ app.use('/api/enrollments', require('./routes/enrollments'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/rewards', require('./routes/rewards'));
 app.use('/api/staff', require('./routes/staff'));
+app.use('/api/entitlements', require('./routes/entitlements'));
 
 // Error handling
 app.use((err, req, res, next) => {
@@ -63,25 +63,15 @@ app.use((req, res) => {
   });
 });
 
-// Start server after database initialization
-async function start() {
-  try {
-    await initializeDatabase();
-
-    app.listen(PORT, () => {
-      console.log(`
+// Start server
+app.listen(PORT, () => {
+  console.log(`
 ╔═══════════════════════════════════════════╗
 ║         Lootly API Server                 ║
 ╠═══════════════════════════════════════════╣
 ║  Running on: http://localhost:${PORT}        ║
-║  Environment: ${process.env.NODE_ENV || 'development'}             ║
+║  Database: PostgreSQL (Neon)              ║
+║  ORM: Drizzle                             ║
 ╚═══════════════════════════════════════════╝
-      `);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-}
-
-start();
+  `);
+});

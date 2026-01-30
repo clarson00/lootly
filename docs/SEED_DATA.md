@@ -1,21 +1,17 @@
 # Lootly Seed Data - Pilot Customer
 
-> **Pilot Customer:** Freddie Guerrera  
-> **Business:** Freddie's Restaurant Group  
-> **Locations:** 4 restaurants in Pennsylvania
+> **Business:** Tony's Restaurant Group
+> **Locations:** 4 restaurants
+> **Subscription:** Free tier (for testing feature gating)
 
 ## Business
 
 ```javascript
 const business = {
-  id: 'biz_freddies',
-  name: "Freddie's Restaurant Group",
-  owner_name: 'Freddie Guerrera',
-  subscription_tier: 'pro',
-  settings: {
-    points_name: 'points',
-    currency: 'USD'
-  }
+  id: 'biz_pilot',
+  name: "Tony's Restaurant Group",
+  primaryColor: '#f59e0b',
+  subscriptionTier: 'free'  // For testing feature gating
 };
 ```
 
@@ -24,36 +20,32 @@ const business = {
 ```javascript
 const locations = [
   {
-    id: 'loc_honeybrook',
-    business_id: 'biz_freddies',
-    name: 'Honey Brook Pizza',
+    id: 'loc_1',
+    businessId: 'biz_pilot',
+    name: "Tony's Pizza",
     icon: '🍕',
-    address: 'Honey Brook, PA',
-    is_active: true
+    addressLine1: '123 Main St'
   },
   {
-    id: 'loc_lacocina',
-    business_id: 'biz_freddies',
-    name: 'La Cocina',
+    id: 'loc_2',
+    businessId: 'biz_pilot',
+    name: 'Casa Verde',
     icon: '🌮',
-    address: 'PA',
-    is_active: true
+    addressLine1: '456 Oak Ave'
   },
   {
-    id: 'loc_elrancho',
-    business_id: 'biz_freddies',
-    name: 'El Rancho Mexican Restaurant',
-    icon: '🌯',
-    address: 'PA',
-    is_active: true
-  },
-  {
-    id: 'loc_antonios',
-    business_id: 'biz_freddies',
-    name: "Antonio's Italian Restaurant",
+    id: 'loc_3',
+    businessId: 'biz_pilot',
+    name: 'Bella Italia',
     icon: '🍝',
-    address: 'PA',
-    is_active: true
+    addressLine1: '789 Elm St'
+  },
+  {
+    id: 'loc_4',
+    businessId: 'biz_pilot',
+    name: 'Dragon Wok',
+    icon: '🥡',
+    addressLine1: '321 Pine Rd'
   }
 ];
 ```
@@ -61,77 +53,25 @@ const locations = [
 ## Location Group
 
 ```javascript
-const locationGroups = [
-  {
-    id: 'grp_all_freddies',
-    business_id: 'biz_freddies',
-    name: 'All Locations',
-    location_ids: ['loc_honeybrook', 'loc_lacocina', 'loc_elrancho', 'loc_antonios']
-  }
-];
+const locationGroup = {
+  id: 'grp_all',
+  businessId: 'biz_pilot',
+  name: 'All Locations',
+  // Includes all 4 locations
+};
 ```
 
-## Rules
+## Earning Rules
 
 ```javascript
-const rules = [
-  // Base earning rule: 1 point per dollar
+const earningRules = [
   {
-    id: 'rule_base_earning',
-    business_id: 'biz_freddies',
-    name: 'Base Points',
-    description: 'Earn 1 point for every $1 spent',
-    conditions: {
-      operator: 'AND',
-      items: [
-        { subject: 'location', scope: 'any', action: 'spend', comparison: '>=', value: 1 }
-      ]
-    },
-    award_type: 'points_per_dollar',
-    award_value: '1',
-    is_active: true,
-    is_repeatable: true
-  },
-  
-  // Grand Tour milestone: Visit all 4 locations
-  {
-    id: 'rule_grand_tour',
-    business_id: 'biz_freddies',
-    name: 'Grand Tour',
-    description: 'Visit all 4 of Freddie\'s restaurants to unlock a special reward!',
-    conditions: {
-      operator: 'AND',
-      items: [
-        { subject: 'location', scope: 'loc_honeybrook', action: 'visit', comparison: '>=', value: 1 },
-        { subject: 'location', scope: 'loc_lacocina', action: 'visit', comparison: '>=', value: 1 },
-        { subject: 'location', scope: 'loc_elrancho', action: 'visit', comparison: '>=', value: 1 },
-        { subject: 'location', scope: 'loc_antonios', action: 'visit', comparison: '>=', value: 1 }
-      ]
-    },
-    award_type: 'reward',
-    award_value: 'reward_grand_tour',
-    is_active: true,
-    is_repeatable: false
-  },
-  
-  // Weekend Warrior: Visit 2+ locations in 7 days
-  {
-    id: 'rule_weekend_warrior',
-    business_id: 'biz_freddies',
-    name: 'Weekend Warrior',
-    description: 'Visit 2 or more locations within 7 days for bonus points!',
-    conditions: {
-      operator: 'AND',
-      items: [
-        { subject: 'location', scope: 'grp_all_freddies', action: 'visit_unique', comparison: '>=', value: 2 },
-        { type: 'time_window', unit: 'days', value: 7 }
-      ]
-    },
-    award_type: 'points',
-    award_value: '50',
-    is_active: true,
-    is_repeatable: true,
-    cooldown_days: 7
+    id: 'rule_standard',
+    businessId: 'biz_pilot',
+    name: 'Standard Earning',
+    type: 'spend',
+    pointsPerDollar: 1,  // 1 point per $1 spent
+    locationGroupId: 'grp_all'
   }
 ];
 ```
@@ -140,57 +80,88 @@ const rules = [
 
 ```javascript
 const rewards = [
-  // Points-based rewards
+  // Points-based rewards (100 pts each)
   {
-    id: 'reward_free_drink',
-    business_id: 'biz_freddies',
-    name: 'Free Drink',
-    description: 'Any fountain drink or coffee',
-    icon: '🥤',
-    points_required: 50,
-    reward_type: 'points_redemption',
-    valid_locations: ['loc_honeybrook', 'loc_lacocina', 'loc_elrancho', 'loc_antonios'],
-    is_active: true
+    id: 'reward_1',
+    businessId: 'biz_pilot',
+    name: 'Free Pizza',
+    description: "One free personal pizza at Tony's Pizza",
+    icon: '🍕',
+    pointsRequired: 100,
+    rewardType: 'points_redemption',
+    valueType: 'free_item',
+    valueAmount: '15'
   },
   {
-    id: 'reward_free_appetizer',
-    business_id: 'biz_freddies',
-    name: 'Free Appetizer',
-    description: 'Any appetizer up to $10 value',
-    icon: '🥟',
-    points_required: 100,
-    reward_type: 'points_redemption',
-    valid_locations: ['loc_honeybrook', 'loc_lacocina', 'loc_elrancho', 'loc_antonios'],
-    is_active: true
+    id: 'reward_2',
+    businessId: 'biz_pilot',
+    name: 'Free Nachos',
+    description: 'Free loaded nachos at Casa Verde',
+    icon: '🌮',
+    pointsRequired: 100,
+    rewardType: 'points_redemption',
+    valueType: 'free_item',
+    valueAmount: '12'
   },
   {
-    id: 'reward_10_off',
-    business_id: 'biz_freddies',
-    name: '$10 Off',
-    description: '$10 off any order of $25 or more',
-    icon: '💵',
-    points_required: 200,
-    reward_type: 'points_redemption',
-    valid_locations: ['loc_honeybrook', 'loc_lacocina', 'loc_elrancho', 'loc_antonios'],
-    is_active: true
+    id: 'reward_3',
+    businessId: 'biz_pilot',
+    name: 'Free Pasta',
+    description: 'Free pasta dish at Bella Italia',
+    icon: '🍝',
+    pointsRequired: 100,
+    rewardType: 'points_redemption',
+    valueType: 'free_item',
+    valueAmount: '14'
   },
-  
+  {
+    id: 'reward_4',
+    businessId: 'biz_pilot',
+    name: 'Free Combo',
+    description: 'Free combo meal at Dragon Wok',
+    icon: '🥡',
+    pointsRequired: 100,
+    rewardType: 'points_redemption',
+    valueType: 'free_item',
+    valueAmount: '13'
+  },
+
   // Milestone reward (unlocked by Grand Tour rule)
   {
     id: 'reward_grand_tour',
-    business_id: 'biz_freddies',
-    name: 'Grand Tour Champion',
-    description: '$25 off + Double points for 30 days!',
+    businessId: 'biz_pilot',
+    name: '$50 Off Grand Tour',
+    description: 'Visit all 4 locations to unlock! $50 off your next order anywhere.',
     icon: '🏆',
-    points_required: 0,  // Unlocked by rule, not points
-    reward_type: 'milestone',
-    effects: {
-      discount_amount: 25,
-      points_multiplier: 2.0,
-      multiplier_duration_days: 30
+    pointsRequired: 0,  // Unlocked by rule, not points
+    rewardType: 'milestone',
+    valueType: 'fixed_discount',
+    valueAmount: '50'
+  }
+];
+```
+
+## Rules (Milestones)
+
+```javascript
+const rules = [
+  {
+    id: 'rule_grand_tour',
+    businessId: 'biz_pilot',
+    name: 'Grand Tour',
+    description: 'Visit all 4 locations to unlock epic rewards!',
+    conditions: {
+      operator: 'AND',
+      items: [
+        { subject: 'location', scope: 'specific', location_id: 'loc_1', action: 'visit', comparison: '>=', value: 1 },
+        { subject: 'location', scope: 'specific', location_id: 'loc_2', action: 'visit', comparison: '>=', value: 1 },
+        { subject: 'location', scope: 'specific', location_id: 'loc_3', action: 'visit', comparison: '>=', value: 1 },
+        { subject: 'location', scope: 'specific', location_id: 'loc_4', action: 'visit', comparison: '>=', value: 1 }
+      ]
     },
-    valid_locations: ['loc_honeybrook', 'loc_lacocina', 'loc_elrancho', 'loc_antonios'],
-    is_active: true
+    awardType: 'reward',
+    awardValue: 'reward_grand_tour',
+    isRepeatable: false
   }
 ];
 ```
@@ -198,62 +169,38 @@ const rewards = [
 ## Staff
 
 ```javascript
+// One staff member per location, all with PIN: 1234
 const staff = [
-  // Honey Brook Pizza
-  {
-    id: 'staff_hb_1',
-    location_id: 'loc_honeybrook',
-    name: 'Manager',
-    pin: '1234',
-    role: 'manager'
-  },
-  
-  // La Cocina
-  {
-    id: 'staff_lc_1',
-    location_id: 'loc_lacocina',
-    name: 'Manager',
-    pin: '1234',
-    role: 'manager'
-  },
-  
-  // El Rancho
-  {
-    id: 'staff_er_1',
-    location_id: 'loc_elrancho',
-    name: 'Manager',
-    pin: '1234',
-    role: 'manager'
-  },
-  
-  // Antonio's
-  {
-    id: 'staff_ant_1',
-    location_id: 'loc_antonios',
-    name: 'Manager',
-    pin: '1234',
-    role: 'manager'
-  }
+  { id: 'staff_loc_1', locationId: 'loc_1', name: "Tony's Pizza Staff", pinHash: bcrypt('1234') },
+  { id: 'staff_loc_2', locationId: 'loc_2', name: 'Casa Verde Staff', pinHash: bcrypt('1234') },
+  { id: 'staff_loc_3', locationId: 'loc_3', name: 'Bella Italia Staff', pinHash: bcrypt('1234') },
+  { id: 'staff_loc_4', locationId: 'loc_4', name: 'Dragon Wok Staff', pinHash: bcrypt('1234') }
 ];
 ```
 
-## Test Customer (for development)
+## Test Customer
 
 ```javascript
 const testCustomer = {
-  id: 'cust_test_001',
-  phone: '+15555551234',
+  id: 'cust_test',
+  phone: '+15551234567',
   name: 'Test Customer',
   email: 'test@example.com'
 };
 
 const testEnrollment = {
-  id: 'enroll_test_001',
-  customer_id: 'cust_test_001',
-  business_id: 'biz_freddies',
-  points_balance: 150,
-  points_multiplier: 1.0,
-  tier: 'member'
+  id: 'enroll_test',
+  customerId: 'cust_test',
+  businessId: 'biz_pilot',
+  pointsBalance: 50,
+  lifetimePoints: 50,
+  lifetimeSpend: 5000  // cents ($50)
+};
+
+const testQrCode = {
+  customerId: 'cust_test',
+  code: 'lootly:customer:cust_test',
+  type: 'primary'
 };
 ```
 
@@ -261,23 +208,32 @@ const testEnrollment = {
 
 | Entity | Count | Notes |
 |--------|-------|-------|
-| Business | 1 | Freddie's Restaurant Group |
-| Locations | 4 | Pizza, 2 Mexican, 1 Italian |
+| Business | 1 | Tony's Restaurant Group (free tier) |
+| Locations | 4 | Pizza, Mexican, Italian, Asian |
 | Location Groups | 1 | All Locations |
-| Rules | 3 | Base earning, Grand Tour, Weekend Warrior |
-| Rewards | 4 | 3 points-based + 1 milestone |
-| Staff | 4 | 1 manager per location (PIN: 1234) |
-| Test Customer | 1 | For development testing |
+| Earning Rules | 1 | 1 point per $1 spent |
+| Rewards | 5 | 4 points-based (100 pts) + 1 milestone |
+| Rules | 1 | Grand Tour milestone |
+| Staff | 4 | 1 per location (PIN: 1234) |
+| Test Customer | 1 | Phone: +15551234567 |
 
-## Location Icons Quick Reference
+## Test Credentials
+
+| Role | Credential | Value |
+|------|------------|-------|
+| Customer Phone | +15551234567 | |
+| Verification Code | 1234 | (MVP accepts any 4-digit code) |
+| Staff PIN | 1234 | (any location) |
+
+## Location Icons
 
 | Location | Icon |
 |----------|------|
-| Honey Brook Pizza | 🍕 |
-| La Cocina | 🌮 |
-| El Rancho Mexican Restaurant | 🌯 |
-| Antonio's Italian Restaurant | 🍝 |
+| Tony's Pizza | 🍕 |
+| Casa Verde | 🌮 |
+| Bella Italia | 🍝 |
+| Dragon Wok | 🥡 |
 
 ---
 
-*This file is used by `backend/db/seed.js` to populate the database for development and pilot testing.*
+*This file documents `backend/db/seed.js`. Run `npm run seed` in the backend folder to populate the database.*

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(STAFF3=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoic3RhZmYiLCJzdGFmZl9pZCI6InN0YWZmX2xvY18zIiwibG9jYXRpb25faWQiOiJsb2NfMyIsImJ1c2luZXNzX2lkIjoiYml6X3BpbG90IiwiaWF0IjoxNzY5NzM2Mjk4LCJleHAiOjE3Njk3Nzk0OTh9.0C08I1HeZGU_qZO_qg93u30ATHzYdGk8jZHtRB6RSss\")",
+      "Bash(curl:*)",
+      "Bash(STAFF4=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoic3RhZmYiLCJzdGFmZl9pZCI6InN0YWZmX2xvY180IiwibG9jYXRpb25faWQiOiJsb2NfNCIsImJ1c2luZXNzX2lkIjoiYml6X3BpbG90IiwiaWF0IjoxNzY5NzM2MzE0LCJleHAiOjE3Njk3Nzk1MTR9.ytUUZ3qE4Rr98j1BIr_2AkWuXMFQDAmvTCLdFPx4rGU\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiY3VzdG9tZXIiLCJjdXN0b21lcl9pZCI6ImN1c3RfdGVzdCIsInBob25lIjoiKzE1NTUxMjM0NTY3IiwiaWF0IjoxNzY5NzM2MDI1LCJleHAiOjE3NzAzNDA4MjV9.UmXGotROlP7XqjsDVorCjr9SdcMwTFC7BI8rM7hh0ys\")",
+      "Bash(STAFF1=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoic3RhZmYiLCJzdGFmZl9pZCI6InN0YWZmX2xvY18xIiwibG9jYXRpb25faWQiOiJsb2NfMSIsImJ1c2luZXNzX2lkIjoiYml6X3BpbG90IiwiaWF0IjoxNzY5NzM2MTU1LCJleHAiOjE3Njk3NzkzNTV9.CwZfoBjyCvB_dipU_ALrFE_EGdGgbgxIMV_PgTXVme0\")",
+      "Bash(python:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nMark integration testing complete\n\nAll flows verified on Express/SQLite prototype:\n- Customer auth \\(phone + code\\)\n- Staff login \\(location + PIN\\)\n- Multi-location visit tracking\n- Grand Tour milestone \\(4 locations → $50 reward + 2x multiplier\\)\n- Reward unlock with points\n- Staff redemption flow\n\nReady for backend migration to Hono + PostgreSQL.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)"
+    ]
+  }
+}

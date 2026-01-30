@@ -1,11 +1,11 @@
 # Lootly Database Schema
 
-> **OWNERSHIP:** Claude Code owns the actual schema in `backend/db/schema.ts`.  
+> **OWNERSHIP:** Claude Code owns the actual schema in `backend/db/schema.js`.
 > This doc is a **reference spec**, not a constraint. Modify the schema as needed—add columns, change types, add tables, refactor. Just keep seed data working and update this doc if making major changes.
 
-> **Database:** PostgreSQL (Neon serverless)  
-> **ORM:** Drizzle ORM  
-> **Location:** `backend/db/schema.ts`
+> **Database:** PostgreSQL (Neon for production, local PostgreSQL for dev)
+> **ORM:** Drizzle ORM
+> **Location:** `backend/db/schema.js`
 
 ---
 

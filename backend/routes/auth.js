@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { db, generateId } = require('../db/database');
+const { db, schema, generateId } = require('../db');
+const { eq } = require('drizzle-orm');
 const { generateToken, authenticateCustomer } = require('../middleware/auth');
+
+const { customers, enrollments, qrCodes } = schema;
 
 // POST /api/auth/request-code - Request SMS verification code
 router.post('/request-code', (req, res) => {
@@ -33,7 +36,7 @@ router.post('/request-code', (req, res) => {
 });
 
 // POST /api/auth/verify-code - Verify SMS code and get JWT
-router.post('/verify-code', (req, res) => {
+router.post('/verify-code', async (req, res) => {
   const { phone, code } = req.body;
 
   if (!phone || !code) {
@@ -51,84 +54,114 @@ router.post('/verify-code', (req, res) => {
     });
   }
 
-  // Normalize phone number
-  const normalizedPhone = phone.replace(/[\s\-\(\)]/g, '');
+  try {
+    // Normalize phone number
+    const normalizedPhone = phone.replace(/[\s\-\(\)]/g, '');
 
-  // Check if customer exists
-  let customer = db.prepare('SELECT * FROM customers WHERE phone = ?').get(normalizedPhone);
-  let isNew = false;
+    // Check if customer exists
+    let [customer] = await db.select().from(customers).where(eq(customers.phone, normalizedPhone));
+    let isNew = false;
 
-  if (!customer) {
-    // Create new customer
-    isNew = true;
-    const customerId = generateId('cust');
-    const qrCode = `lootly:customer:${customerId}`;
+    if (!customer) {
+      // Create new customer
+      isNew = true;
+      const customerId = generateId('cust');
+      const qrCode = `lootly:customer:${customerId}`;
 
-    db.prepare(`
-      INSERT INTO customers (id, phone, qr_code)
-      VALUES (?, ?, ?)
-    `).run(customerId, normalizedPhone, qrCode);
+      await db.insert(customers).values({
+        id: customerId,
+        phone: normalizedPhone
+      });
 
-    customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(customerId);
+      // Create QR code record
+      await db.insert(qrCodes).values({
+        id: generateId('qr'),
+        customerId: customerId,
+        code: qrCode,
+        type: 'primary'
+      });
 
-    // Auto-enroll in pilot business for MVP
-    const enrollmentId = generateId('enroll');
-    db.prepare(`
-      INSERT INTO enrollments (id, customer_id, business_id)
-      VALUES (?, ?, 'biz_pilot')
-    `).run(enrollmentId, customerId);
+      [customer] = await db.select().from(customers).where(eq(customers.id, customerId));
 
-    console.log(`[AUTH] New customer created: ${customerId}`);
-  }
+      // Auto-enroll in pilot business for MVP
+      await db.insert(enrollments).values({
+        id: generateId('enroll'),
+        customerId: customerId,
+        businessId: 'biz_pilot'
+      });
 
-  // Generate token
-  const token = generateToken({
-    type: 'customer',
-    customer_id: customer.id,
-    phone: customer.phone
-  });
-
-  console.log(`[AUTH] Customer logged in: ${customer.id}`);
-
-  res.json({
-    success: true,
-    data: {
-      token,
-      customer: {
-        id: customer.id,
-        phone: customer.phone,
-        name: customer.name,
-        email: customer.email,
-        qr_code: customer.qr_code
-      },
-      isNew
+      console.log(`[AUTH] New customer created: ${customerId}`);
     }
-  });
+
+    // Get QR code
+    const [qr] = await db.select().from(qrCodes).where(eq(qrCodes.customerId, customer.id));
+
+    // Generate token
+    const token = generateToken({
+      type: 'customer',
+      customer_id: customer.id,
+      phone: customer.phone
+    });
+
+    console.log(`[AUTH] Customer logged in: ${customer.id}`);
+
+    res.json({
+      success: true,
+      data: {
+        token,
+        customer: {
+          id: customer.id,
+          phone: customer.phone,
+          name: customer.name,
+          email: customer.email,
+          qr_code: qr?.code || `lootly:customer:${customer.id}`
+        },
+        isNew
+      }
+    });
+  } catch (error) {
+    console.error('Error verifying code:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'Failed to verify code' }
+    });
+  }
 });
 
 // GET /api/auth/me - Get current user
-router.get('/me', authenticateCustomer, (req, res) => {
-  const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.customer.id);
+router.get('/me', authenticateCustomer, async (req, res) => {
+  try {
+    const [customer] = await db.select().from(customers).where(eq(customers.id, req.customer.id));
 
-  if (!customer) {
-    return res.status(404).json({
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Customer not found' }
+      });
+    }
+
+    // Get QR code
+    const [qr] = await db.select().from(qrCodes).where(eq(qrCodes.customerId, customer.id));
+
+    res.json({
+      success: true,
+      data: {
+        customer: {
+          id: customer.id,
+          phone: customer.phone,
+          name: customer.name,
+          email: customer.email,
+          qr_code: qr?.code || `lootly:customer:${customer.id}`
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching customer:', error);
+    res.status(500).json({
       success: false,
-      error: { code: 'NOT_FOUND', message: 'Customer not found' }
+      error: { code: 'SERVER_ERROR', message: 'Failed to fetch customer' }
     });
   }
-
-  res.json({
-    success: true,
-    data: {
-      customer: {
-        id: customer.id,
-        phone: customer.phone,
-        name: customer.name,
-        email: customer.email,
-        qr_code: customer.qr_code
-      }
-    }
-  });
 });
 
 module.exports = router;

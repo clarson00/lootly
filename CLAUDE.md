@@ -86,6 +86,7 @@ const customers = await db.query.customers.findMany({
 lootly/
 ├── CLAUDE.md           # This file (read first!)
 ├── ROADMAP.md          # Feature roadmap
+├── PROGRESS.md         # Development progress tracker
 ├── docs/
 │   ├── ARCHITECTURE.md # ⚠️ System design (MUST READ)
 │   ├── ENTITLEMENTS.md # ⚠️ Feature gating (MUST READ)
@@ -94,13 +95,15 @@ lootly/
 │   ├── DATABASE_SCHEMA.md
 │   ├── SEED_DATA.md
 │   └── roadmap/        # Feature specs
-│       ├── user-journeys.md
-│       ├── time-bound-promos.md
-│       ├── marketing-messages.md
-│       ├── analytics-reporting.md
-│       └── ai-marketing-assistant.md
-├── backend/            # Express API (when created)
-└── frontend/           # React PWA (when created)
+├── backend/            # Express API
+│   ├── db/             # Drizzle schema, seed
+│   ├── routes/         # API route handlers
+│   ├── middleware/     # Auth, feature gating
+│   ├── services/       # Business logic (entitlements)
+│   ├── lib/features/   # Feature registry, tier definitions
+│   └── tests/          # API integration tests
+├── customer-app/       # React PWA for customers
+└── staff-app/          # React PWA for tablet check-in
 ```
 
 ## Ownership Model
@@ -114,20 +117,29 @@ lootly/
 
 ## Current Status
 
-- **Phase:** Pre-MVP (specs only)
-- **Pilot Customer:** Freddie's Restaurant Group (4 locations)
-- **Next:** Build MVP backend and frontend
+- **Phase:** MVP Complete (local deployment)
+- **Pilot Customer:** Tony's Restaurant Group (4 locations)
+- **Backend:** Express + Drizzle + PostgreSQL with feature gating
+- **Frontend:** Customer app + Staff tablet app (React PWAs)
+- **Next:** Production deployment (Neon + Railway + Vercel)
 
 ## Commands Reference
 
 ```bash
-# When backend exists:
-cd backend && npm run dev      # Start dev server
-cd backend && npm run db:push  # Push schema changes
-cd backend && npm run db:seed  # Seed pilot data
+# Backend
+cd backend && npm run dev      # Start dev server (nodemon)
+cd backend && npm start        # Start production server
+cd backend && npm test         # Run API integration tests
+cd backend && npm run seed     # Seed database with test data
+cd backend && npm run db:push  # Push schema changes to DB
 
-# When frontend exists:
-cd frontend && npm run dev     # Start dev server
+# Frontend Apps
+cd customer-app && npm run dev # Customer PWA (port 5173)
+cd staff-app && npm run dev    # Staff tablet PWA (port 5174)
+
+# Test Credentials
+# Customer: +15551234567 (code: 1234)
+# Staff PIN: 1234 (any location)
 ```
 
 ## Questions?

@@ -93,6 +93,15 @@ class StaffApiClient {
     return this.request(`/rewards/redemption/${encodeURIComponent(code)}`);
   }
 
+  // Entitlements
+  async getEntitlements(businessId) {
+    return this.request(`/entitlements?businessId=${businessId}`);
+  }
+
+  async checkFeature(businessId, feature) {
+    return this.request(`/entitlements/check/${encodeURIComponent(feature)}?businessId=${businessId}`);
+  }
+
   // Logout
   logout() {
     this.setToken(null);

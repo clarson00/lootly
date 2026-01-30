@@ -11,7 +11,8 @@
 | Customer App | ✅ Complete | All pages built, PWA configured |
 | Staff App | ✅ Complete | All pages built, PWA configured |
 | Architecture Docs | ✅ Complete | ENTITLEMENTS, FEATURE_FLAGS, FEATURE_GATING synced |
-| Backend Migration (PostgreSQL/Drizzle) | 🔲 Not Started | Keep Express, migrate DB to PostgreSQL |
+| Backend Migration (PostgreSQL/Drizzle) | ✅ Complete | Express + Drizzle ORM + PostgreSQL |
+| Feature Gating System | ✅ Complete | Entitlements service, middleware, frontend components |
 | Integration Testing | ✅ Complete | All flows verified |
 
 **Legend:** 🔲 Not Started | 🟡 In Progress | ✅ Complete | ⚠️ Blocked
@@ -86,17 +87,21 @@
 3. ~~**Build Customer App**~~ ✅ Done
 4. ~~**Build Staff App**~~ ✅ Done
 5. ~~**Sync architecture docs**~~ ✅ Done
-6. **Backend Migration to Target Architecture** (Next)
-   - Set up Neon PostgreSQL database
-   - Add Drizzle ORM to existing Express backend
-   - Migrate from SQLite to PostgreSQL (same routes, new DB layer)
-   - Add feature gating middleware
-   - Deploy to Railway/Render/Fly.io
-7. **Integration Testing**
-   - Test full check-in flow
-   - Test full redemption flow
-   - Test milestone triggers
-   - Test multi-location tracking
+6. ~~**Backend Migration to Target Architecture**~~ ✅ Done
+   - ~~Set up PostgreSQL database~~ ✅ (local PostgreSQL)
+   - ~~Add Drizzle ORM to existing Express backend~~ ✅
+   - ~~Migrate from SQLite to PostgreSQL~~ ✅
+   - ~~Add feature gating middleware~~ ✅
+   - Deploy to Railway/Render/Fly.io (pending)
+7. ~~**Integration Testing**~~ ✅ Done
+8. **Deployment** (Next)
+   - Set up Neon PostgreSQL (production)
+   - Deploy backend to Railway/Render/Fly.io
+   - Deploy frontend apps to Vercel
+9. **Post-MVP Features**
+   - Stripe billing integration
+   - Real SMS verification (Twilio)
+   - Push notifications
 
 ---
 
@@ -177,6 +182,32 @@
 - Staff redemption flow: ✅
 
 **Notes:** All integration tests passed. Prototype fully functional. Ready for backend migration.
+
+### Session 3 - 2026-01-29
+**Started:** PostgreSQL migration and feature gating
+**Completed:**
+- PostgreSQL/Drizzle migration:
+  - Created Drizzle schema (`backend/db/schema.js`) with all 19 tables
+  - Created Drizzle config (`backend/drizzle.config.js`)
+  - Pushed schema to local PostgreSQL database
+  - Updated seed script for Drizzle ORM
+  - Seeded database with pilot data (Tony's Restaurant Group)
+
+- Feature gating system:
+  - Created feature registry (`backend/lib/features/registry.js`) with all feature keys
+  - Created tier definitions (free, starter, pro, enterprise)
+  - Created EntitlementsService (`backend/services/entitlements.js`)
+  - Created `requireFeature()` middleware (`backend/middleware/requireFeature.js`)
+  - Created `/api/entitlements` routes (get all, check feature, list tiers)
+  - Created frontend `<FeatureGate>` component and `useEntitlements` hook for both apps
+
+**API Endpoints Added:**
+- `GET /api/entitlements?businessId=X` - Get all entitlements for a business
+- `GET /api/entitlements/check/:feature?businessId=X` - Check specific feature access
+- `GET /api/entitlements/tiers` - Get all tier definitions (public)
+- `GET /api/entitlements/features` - Get all feature keys
+
+**Notes:** Feature gating is now built into the foundation. All new features should use `requireFeature()` on backend routes and `<FeatureGate>` in frontend components.
 
 ---
 

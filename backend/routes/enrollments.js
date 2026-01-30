@@ -1,13 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { db, generateId } = require('../db/database');
+const { db, schema, generateId } = require('../db');
+const { eq, and, desc, sql } = require('drizzle-orm');
 const { authenticateCustomer } = require('../middleware/auth');
+
+const { businesses, locations, enrollments, visits, customerRewards, rewards } = schema;
 
 // All routes require customer authentication
 router.use(authenticateCustomer);
 
 // POST /api/enrollments - Enroll in a loyalty program
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { business_id } = req.body;
   const customerId = req.customer.id;
 
@@ -18,175 +21,258 @@ router.post('/', (req, res) => {
     });
   }
 
-  // Check if business exists
-  const business = db.prepare('SELECT id FROM businesses WHERE id = ?').get(business_id);
-  if (!business) {
-    return res.status(404).json({
-      success: false,
-      error: { code: 'BUSINESS_NOT_FOUND', message: 'Business not found' }
-    });
-  }
-
-  // Check if already enrolled
-  const existing = db.prepare(`
-    SELECT id FROM enrollments
-    WHERE customer_id = ? AND business_id = ?
-  `).get(customerId, business_id);
-
-  if (existing) {
-    return res.status(400).json({
-      success: false,
-      error: { code: 'ALREADY_ENROLLED', message: 'Already enrolled in this program' }
-    });
-  }
-
-  // Create enrollment
-  const enrollmentId = generateId('enroll');
-  db.prepare(`
-    INSERT INTO enrollments (id, customer_id, business_id)
-    VALUES (?, ?, ?)
-  `).run(enrollmentId, customerId, business_id);
-
-  const enrollment = db.prepare('SELECT * FROM enrollments WHERE id = ?').get(enrollmentId);
-
-  res.status(201).json({
-    success: true,
-    data: {
-      enrollment: {
-        id: enrollment.id,
-        business_id: enrollment.business_id,
-        points_balance: enrollment.points_balance,
-        total_points_earned: enrollment.total_points_earned,
-        total_spend: enrollment.total_spend,
-        points_multiplier: enrollment.points_multiplier
-      }
+  try {
+    // Check if business exists
+    const [business] = await db.select({ id: businesses.id }).from(businesses).where(eq(businesses.id, business_id));
+    if (!business) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'BUSINESS_NOT_FOUND', message: 'Business not found' }
+      });
     }
-  });
+
+    // Check if already enrolled
+    const [existing] = await db.select({ id: enrollments.id }).from(enrollments)
+      .where(and(eq(enrollments.customerId, customerId), eq(enrollments.businessId, business_id)));
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'ALREADY_ENROLLED', message: 'Already enrolled in this program' }
+      });
+    }
+
+    // Create enrollment
+    const enrollmentId = generateId('enroll');
+    await db.insert(enrollments).values({
+      id: enrollmentId,
+      customerId: customerId,
+      businessId: business_id
+    });
+
+    const [enrollment] = await db.select().from(enrollments).where(eq(enrollments.id, enrollmentId));
+
+    res.status(201).json({
+      success: true,
+      data: {
+        enrollment: {
+          id: enrollment.id,
+          business_id: enrollment.businessId,
+          points_balance: enrollment.pointsBalance,
+          total_points_earned: enrollment.lifetimePoints,
+          total_spend: enrollment.lifetimeSpend,
+          points_multiplier: enrollment.pointsMultiplier
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error creating enrollment:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'Failed to create enrollment' }
+    });
+  }
 });
 
 // GET /api/enrollments - List all enrollments for customer
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const customerId = req.customer.id;
 
-  const enrollments = db.prepare(`
-    SELECT
-      e.id,
-      e.business_id,
-      e.points_balance,
-      e.total_points_earned,
-      e.total_spend,
-      e.points_multiplier,
-      b.name as business_name,
-      b.logo_url as business_logo,
-      b.primary_color as business_color
-    FROM enrollments e
-    JOIN businesses b ON e.business_id = b.id
-    WHERE e.customer_id = ?
-  `).all(customerId);
+  try {
+    const enrollmentList = await db.select({
+      id: enrollments.id,
+      businessId: enrollments.businessId,
+      pointsBalance: enrollments.pointsBalance,
+      lifetimePoints: enrollments.lifetimePoints,
+      lifetimeSpend: enrollments.lifetimeSpend,
+      pointsMultiplier: enrollments.pointsMultiplier,
+      businessName: businesses.name,
+      businessLogo: businesses.logoUrl,
+      businessColor: businesses.primaryColor
+    })
+    .from(enrollments)
+    .innerJoin(businesses, eq(enrollments.businessId, businesses.id))
+    .where(eq(enrollments.customerId, customerId));
 
-  // Get locations visited for each enrollment
-  const result = enrollments.map(enrollment => {
-    const locationsVisited = db.prepare(`
-      SELECT DISTINCT l.id, l.name, l.icon
-      FROM visits v
-      JOIN locations l ON v.location_id = l.id
-      WHERE v.customer_id = ? AND l.business_id = ?
-    `).all(customerId, enrollment.business_id);
+    // Get locations visited for each enrollment
+    const result = await Promise.all(enrollmentList.map(async (enrollment) => {
+      // Get distinct visited locations
+      const locationsVisited = await db.selectDistinct({
+        id: locations.id,
+        name: locations.name,
+        icon: locations.icon
+      })
+      .from(visits)
+      .innerJoin(locations, eq(visits.locationId, locations.id))
+      .where(and(eq(visits.customerId, customerId), eq(locations.businessId, enrollment.businessId)));
 
-    const totalLocations = db.prepare(`
-      SELECT COUNT(*) as count FROM locations
-      WHERE business_id = ? AND is_active = 1
-    `).get(enrollment.business_id);
+      // Count total locations
+      const [totalLocs] = await db.select({
+        count: sql`count(*)::int`
+      })
+      .from(locations)
+      .where(and(eq(locations.businessId, enrollment.businessId), eq(locations.isActive, true)));
 
-    return {
-      ...enrollment,
-      locations_visited: locationsVisited,
-      total_locations: totalLocations.count
-    };
-  });
+      return {
+        id: enrollment.id,
+        business_id: enrollment.businessId,
+        points_balance: enrollment.pointsBalance,
+        total_points_earned: enrollment.lifetimePoints,
+        total_spend: enrollment.lifetimeSpend,
+        points_multiplier: enrollment.pointsMultiplier,
+        business_name: enrollment.businessName,
+        business_logo: enrollment.businessLogo,
+        business_color: enrollment.businessColor,
+        locations_visited: locationsVisited,
+        total_locations: totalLocs?.count || 0
+      };
+    }));
 
-  res.json({
-    success: true,
-    data: {
-      enrollments: result
-    }
-  });
+    res.json({
+      success: true,
+      data: {
+        enrollments: result
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching enrollments:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'Failed to fetch enrollments' }
+    });
+  }
 });
 
 // GET /api/enrollments/:business_id - Get enrollment details for a specific business
-router.get('/:business_id', (req, res) => {
+router.get('/:business_id', async (req, res) => {
   const { business_id } = req.params;
   const customerId = req.customer.id;
 
-  const enrollment = db.prepare(`
-    SELECT
-      e.*,
-      b.name as business_name,
-      b.logo_url as business_logo,
-      b.primary_color as business_color
-    FROM enrollments e
-    JOIN businesses b ON e.business_id = b.id
-    WHERE e.customer_id = ? AND e.business_id = ?
-  `).get(customerId, business_id);
+  try {
+    const [enrollment] = await db.select({
+      id: enrollments.id,
+      businessId: enrollments.businessId,
+      pointsBalance: enrollments.pointsBalance,
+      lifetimePoints: enrollments.lifetimePoints,
+      lifetimeSpend: enrollments.lifetimeSpend,
+      pointsMultiplier: enrollments.pointsMultiplier,
+      businessName: businesses.name,
+      businessLogo: businesses.logoUrl,
+      businessColor: businesses.primaryColor
+    })
+    .from(enrollments)
+    .innerJoin(businesses, eq(enrollments.businessId, businesses.id))
+    .where(and(eq(enrollments.customerId, customerId), eq(enrollments.businessId, business_id)));
 
-  if (!enrollment) {
-    return res.status(404).json({
+    if (!enrollment) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_ENROLLED', message: 'Not enrolled in this program' }
+      });
+    }
+
+    // Get all locations
+    const locs = await db.select({
+      id: locations.id,
+      name: locations.name,
+      icon: locations.icon,
+      addressLine1: locations.addressLine1
+    })
+    .from(locations)
+    .where(and(eq(locations.businessId, business_id), eq(locations.isActive, true)));
+
+    // Get visits
+    const visitList = await db.select({
+      id: visits.id,
+      locationId: visits.locationId,
+      spendAmount: visits.spendAmount,
+      pointsEarned: visits.pointsEarned,
+      createdAt: visits.createdAt,
+      locationName: locations.name,
+      locationIcon: locations.icon
+    })
+    .from(visits)
+    .innerJoin(locations, eq(visits.locationId, locations.id))
+    .where(and(eq(visits.customerId, customerId), eq(locations.businessId, business_id)))
+    .orderBy(desc(visits.createdAt))
+    .limit(20);
+
+    // Get unlocked rewards
+    const rewardsList = await db.select({
+      id: customerRewards.id,
+      rewardId: customerRewards.rewardId,
+      status: customerRewards.status,
+      redemptionCode: customerRewards.redemptionCode,
+      earnedAt: customerRewards.earnedAt,
+      redeemedAt: customerRewards.redeemedAt,
+      rewardName: rewards.name,
+      rewardDescription: rewards.description,
+      rewardIcon: rewards.icon,
+      pointsRequired: rewards.pointsRequired,
+      valueAmount: rewards.valueAmount,
+      rewardType: rewards.rewardType
+    })
+    .from(customerRewards)
+    .innerJoin(rewards, eq(customerRewards.rewardId, rewards.id))
+    .where(and(eq(customerRewards.enrollmentId, enrollment.id), eq(rewards.businessId, business_id)))
+    .orderBy(desc(customerRewards.earnedAt));
+
+    // Get visited location IDs
+    const visitedLocationIds = new Set(visitList.map(v => v.locationId));
+
+    res.json({
+      success: true,
+      data: {
+        enrollment: {
+          id: enrollment.id,
+          business_id: enrollment.businessId,
+          business_name: enrollment.businessName,
+          business_logo: enrollment.businessLogo,
+          business_color: enrollment.businessColor,
+          points_balance: enrollment.pointsBalance,
+          total_points_earned: enrollment.lifetimePoints,
+          total_spend: enrollment.lifetimeSpend,
+          points_multiplier: enrollment.pointsMultiplier
+        },
+        locations: locs.map(loc => ({
+          id: loc.id,
+          name: loc.name,
+          icon: loc.icon,
+          address: loc.addressLine1,
+          visited: visitedLocationIds.has(loc.id)
+        })),
+        visits: visitList.map(v => ({
+          id: v.id,
+          location_id: v.locationId,
+          location_name: v.locationName,
+          location_icon: v.locationIcon,
+          spend_amount: v.spendAmount,
+          points_earned: v.pointsEarned,
+          created_at: v.createdAt
+        })),
+        rewards: rewardsList.map(r => ({
+          id: r.id,
+          reward_id: r.rewardId,
+          name: r.rewardName,
+          description: r.rewardDescription,
+          icon: r.rewardIcon,
+          points_cost: r.pointsRequired,
+          dollar_value: r.valueAmount,
+          reward_type: r.rewardType,
+          status: r.status,
+          redemption_code: r.redemptionCode,
+          unlocked_at: r.earnedAt,
+          redeemed_at: r.redeemedAt
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching enrollment:', error);
+    res.status(500).json({
       success: false,
-      error: { code: 'NOT_ENROLLED', message: 'Not enrolled in this program' }
+      error: { code: 'SERVER_ERROR', message: 'Failed to fetch enrollment' }
     });
   }
-
-  // Get all locations
-  const locations = db.prepare(`
-    SELECT id, name, icon, address
-    FROM locations
-    WHERE business_id = ? AND is_active = 1
-  `).all(business_id);
-
-  // Get visits
-  const visits = db.prepare(`
-    SELECT v.*, l.name as location_name, l.icon as location_icon
-    FROM visits v
-    JOIN locations l ON v.location_id = l.id
-    WHERE v.customer_id = ? AND l.business_id = ?
-    ORDER BY v.created_at DESC
-    LIMIT 20
-  `).all(customerId, business_id);
-
-  // Get unlocked rewards
-  const rewards = db.prepare(`
-    SELECT cr.*, r.name, r.description, r.icon, r.points_cost, r.dollar_value, r.reward_type
-    FROM customer_rewards cr
-    JOIN rewards r ON cr.reward_id = r.id
-    WHERE cr.customer_id = ? AND r.business_id = ?
-    ORDER BY cr.unlocked_at DESC
-  `).all(customerId, business_id);
-
-  // Get visited location IDs
-  const visitedLocationIds = new Set(visits.map(v => v.location_id));
-
-  res.json({
-    success: true,
-    data: {
-      enrollment: {
-        id: enrollment.id,
-        business_id: enrollment.business_id,
-        business_name: enrollment.business_name,
-        business_logo: enrollment.business_logo,
-        business_color: enrollment.business_color,
-        points_balance: enrollment.points_balance,
-        total_points_earned: enrollment.total_points_earned,
-        total_spend: enrollment.total_spend,
-        points_multiplier: enrollment.points_multiplier
-      },
-      locations: locations.map(loc => ({
-        ...loc,
-        visited: visitedLocationIds.has(loc.id)
-      })),
-      visits,
-      rewards
-    }
-  });
 });
 
 module.exports = router;
