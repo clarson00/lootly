@@ -462,6 +462,90 @@ Digital points. Maybe a digital "card" in Apple Wallet.
 
 ---
 
+## 💰 DIFFERENTIATOR #9: THE YIELD ENGINE (PASSIVE GROWTH)
+
+### What It Is
+
+Doubloons grow automatically just for being a member. No action required.
+
+```
+🌟 MONTHLY TREASURE REPORT
+
+Your doubloons: 1,247
+Passive growth this month: +12 doubloons
+
+Just for being a Downtown Pirate.
+Keep the treasure, keep earning.
+```
+
+### How It Works (Hidden From Customer)
+
+```
+Business pays monthly subscription ($49-199)
+    ↓
+RewardsPirate allocates portion to Yield Pool
+    ↓
+Yield Pool deposited in yield-bearing accounts
+(Treasury-backed stablecoins, conservative DeFi, etc.)
+    ↓
+Yield accumulates (4-8% APY typical)
+    ↓
+Yield distributed as "passive doubloon growth"
+    ↓
+Customer sees: "Your doubloons grew!"
+```
+
+**Customer never sees "crypto", "staking", "yield", "APY"**
+
+They just see their points growing. Magic.
+
+### Why This Is Revolutionary
+
+| Traditional Loyalty | RewardsPirate |
+|---------------------|---------------|
+| Points sit there dead | Points grow while you sleep |
+| No reason to hold points | Incentive to accumulate |
+| Inflation erodes value | Value increases over time |
+| Leave program = lose points | Stay = compound growth |
+
+### Distribution Options
+
+| Model | How It Works |
+|-------|-------------|
+| **Customer Growth** | Doubloons grow based on balance held |
+| **Business Rebate** | Owners earn yield back on subscription |
+| **Network Treasure** | Pool funds community events & bonuses |
+
+### Why Competitors CAN'T Do This
+
+- **Square/Toast:** They're payments companies, not treasury managers
+- **Stripe:** Would have to become a crypto company
+- **Traditional loyalty:** No infrastructure for yield generation
+- **SaaS competitors:** Margin business, not asset management
+
+**We're building financial infrastructure. They're building software.**
+
+### The Messaging
+
+**Never say:**
+- ❌ Crypto, staking, DeFi, APY, interest
+
+**Always say:**
+- ✅ "Passive growth"
+- ✅ "Your treasure grew"
+- ✅ "Network rewards"
+- ✅ "Membership bonus"
+
+### Why It Locks In Loyalty
+
+> "Your 500 doubloons from last year? They're 520 now.
+> You didn't do anything. They just grew.
+> Why would you ever leave?"
+
+**No other loyalty program in the world can say that.**
+
+---
+
 ## 📊 SUMMARY: THE MOAT
 
 | Differentiator | Square | Toast | Stripe | RewardsPirate |
@@ -475,6 +559,7 @@ Digital points. Maybe a digital "card" in Apple Wallet.
 | Deep gamification | ❌ | ❌ | ❌ | ✅ |
 | Physical status items | ❌ | ❌ | ❌ | ✅ |
 | Multi-tenant discovery | ❌ | ❌ | ❌ | ✅ |
+| Passive yield/growth | ❌ | ❌ | ❌ | ✅ |
 
 ---
 
