@@ -69,10 +69,10 @@ const customers = await db.query.customers.findMany({
 
 ### 4. Tech Stack
 
-- **Backend:** Hono (TypeScript), Drizzle ORM, PostgreSQL (Neon)
+- **Backend:** Express (TypeScript), Drizzle ORM, PostgreSQL (Neon)
 - **Frontend:** React, TailwindCSS, PWA
 - **Auth:** Phone number + SMS code
-- **Hosting:** Cloudflare Workers (backend), Vercel (frontend)
+- **Hosting:** Railway/Render/Fly.io (backend), Vercel (frontend)
 
 ### 5. Database
 
@@ -99,7 +99,7 @@ lootly/
 │       ├── marketing-messages.md
 │       ├── analytics-reporting.md
 │       └── ai-marketing-assistant.md
-├── backend/            # Hono API (when created)
+├── backend/            # Express API (when created)
 └── frontend/           # React PWA (when created)
 ```
 
