@@ -8,13 +8,13 @@ const router = express.Router();
 // Import admin route modules
 const integrationsRoutes = require('./integrations');
 const marketingRoutes = require('./marketing');
+const rulesRoutes = require('./rules');
+const rulesetsRoutes = require('./rulesets');
 
 // Mount routes
 router.use('/integrations', integrationsRoutes);
 router.use('/marketing', marketingRoutes);
-
-// TODO: Add rules admin routes when migrated
-// router.use('/rules', require('./rules'));
-// router.use('/rulesets', require('./rulesets'));
+router.use('/rules', rulesRoutes);
+router.use('/rulesets', rulesetsRoutes);
 
 module.exports = router;
