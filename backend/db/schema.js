@@ -317,8 +317,36 @@ const rulesetProgress = pgTable('ruleset_progress', {
   businessIdx: index('idx_ruleset_progress_business').on(table.businessId),
 }));
 
+// Pending Award Choices - Track OR-based awards waiting for customer selection
+const pendingAwardChoices = pgTable('pending_award_choices', {
+  id: text('id').primaryKey(), // pac_ prefix
+  customerId: text('customer_id').notNull().references(() => customers.id),
+  businessId: text('business_id').notNull().references(() => businesses.id),
+  ruleId: text('rule_id').notNull().references(() => rules.id),
+  ruleTriggerid: text('rule_trigger_id').references(() => ruleTriggers.id),
+
+  // The full award options structure
+  awardOptions: jsonb('award_options').notNull(), // { operator: 'OR', groups: [...] }
+
+  // Status
+  status: text('status').default('pending'), // 'pending', 'claimed', 'expired'
+
+  // Claim tracking
+  claimedGroupIndex: integer('claimed_group_index'), // Which group was chosen
+  claimedLocationId: text('claimed_location_id').references(() => locations.id),
+  claimedAt: timestamp('claimed_at'),
+  awardsGiven: jsonb('awards_given'), // The actual awards that were applied
+
+  // Metadata
+  createdAt: timestamp('created_at').defaultNow(),
+  expiresAt: timestamp('expires_at'),
+}, (table) => ({
+  customerIdx: index('idx_pending_awards_customer').on(table.customerId),
+  businessIdx: index('idx_pending_awards_business').on(table.businessId),
+  statusIdx: index('idx_pending_awards_status').on(table.status),
+}));
+
 // Customer Tags - Tags applied to customers (from rules or manual)
-const customerTags = pgTable('customer_tags', {
   id: text('id').primaryKey(), // ctag_ prefix
   customerId: text('customer_id').notNull().references(() => customers.id),
   businessId: text('business_id').notNull().references(() => businesses.id),
@@ -515,6 +543,7 @@ module.exports = {
   ruleTriggers,
   rulesetProgress,
   customerTags,
+  pendingAwardChoices,
   // Rewards
   rewards,
   customerRewards,

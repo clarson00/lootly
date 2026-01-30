@@ -153,6 +153,22 @@ class ApiClient {
     });
   }
 
+  // Award Choices
+  async getPendingAwards(businessId) {
+    return this.request(`/award-choices?business_id=${businessId}&status=pending`);
+  }
+
+  async getAwardChoice(choiceId) {
+    return this.request(`/award-choices/${choiceId}`);
+  }
+
+  async claimAward(choiceId, groupIndex) {
+    return this.request(`/award-choices/${choiceId}/claim`, {
+      method: 'POST',
+      body: JSON.stringify({ group_index: groupIndex })
+    });
+  }
+
   // Logout
   logout() {
     this.setToken(null);

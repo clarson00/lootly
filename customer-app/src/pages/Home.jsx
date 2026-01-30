@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import ProgressBar from '../components/ProgressBar';
 import LocationBadge from '../components/LocationBadge';
+import PendingAwardClaim from '../components/PendingAwardClaim';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ export default function Home() {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pendingAwards, setPendingAwards] = useState([]);
+  const [selectedAward, setSelectedAward] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -19,14 +22,23 @@ export default function Home() {
 
   async function loadData() {
     try {
-      const result = await api.getEnrollment('biz_pilot');
-      setEnrollment(result.data.enrollment);
-      setLocations(result.data.locations);
+      const [enrollmentResult, awardsResult] = await Promise.all([
+        api.getEnrollment('biz_pilot'),
+        api.getPendingAwards('biz_pilot').catch(() => ({ data: { choices: [] } })),
+      ]);
+      setEnrollment(enrollmentResult.data.enrollment);
+      setLocations(enrollmentResult.data.locations);
+      setPendingAwards(awardsResult.data?.choices || []);
     } catch (err) {
       setError(err.error?.message || 'Failed to load data');
     } finally {
       setLoading(false);
     }
+  }
+
+  const handleAwardClaimed = () => {
+    setSelectedAward(null);
+    loadData(); // Refresh data
   }
 
   if (loading) {
@@ -116,6 +128,37 @@ export default function Home() {
         )}
       </div>
 
+      {/* Pending Awards Alert */}
+      {pendingAwards.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-900/50 to-orange-900/50 rounded-2xl p-4 mb-6 border border-amber-500/50">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-3xl animate-bounce">🎁</span>
+            <div>
+              <h3 className="font-bold text-white">Loot Awaits!</h3>
+              <p className="text-amber-200 text-sm">
+                Ye have {pendingAwards.length} reward{pendingAwards.length > 1 ? 's' : ''} to claim!
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {pendingAwards.slice(0, 3).map((award) => (
+              <button
+                key={award.id}
+                onClick={() => setSelectedAward(award)}
+                className="w-full bg-dark/50 rounded-xl p-3 flex items-center justify-between
+                           hover:bg-dark/70 active:scale-[0.98] transition-all"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{award.ruleIcon}</span>
+                  <span className="text-white font-medium">{award.ruleName}</span>
+                </div>
+                <span className="text-primary text-sm font-medium">Claim →</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-4">
         <button
@@ -136,6 +179,15 @@ export default function Home() {
           Rewards
         </button>
       </div>
+
+      {/* Pending Award Claim Modal */}
+      {selectedAward && (
+        <PendingAwardClaim
+          choice={selectedAward}
+          onClaimed={handleAwardClaimed}
+          onClose={() => setSelectedAward(null)}
+        />
+      )}
     </div>
   );
 }

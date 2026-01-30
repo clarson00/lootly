@@ -162,6 +162,11 @@ export const api = {
   async getBusinesses() {
     return request('/businesses');
   },
+
+  // Locations
+  async getLocations(businessId) {
+    return request(`/businesses/${businessId}`);
+  },
 };
 
 export { ApiError };

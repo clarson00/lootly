@@ -5,11 +5,11 @@
  * Evaluates rules against customer context and applies awards.
  */
 
-const { db } = require('../../db');
+const { db, generateId } = require('../../db');
 const { eq, and, gte, desc } = require('drizzle-orm');
 const schema = require('../../db/schema');
 const { evaluateCondition } = require('./conditions');
-const { applyAward } = require('./awards');
+const { applyAward, processAwards, requiresChoice } = require('./awards');
 
 class RulesEvaluator {
   constructor() {
@@ -78,10 +78,10 @@ class RulesEvaluator {
 
       if (result) {
         // Rule triggered! Apply awards
-        const appliedAwards = await this.applyAwards(rule, context);
+        const awardResult = await this.applyAwards(rule, context);
 
         // Log the trigger
-        await this.logTrigger(rule, context, appliedAwards, triggerType);
+        await this.logTrigger(rule, context, awardResult, triggerType);
 
         // Update ruleset progress if part of a voyage
         if (rule.rulesetId) {
@@ -90,7 +90,10 @@ class RulesEvaluator {
 
         triggeredRules.push({
           rule,
-          awards: appliedAwards,
+          awards: awardResult.applied,
+          pendingChoice: awardResult.pendingChoice,
+          pendingChoiceId: awardResult.pendingChoiceId,
+          awardOptions: awardResult.awardOptions,
         });
       }
     }
@@ -232,46 +235,91 @@ class RulesEvaluator {
 
   /**
    * Apply all awards from a rule
+   * Handles both simple award arrays and composable OR/AND structures
+   *
+   * @returns {Object} { applied: [], pendingChoice: boolean, pendingChoiceId?: string }
    */
   async applyAwards(rule, context) {
-    const appliedAwards = [];
-
     // Support both new awards array and legacy awardType/awardValue
-    let awards = rule.awards || [];
+    let awards = rule.awards;
 
     // Convert legacy format if needed
-    if ((!awards || awards.length === 0) && rule.awardType && rule.awardValue) {
+    if ((!awards || (Array.isArray(awards) && awards.length === 0)) && rule.awardType && rule.awardValue) {
       awards = [{
         type: rule.awardType,
         value: rule.awardValue,
       }];
     }
 
-    for (const award of awards) {
-      const result = await applyAward(award, context);
-      appliedAwards.push({
-        ...award,
-        applied: result,
-      });
+    // Handle empty awards
+    if (!awards || (Array.isArray(awards) && awards.length === 0)) {
+      return { applied: [], pendingChoice: false };
     }
 
-    return appliedAwards;
+    // Check if this is an OR-based award that requires customer choice
+    if (requiresChoice(awards)) {
+      // Create a pending choice record instead of applying immediately
+      const pendingChoiceId = await this.createPendingChoice(rule, awards, context);
+
+      return {
+        applied: [],
+        pendingChoice: true,
+        pendingChoiceId,
+        awardOptions: awards,
+      };
+    }
+
+    // Process awards (handles AND groups and simple arrays)
+    const result = await processAwards(awards, context);
+
+    return {
+      applied: result.applied || [],
+      pendingChoice: false,
+    };
+  }
+
+  /**
+   * Create a pending award choice record for OR-based awards
+   */
+  async createPendingChoice(rule, awards, context) {
+    const id = generateId('pac');
+
+    // Calculate expiry (default 30 days)
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    await this.db.insert(schema.pendingAwardChoices).values({
+      id,
+      customerId: context.customerId,
+      businessId: context.businessId,
+      ruleId: rule.id,
+      ruleTriggerid: context.triggerId,
+      awardOptions: awards,
+      status: 'pending',
+      expiresAt,
+    });
+
+    return id;
   }
 
   /**
    * Log a rule trigger
    */
-  async logTrigger(rule, context, appliedAwards, triggerType) {
+  async logTrigger(rule, context, awardResult, triggerType) {
     const { nanoid } = await import('nanoid');
 
-    const pointsAwarded = appliedAwards
-      .filter(a => a.type === 'bonus_points')
-      .reduce((sum, a) => sum + (a.applied?.pointsAwarded || 0), 0);
+    const appliedAwards = awardResult.applied || [];
 
-    const rewardUnlocked = appliedAwards.find(a => a.type === 'unlock_reward');
+    const pointsAwarded = appliedAwards
+      .filter(a => a.award?.type === 'bonus_points')
+      .reduce((sum, a) => sum + (a.result?.pointsAwarded || 0), 0);
+
+    const rewardUnlocked = appliedAwards.find(a => a.award?.type === 'unlock_reward');
+
+    const triggerId = `rtrig_${nanoid(12)}`;
 
     await this.db.insert(schema.ruleTriggers).values({
-      id: `rtrig_${nanoid(12)}`,
+      id: triggerId,
       ruleId: rule.id,
       rulesetId: rule.rulesetId,
       customerId: context.customerId,
@@ -279,7 +327,9 @@ class RulesEvaluator {
       businessId: context.businessId,
       triggerTransactionId: context.transactionId,
       triggerType,
-      awardsGiven: appliedAwards,
+      awardsGiven: awardResult.pendingChoice
+        ? { pendingChoice: true, pendingChoiceId: awardResult.pendingChoiceId }
+        : appliedAwards,
       pointsAwarded,
       rewardIdUnlocked: rewardUnlocked?.rewardId,
       conditionSnapshot: rule.conditions,
@@ -287,8 +337,11 @@ class RulesEvaluator {
         locationId: context.locationId,
         amountCents: context.amountCents,
         timestamp: new Date().toISOString(),
+        pendingChoice: awardResult.pendingChoice,
       },
     });
+
+    return triggerId;
   }
 
   /**
