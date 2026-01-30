@@ -35,7 +35,7 @@ Allow tenant admins to promote their rules and voyages on social media (Facebook
 - Engagement stats
 - Twitter/X integration
 - Email integrations (Mailchimp, etc.)
-- AI content suggestions
+- AI content generation (planned - see below)
 
 ---
 
@@ -58,6 +58,7 @@ Step 2: Edit content
   - TinyMCE editor for customization
   - Add image (optional, required for IG)
   - Character count indicator
+  - [Future: AI assist buttons]
     ↓
 Step 3: Publish
   - Select platforms (checkboxes)
@@ -201,6 +202,10 @@ DELETE /api/admin/marketing/posts/:id       // Delete post record
 
 // Helpers
 GET    /api/admin/marketing/preview         // Generate preview content for rule/voyage
+
+// AI (future)
+POST   /api/admin/marketing/ai/generate     // Generate post content
+POST   /api/admin/marketing/ai/improve      // Improve existing content
 ```
 
 ---
@@ -222,7 +227,8 @@ admin-app/src/
 │       ├── SourcePicker.tsx      // Select rule/voyage/custom
 │       ├── PostEditor.tsx        // TinyMCE wrapper
 │       ├── PlatformSelector.tsx  // Checkboxes for FB/IG
-│       └── PostPreview.tsx       // Platform-specific previews
+│       ├── PostPreview.tsx       // Platform-specific previews
+│       └── AIAssistPanel.tsx     // [Future] AI content tools
 ```
 
 ---
@@ -265,6 +271,146 @@ Future:
 | Post history | ❌ | ✅ | ✅ | ✅ |
 | Scheduled posts | ❌ | ❌ | ✅ | ✅ |
 | Engagement stats | ❌ | ❌ | ✅ | ✅ |
+| AI content assist | ❌ | ❌ | ✅ | ✅ |
+
+---
+
+## 🤖 AI Agent Integration (Planned)
+
+> **Status:** Future enhancement - will be part of broader AI agent for the admin app
+> **Note:** Design the MVP with AI in mind so it's easy to add later
+
+### Vision
+
+An AI agent will assist admins throughout the app. For marketing specifically:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  📣 CREATE POST > Edit                                  │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ [B] [I] [U] | [🖼️] [🔗] | [Undo] [Redo]         │   │
+│  ├─────────────────────────────────────────────────┤   │
+│  │                                                 │   │
+│  │ 🏴‍☠️ HAPPY HOUR HERO 🏴‍☠️                          │   │
+│  │                                                 │   │
+│  │ [content here...]                              │   │
+│  │                                                 │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  🤖 AI ASSIST                                          │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ [✨ Make it exciting]  [📝 Make it shorter]     │   │
+│  │ [🎯 Add urgency]       [😄 Make it fun]         │   │
+│  │ [🔄 Try a different angle]                      │   │
+│  │                                                 │   │
+│  │ Or describe what you want:                      │   │
+│  │ [____________________________________] [Go]     │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+### AI Capabilities
+
+| Capability | Description |
+|------------|-------------|
+| **Generate from scratch** | "Write a post promoting our weekend bonus" |
+| **Improve existing** | Make content more engaging, urgent, fun, etc. |
+| **Adjust tone** | Professional ↔ casual ↔ playful |
+| **Shorten/lengthen** | Fit platform character limits |
+| **Add hashtags** | Suggest relevant hashtags |
+| **Multiple variations** | Generate 3 options to choose from |
+| **Platform-specific** | Optimize for FB vs IG vs Twitter |
+
+### Context the AI Will Have
+
+When generating content, the AI agent will know:
+
+- The rule/voyage details (from PlainLanguagePreview)
+- Business name and branding
+- Business type (coffee shop, restaurant, etc.)
+- Previous successful posts (engagement data)
+- Target platform and its constraints
+- Current season/time of year
+- Any active promotions or events
+
+### Example Interaction
+
+```
+User clicks [✨ Make it exciting]
+
+AI rewrites:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚨 ALERT: HAPPY HOUR HERO MODE ACTIVATED! 🚨
+
+Ahoy, fellow pirates! ⚓
+
+Drop anchor between 3-6pm on weekdays and we'll 
+load your treasure chest with 50 BONUS DOUBLOONS! 💰
+
+That's FREE loot just for stopping by during 
+the golden hours. No catch. No tricks. Just rewards.
+
+⏰ But hurry - this voyage ends Feb 28th!
+
+Who's in? Tag your crew! 👇
+
+#JoesCoffee #HappyHour #FreeLoot #Rewards
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[Use this] [Try another] [Edit more]
+```
+
+### Technical Approach
+
+```typescript
+// POST /api/admin/marketing/ai/generate
+{
+  source_type: 'rule',
+  source_id: 'rule_abc123',
+  plain_language_summary: '...from PlainLanguagePreview...',
+  instruction: 'make it exciting', // or custom prompt
+  platform: 'facebook',
+  business_context: {
+    name: "Joe's Coffee",
+    type: 'coffee_shop',
+    tone: 'friendly_casual' // from business settings
+  }
+}
+
+// Response
+{
+  content: '🚨 ALERT: HAPPY HOUR HERO MODE ACTIVATED!...',
+  hashtags: ['#JoesCoffee', '#HappyHour', ...],
+  character_count: 342,
+  variations: [...] // optional: multiple options
+}
+```
+
+### Integration Points
+
+The AI agent will eventually be used across the admin app:
+
+| Area | AI Assist |
+|------|-----------|
+| **Marketing** | Generate/improve post content |
+| **Rule Builder** | "Create a rule that rewards weekend visitors" |
+| **Voyage Builder** | "Design a voyage for new customers" |
+| **Analytics** | "What's working? What should I try?" |
+| **Customer Support** | "Draft a response to this feedback" |
+
+### MVP Prep for AI
+
+Even in MVP (no AI), design for easy AI addition:
+
+1. **Separate content generation logic** - Don't hardcode the template generation
+2. **Add API endpoint stubs** - `/api/admin/marketing/ai/*` returns 501 for now
+3. **UI placeholder** - "AI Assist coming soon" in the editor
+4. **Store business context** - Tone, type, branding for future AI use
 
 ---
 
@@ -275,9 +421,10 @@ Future:
 3. **Engagement tracking** - Pull likes/comments from APIs
 4. **Twitter/X** - Additional platform
 5. **Email integration** - Mailchimp, Constant Contact
-6. **AI suggestions** - "Make it more exciting" button
+6. **AI content generation** - See section above
 7. **A/B testing** - Post variations, track performance
 8. **Best time recommendations** - When to post based on past engagement
+9. **AI image generation** - Generate promotional graphics
 
 ---
 
@@ -286,6 +433,7 @@ Future:
 1. **Multi-location:** If business has multiple FB pages, let them pick which one(s)?
 2. **Approval workflow:** For teams, should there be draft → approve → publish?
 3. **Link in bio:** Should we help manage their "link in bio" for IG?
+4. **AI model:** Which LLM for content generation? (Claude API, OpenAI, etc.)
 
 ---
 
@@ -300,3 +448,4 @@ Future:
 7. Post builder - publish step (platform selector + API calls)
 8. Post to Meta API (backend)
 9. Post history display
+10. [Future] AI assist integration
