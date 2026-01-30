@@ -481,25 +481,40 @@ function generateMarketingSummary(type, data, locations = [], locationGroups = [
   parts.push(`🏴‍☠️ ${name.toUpperCase()} 🏴‍☠️`);
   parts.push('');
 
-  // Extract location names from conditions
-  const conditionLocations = extractLocationNames(data.conditions, locations, locationGroups);
+  // Extract location info from conditions (includes AND/OR logic)
+  const locationInfo = extractLocationInfo(data.conditions, locations, locationGroups);
 
   if (type === 'rule') {
-    // Show where this applies
-    if (conditionLocations.length > 0) {
-      parts.push(`📍 Visit us at: ${conditionLocations.join(', ')}`);
+    // Show where this applies with AND/OR logic
+    if (locationInfo.names.length > 0) {
+      if (locationInfo.requireAll) {
+        // Must visit ALL locations
+        parts.push(`📍 Visit ALL ${locationInfo.names.length} locations to qualify:`);
+        locationInfo.names.forEach(name => parts.push(`   • ${name}`));
+      } else if (locationInfo.names.length === 1) {
+        parts.push(`📍 Visit us at: ${locationInfo.names[0]}`);
+      } else {
+        // Can visit ANY location
+        parts.push(`📍 Visit ANY of our locations:`);
+        locationInfo.names.slice(0, 5).forEach(name => parts.push(`   • ${name}`));
+        if (locationInfo.names.length > 5) {
+          parts.push(`   • ...and ${locationInfo.names.length - 5} more!`);
+        }
+      }
     } else if (locations.length > 0) {
       // Show all locations if no specific ones in conditions
-      const allLocationNames = locations.map(l => l.name).slice(0, 4);
-      if (allLocationNames.length > 0) {
-        parts.push(`📍 Available at: ${allLocationNames.join(', ')}${locations.length > 4 ? ` and ${locations.length - 4} more` : ''}`);
+      parts.push(`📍 Available at any of our locations:`);
+      locations.slice(0, 5).forEach(loc => parts.push(`   • ${loc.name}`));
+      if (locations.length > 5) {
+        parts.push(`   • ...and ${locations.length - 5} more!`);
       }
     }
+    parts.push('');
 
-    // Describe what you earn
+    // Describe what you earn with AND/OR logic
     const awardsText = describeAwardsForMarketing(data.awards, locations);
     if (awardsText) {
-      parts.push(`🎁 ${awardsText}`);
+      parts.push(awardsText);
     }
 
     parts.push('');
@@ -572,29 +587,34 @@ function generateMarketingSummary(type, data, locations = [], locationGroups = [
 }
 
 /**
- * Extract location names from conditions
- * Returns { names: [...], scope: 'all'|'specific'|'group' }
+ * Extract location info from conditions
+ * Returns { names: [...], requireAll: boolean }
  */
-function extractLocationNames(conditions, locations = [], locationGroups = []) {
+function extractLocationInfo(conditions, locations = [], locationGroups = []) {
   const names = [];
-  let foundScope = null;
+  let requireAll = false;
 
-  if (!conditions) return names;
+  if (!conditions) return { names, requireAll };
 
-  function extractFromCondition(cond) {
+  function extractFromCondition(cond, parentOperator = null) {
     if (!cond) return;
 
     if (cond.operator && cond.items) {
-      cond.items.forEach(item => extractFromCondition(item));
+      // Track if we have AND at the top level with multiple location conditions
+      cond.items.forEach(item => extractFromCondition(item, cond.operator));
       return;
     }
 
     if (cond.type === 'location_visit' && cond.params) {
-      const { scope, locationId, locationGroupId } = cond.params;
-      foundScope = scope;
+      const { scope, locationId, locationGroupId, comparison, value } = cond.params;
 
       if (scope === 'all') {
-        // Add all locations
+        // Must visit ALL locations
+        requireAll = true;
+        locations.forEach(loc => names.push(loc.name));
+      } else if (scope === 'any') {
+        // Can visit any location
+        requireAll = false;
         locations.forEach(loc => names.push(loc.name));
       } else if (scope === 'specific' && locationId) {
         const location = locations.find(l => l.id === locationId);
@@ -607,11 +627,21 @@ function extractLocationNames(conditions, locations = [], locationGroups = []) {
           names.push(`${group.name} locations`);
         }
       }
+
+      // Check if comparison requires multiple visits
+      if (comparison === 'gte' && value > 1) {
+        requireAll = true;
+      }
     }
   }
 
   extractFromCondition(conditions);
-  return [...new Set(names)]; // Remove duplicates
+  return { names: [...new Set(names)], requireAll };
+}
+
+// Keep old function name for backward compatibility
+function extractLocationNames(conditions, locations = [], locationGroups = []) {
+  return extractLocationInfo(conditions, locations, locationGroups).names;
 }
 
 /**
@@ -620,35 +650,65 @@ function extractLocationNames(conditions, locations = [], locationGroups = []) {
 function describeAwardsForMarketing(awards, locations = []) {
   if (!awards) return '';
 
-  // Handle composable awards with OR choices
+  // Handle composable awards with OR choices (pick one)
   if (awards.operator === 'OR' && awards.groups) {
-    const options = awards.groups.map(group => {
-      const desc = group.awards?.map(a => describeAwardMarketing(a)).join(' + ') || 'rewards';
-      if (group.locationId) {
-        const loc = locations.find(l => l.id === group.locationId);
-        return loc ? `${desc} (redeemable at ${loc.name})` : desc;
-      }
-      return desc;
-    });
-    return `Choose your reward: ${options.join(' OR ')}`;
+    const hasLocationSpecific = awards.groups.some(g => g.locationId);
+
+    if (hasLocationSpecific) {
+      // Different locations offer different rewards
+      const lines = ['🎁 CHOOSE YOUR REWARD:'];
+      awards.groups.forEach(group => {
+        const desc = group.awards?.map(a => describeAwardMarketing(a)).join(' + ') || 'rewards';
+        if (group.locationId) {
+          const loc = locations.find(l => l.id === group.locationId);
+          lines.push(`   • ${loc ? loc.name : 'Location'}: ${desc}`);
+        } else {
+          lines.push(`   • ${desc}`);
+        }
+      });
+      return lines.join('\n');
+    } else {
+      // Same location, choose between rewards
+      const options = awards.groups.map(group => {
+        return group.awards?.map(a => describeAwardMarketing(a)).join(' + ') || 'rewards';
+      });
+      return `🎁 CHOOSE YOUR REWARD:\n   • ${options.join('\n   • ')}`;
+    }
   }
 
-  // Handle AND awards
+  // Handle AND awards (get all of them - stacked!)
   if (awards.operator === 'AND' && awards.groups) {
-    const descs = awards.groups.map(group => {
-      const desc = group.awards?.map(a => describeAwardMarketing(a)).join(' + ') || 'rewards';
-      if (group.locationId) {
-        const loc = locations.find(l => l.id === group.locationId);
-        return loc ? `${desc} at ${loc.name}` : desc;
-      }
-      return desc;
-    });
-    return `Earn: ${descs.join(' + ')}`;
+    const hasLocationSpecific = awards.groups.some(g => g.locationId);
+
+    if (hasLocationSpecific) {
+      // Different locations each give rewards (stacked)
+      const lines = ['🎁 EARN AT EACH LOCATION:'];
+      awards.groups.forEach(group => {
+        const desc = group.awards?.map(a => describeAwardMarketing(a)).join(' + ') || 'rewards';
+        if (group.locationId) {
+          const loc = locations.find(l => l.id === group.locationId);
+          lines.push(`   • ${loc ? loc.name : 'Location'}: ${desc}`);
+        } else {
+          lines.push(`   • ${desc}`);
+        }
+      });
+      lines.push('');
+      lines.push('✨ Complete them all for STACKED rewards!');
+      return lines.join('\n');
+    } else {
+      // Stacked rewards at same location
+      const allRewards = awards.groups.flatMap(g => g.awards || []);
+      const desc = allRewards.map(a => describeAwardMarketing(a)).join(' + ');
+      return `🎁 STACKED REWARDS: ${desc}`;
+    }
   }
 
   // Handle simple array
   if (Array.isArray(awards) && awards.length > 0) {
-    return `Earn: ${awards.map(a => describeAwardMarketing(a)).join(' + ')}`;
+    if (awards.length === 1) {
+      return `🎁 Earn: ${describeAwardMarketing(awards[0])}`;
+    }
+    return `🎁 Earn: ${awards.map(a => describeAwardMarketing(a)).join(' + ')}`;
   }
 
   return '';
