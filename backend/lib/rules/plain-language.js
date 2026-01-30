@@ -356,8 +356,289 @@ function formatTime(timeStr) {
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
+/**
+ * Generate a complete rule description
+ * @param {Object} rule - The rule object
+ * @param {Array} locations - Array of location objects for name resolution
+ * @param {Array} locationGroups - Array of location group objects
+ * @returns {string} Human-readable rule description
+ */
+function describeRule(rule, locations = [], locationGroups = []) {
+  const parts = [];
+
+  // Rule name
+  const name = rule.displayName || rule.name || 'Unnamed Rule';
+  parts.push(`**${name}**`);
+
+  // Conditions
+  const conditionsText = describeConditionsWithLocations(rule.conditions, locations, locationGroups);
+  if (conditionsText) {
+    parts.push(`When: ${conditionsText}`);
+  }
+
+  // Awards
+  const awardsText = describeAwardsWithLocations(rule.awards, locations);
+  if (awardsText) {
+    parts.push(`Earn: ${awardsText}`);
+  }
+
+  // Time constraints
+  if (rule.startsAt || rule.endsAt) {
+    const timeText = describeDateRange({ startDate: rule.startsAt, endDate: rule.endsAt });
+    if (timeText) {
+      parts.push(`Active: ${timeText}`);
+    }
+  }
+
+  // Repeatability
+  if (rule.isRepeatable) {
+    parts.push(`Can be earned ${rule.cooldownDays ? `every ${rule.cooldownDays} days` : 'multiple times'}`);
+  } else {
+    parts.push('One-time only');
+  }
+
+  return parts.join('\n');
+}
+
+/**
+ * Generate a complete voyage description
+ * @param {Object} voyage - The voyage/ruleset object
+ * @param {Array} steps - Array of rule objects (voyage steps)
+ * @param {Array} locations - Array of location objects
+ * @param {Array} locationGroups - Array of location group objects
+ * @returns {string} Human-readable voyage description
+ */
+function describeVoyage(voyage, steps = [], locations = [], locationGroups = []) {
+  const parts = [];
+
+  // Voyage name
+  const name = voyage.displayName || voyage.name || 'Unnamed Voyage';
+  parts.push(`**${name}**`);
+
+  // Tagline
+  if (voyage.tagline) {
+    parts.push(`_${voyage.tagline}_`);
+  }
+
+  // Description
+  if (voyage.description) {
+    parts.push(voyage.description);
+  }
+
+  // Steps
+  if (steps && steps.length > 0) {
+    parts.push('');
+    parts.push(`**${steps.length} Steps to Complete:**`);
+
+    steps
+      .sort((a, b) => (a.sequenceOrder || 0) - (b.sequenceOrder || 0))
+      .forEach((step, index) => {
+        const stepName = step.displayName || step.name || `Step ${index + 1}`;
+        const conditionsText = describeConditionsWithLocations(step.conditions, locations, locationGroups);
+        const awardsText = describeAwardsWithLocations(step.awards, locations);
+
+        parts.push(`${index + 1}. **${stepName}**`);
+        if (conditionsText) {
+          parts.push(`   Do: ${conditionsText}`);
+        }
+        if (awardsText) {
+          parts.push(`   Earn: ${awardsText}`);
+        }
+      });
+  }
+
+  // Time limit
+  if (voyage.timeLimitValue && voyage.timeLimitUnit) {
+    parts.push('');
+    parts.push(`⏰ Complete within ${voyage.timeLimitValue} ${voyage.timeLimitUnit}`);
+  }
+
+  // Active dates
+  if (voyage.startsAt || voyage.endsAt) {
+    const timeText = describeDateRange({ startDate: voyage.startsAt, endDate: voyage.endsAt });
+    if (timeText) {
+      parts.push(`Active: ${timeText}`);
+    }
+  }
+
+  return parts.join('\n');
+}
+
+/**
+ * Generate marketing-ready content from a rule or voyage
+ * @param {string} type - 'rule' or 'voyage'
+ * @param {Object} data - The rule or voyage object (with steps for voyage)
+ * @param {Array} locations - Array of location objects
+ * @param {Array} locationGroups - Array of location group objects
+ * @returns {string} Marketing-ready post content
+ */
+function generateMarketingSummary(type, data, locations = [], locationGroups = []) {
+  const parts = [];
+
+  // Header with emoji
+  const name = data.displayName || data.name || 'Special Offer';
+  parts.push(`🏴‍☠️ ${name.toUpperCase()} 🏴‍☠️`);
+  parts.push('');
+
+  if (type === 'rule') {
+    // Rule-based marketing content
+    const conditionsText = describeConditionsWithLocations(data.conditions, locations, locationGroups, true);
+    const awardsText = describeAwardsWithLocations(data.awards, locations, true);
+
+    if (conditionsText) {
+      parts.push(`📍 ${conditionsText}`);
+    }
+
+    if (awardsText) {
+      parts.push(`🎁 Earn: ${awardsText}`);
+    }
+
+    parts.push('');
+  } else if (type === 'voyage') {
+    // Voyage-based marketing content
+    if (data.tagline) {
+      parts.push(`⚓ ${data.tagline}`);
+      parts.push('');
+    }
+
+    if (data.description) {
+      parts.push(data.description);
+      parts.push('');
+    }
+
+    // Show steps summary
+    const steps = data.steps || [];
+    if (steps.length > 0) {
+      parts.push(`Complete ${steps.length} quests to win big!`);
+      parts.push('');
+
+      // Show first few steps
+      steps.slice(0, 3).forEach((step, index) => {
+        const stepName = step.displayName || step.name || `Quest ${index + 1}`;
+        parts.push(`${index + 1}. ${stepName}`);
+      });
+
+      if (steps.length > 3) {
+        parts.push(`...and ${steps.length - 3} more!`);
+      }
+      parts.push('');
+    }
+  }
+
+  // Time urgency
+  if (data.endsAt) {
+    parts.push(`⏰ Hurry - ends ${formatDate(data.endsAt)}!`);
+    parts.push('');
+  }
+
+  // CTA
+  parts.push('Join our rewards program and start earning today! 🏆');
+  parts.push('');
+
+  // Hashtags placeholder
+  parts.push('#Rewards #LocalLoyalty #EarnRewards');
+
+  return parts.join('\n');
+}
+
+/**
+ * Enhanced condition description with location name resolution
+ */
+function describeConditionsWithLocations(conditions, locations = [], locationGroups = [], marketing = false) {
+  if (!conditions) return '';
+
+  // Handle compound conditions
+  if (conditions.operator) {
+    const parts = conditions.items
+      .filter(item => item.type !== 'time_window')
+      .map(item => describeConditionWithLocations(item, locations, locationGroups, marketing));
+
+    const connector = conditions.operator === 'AND' ? ' and ' : ' or ';
+    let text = parts.filter(p => p).join(connector);
+
+    // Add time window
+    const timeWindow = conditions.items.find(item => item.type === 'time_window');
+    if (timeWindow) {
+      text += ` ${describeTimeWindow(timeWindow.params)}`;
+    }
+
+    return text;
+  }
+
+  return describeConditionWithLocations(conditions, locations, locationGroups, marketing);
+}
+
+function describeConditionWithLocations(condition, locations = [], locationGroups = [], marketing = false) {
+  if (!condition || !condition.type) return '';
+
+  const { type, params } = condition;
+
+  // Handle location-based conditions with name resolution
+  if (type === 'location_visit' && params) {
+    const { scope, locationId, locationGroupId, comparison, value } = params;
+
+    if (scope === 'specific' && locationId) {
+      const location = locations.find(l => l.id === locationId);
+      const locationName = location ? `${location.icon || ''} ${location.name}`.trim() : 'a specific location';
+      return marketing
+        ? `Visit ${locationName}`
+        : `visit ${locationName}${value > 1 ? ` ${comparisonText(comparison)} ${value} times` : ''}`;
+    }
+
+    if (scope === 'group' && locationGroupId) {
+      const group = locationGroups.find(g => g.id === locationGroupId);
+      const groupName = group ? group.name : 'a location group';
+      return `visit ${comparisonText(comparison)} ${value} locations in ${groupName}`;
+    }
+  }
+
+  // Fall back to original description
+  return describeCondition(condition, marketing);
+}
+
+/**
+ * Enhanced awards description with location name resolution
+ */
+function describeAwardsWithLocations(awards, locations = [], marketing = false) {
+  if (!awards) return '';
+
+  // Handle composable awards with location targeting
+  if (awards.operator && awards.groups) {
+    const groupDescriptions = awards.groups.map(group => {
+      const awardsDesc = group.awards && group.awards.length > 0
+        ? group.awards.map(a => describeAward(a, marketing)).join(' + ')
+        : 'rewards';
+
+      if (group.locationId) {
+        const location = locations.find(l => l.id === group.locationId);
+        const locationName = location ? location.name : 'specific location';
+        return `${awardsDesc} at ${locationName}`;
+      }
+
+      return awardsDesc;
+    });
+
+    if (awards.operator === 'OR') {
+      return marketing
+        ? `Choose from: ${groupDescriptions.join(' OR ')}`
+        : groupDescriptions.join(' OR ');
+    }
+    return groupDescriptions.join(' + ');
+  }
+
+  // Handle simple array
+  if (Array.isArray(awards) && awards.length > 0) {
+    return awards.map(a => describeAward(a, marketing)).join(' + ');
+  }
+
+  return '';
+}
+
 module.exports = {
   generatePlainLanguage,
   describeConditions,
   describeAwards,
+  describeRule,
+  describeVoyage,
+  generateMarketingSummary,
 };

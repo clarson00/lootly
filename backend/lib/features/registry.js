@@ -30,16 +30,19 @@ const FEATURES = {
   MARKETING_SMS: 'marketing:sms',
   MARKETING_EMAIL: 'marketing:email',
   MARKETING_CAMPAIGNS: 'marketing:campaigns',
+  MARKETING_SOCIAL: 'marketing:social',          // Connect & post to FB/IG
+  MARKETING_SOCIAL_SCHEDULE: 'marketing:social_schedule', // Schedule posts
 
   // Analytics
   ANALYTICS_BASIC: 'analytics:basic',       // Dashboard, basic metrics
   ANALYTICS_ADVANCED: 'analytics:advanced', // Deep reports, exports
   ANALYTICS_REALTIME: 'analytics:realtime',
 
-  // AI
+  // AI (add-on based)
   AI_ASSISTANT: 'ai:assistant',
   AI_INSIGHTS: 'ai:insights',
   AI_COPYWRITING: 'ai:copywriting',
+  AI_MARKETING: 'ai:marketing',                  // AI content generation for marketing
 
   // Operations
   LOCATIONS_MULTI: 'locations:multi',     // More than 1 location
@@ -55,6 +58,27 @@ const FEATURES = {
   LIMIT_CUSTOMERS: 'limit:customers',
   LIMIT_MESSAGES_MONTH: 'limit:messages_month',
   LIMIT_AI_QUERIES_MONTH: 'limit:ai_queries_month',
+  LIMIT_AI_MARKETING_MONTH: 'limit:ai_marketing_month', // AI marketing generations
+};
+
+/**
+ * AI Add-on Tiers (separate from subscription tiers)
+ * These are add-ons that can be purchased on top of any Starter+ subscription
+ */
+const AI_ADDON_TIERS = {
+  NONE: 'none',
+  LITE: 'lite',         // 25/month
+  STANDARD: 'standard', // 50/month
+  PRO: 'pro',           // 100/month
+  UNLIMITED: 'unlimited',
+};
+
+const AI_ADDON_LIMITS = {
+  none: 0,
+  lite: 25,
+  standard: 50,
+  pro: 100,
+  unlimited: -1, // -1 = unlimited
 };
 
 /**
@@ -88,6 +112,7 @@ const TIER_FEATURES = {
     FEATURES.RULES_TIME_BOUND,
     FEATURES.RULESETS,
     FEATURES.MARKETING_PUSH,
+    FEATURES.MARKETING_SOCIAL,       // FB/IG posting
     FEATURES.JOURNEYS_BASIC,
     FEATURES.LOCATIONS_MULTI,
   ],
@@ -97,6 +122,7 @@ const TIER_FEATURES = {
     FEATURES.RULES_PRODUCT,
     FEATURES.JOURNEYS_UNLIMITED,
     FEATURES.MARKETING_CAMPAIGNS,
+    FEATURES.MARKETING_SOCIAL_SCHEDULE, // Scheduled posting
     FEATURES.ANALYTICS_ADVANCED,
     FEATURES.AI_ASSISTANT,
     FEATURES.AI_INSIGHTS,
@@ -109,6 +135,7 @@ const TIER_FEATURES = {
     FEATURES.JOURNEYS_ADVANCED,
     FEATURES.ANALYTICS_REALTIME,
     FEATURES.AI_COPYWRITING,
+    FEATURES.AI_MARKETING,
     FEATURES.MARKETING_SMS,
     FEATURES.MARKETING_EMAIL,
     FEATURES.API_ACCESS,
@@ -187,12 +214,22 @@ function isLimitFeature(feature) {
   return feature.startsWith('limit:');
 }
 
+/**
+ * Get AI generation limit for an add-on tier
+ */
+function getAiAddonLimit(addonTier) {
+  return AI_ADDON_LIMITS[addonTier] || 0;
+}
+
 module.exports = {
   FEATURES,
   TIERS,
   TIER_FEATURES,
   TIER_LIMITS,
+  AI_ADDON_TIERS,
+  AI_ADDON_LIMITS,
   getFeaturesForTier,
   getLimitsForTier,
   isLimitFeature,
+  getAiAddonLimit,
 };

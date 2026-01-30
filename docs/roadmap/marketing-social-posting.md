@@ -1,6 +1,6 @@
 # Marketing & Social Posting
 
-> **Status:** Next up (after Rules Engine + Admin App)
+> **Status:** In Progress - Backend & Frontend scaffolded
 > **Priority:** High - drives customer acquisition for tenants
 > **Dependencies:** Rules Engine, Plain Language Component
 
@@ -19,20 +19,21 @@ Allow tenant admins to promote their rules and voyages on social media (Facebook
 ### What's Included
 
 1. **Integrations Page** - Connect Facebook/Instagram accounts (Meta OAuth)
-2. **Marketing Page** - View posts, create new posts
+2. **Marketing Page** - View posts (list + calendar view), create new posts
 3. **Post Builder Flow:**
    - Select a rule OR voyage (or write custom)
    - Auto-generate content using `PlainLanguagePreview` output
-   - Edit in WYSIWYG editor (TinyMCE)
-   - Select platforms (FB, IG)
-   - Post immediately
+   - Edit in simple textarea with emoji picker and character counter
+   - Select platforms (FB, IG) and target location
+   - Schedule for later OR post immediately
 4. **Post History** - See what was posted and when
+5. **Marketing Calendar** - Visual calendar of scheduled/published posts
+6. **Multi-location Support** - Posts can target specific locations, clone posts across locations
 
 ### What's NOT in MVP
 
-- Scheduling posts for later
 - Image templates / auto-generated graphics
-- Engagement stats
+- Engagement stats (likes, comments, shares)
 - Twitter/X integration
 - Email integrations (Mailchimp, etc.)
 - AI content generation (planned - see below)
@@ -55,9 +56,9 @@ Step 1: Choose source
     ↓
 Step 2: Edit content
   - Auto-populated from PlainLanguagePreview component
-  - TinyMCE editor for customization
-  - Add image (optional, required for IG)
-  - Character count indicator
+  - Simple textarea with emoji picker
+  - Add image URL (optional, required for IG)
+  - Character count indicator (FB: 63K, IG: 2.2K)
   - [Future: AI assist buttons]
     ↓
 Step 3: Publish
@@ -137,49 +138,69 @@ function generateMarketingContent(source, plainLanguageSummary) {
 ## Database Schema
 
 ```sql
--- Connected social accounts
+-- Connected social accounts (per-location support)
 CREATE TABLE social_integrations (
-  id TEXT PRIMARY KEY DEFAULT 'sint_' || nanoid(),
+  id TEXT PRIMARY KEY,                    -- 'sint_' prefix
   business_id TEXT NOT NULL REFERENCES businesses(id),
-  platform TEXT NOT NULL, -- 'facebook', 'instagram', 'twitter'
+  location_id TEXT REFERENCES locations(id), -- null = business-wide
+
+  -- Platform info
+  platform TEXT NOT NULL,                 -- 'facebook', 'instagram'
   platform_account_id TEXT NOT NULL,
   platform_account_name TEXT,
-  access_token TEXT NOT NULL, -- encrypted
-  refresh_token TEXT, -- encrypted  
+  platform_page_id TEXT,                  -- For FB Pages / IG Business
+
+  -- OAuth tokens (encrypted at rest)
+  access_token TEXT NOT NULL,             -- AES-256-GCM encrypted
+  refresh_token TEXT,                     -- encrypted
   token_expires_at TIMESTAMPTZ,
   scopes JSONB,
+
+  -- Status
   is_active BOOLEAN DEFAULT true,
+  last_refreshed_at TIMESTAMPTZ,
+  last_error_at TIMESTAMPTZ,
+  last_error_message TEXT,
+
+  -- Metadata
   connected_at TIMESTAMPTZ DEFAULT NOW(),
-  connected_by TEXT REFERENCES users(id),
-  UNIQUE(business_id, platform)
+  connected_by TEXT REFERENCES staff(id),
+  updated_at TIMESTAMPTZ,
+
+  UNIQUE(business_id, platform, location_id)
 );
 
--- Marketing posts
+-- Marketing posts (with scheduling & location targeting)
 CREATE TABLE marketing_posts (
-  id TEXT PRIMARY KEY DEFAULT 'mpost_' || nanoid(),
+  id TEXT PRIMARY KEY,                    -- 'mpost_' prefix
   business_id TEXT NOT NULL REFERENCES businesses(id),
-  
+  location_id TEXT REFERENCES locations(id), -- null = all locations
+
   -- Content source
-  source_type TEXT, -- 'rule', 'voyage', 'custom'
-  source_id TEXT, -- rule_id or ruleset_id if applicable
-  
+  source_type TEXT,                       -- 'rule', 'voyage', 'custom'
+  source_id TEXT,                         -- rule_id or ruleset_id
+
   -- Content
   content TEXT NOT NULL,
   image_url TEXT,
-  
-  -- Publishing
-  platforms JSONB NOT NULL DEFAULT '[]', -- ['facebook', 'instagram']
+
+  -- Target platforms
+  platforms JSONB NOT NULL DEFAULT '[]',  -- ['facebook', 'instagram']
+
+  -- Scheduling & Publishing
+  status TEXT DEFAULT 'draft',            -- 'draft', 'scheduled', 'publishing', 'published', 'failed', 'partial'
+  scheduled_at TIMESTAMPTZ,               -- null = immediate when published
   published_at TIMESTAMPTZ,
-  status TEXT DEFAULT 'draft', -- 'draft', 'published', 'failed'
-  
+
   -- Platform responses
-  platform_post_ids JSONB, -- { facebook: '123', instagram: '456' }
-  error_message TEXT, -- if failed
-  
+  platform_post_ids JSONB,                -- { facebook: '123', instagram: '456' }
+  platform_errors JSONB,                  -- { facebook: null, instagram: 'error msg' }
+  error_message TEXT,                     -- General error if all failed
+
   -- Metadata
-  created_by TEXT REFERENCES users(id),
+  created_by TEXT REFERENCES staff(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ
 );
 
 -- AI usage tracking (for tiered add-on)
@@ -254,12 +275,15 @@ admin-app/src/
 - Access tokens expire - need refresh logic
 - Instagram REQUIRES an image for posts
 
-### TinyMCE
+### Content Editor (Simple Textarea)
 
-- Use free/open source version or cloud with API key
-- Simple toolbar: bold, italic, emoji, link, undo/redo
-- Character count plugin for platform limits
-- Strip HTML for actual API posts (platforms want plain text)
+**Decision:** Use simple textarea instead of TinyMCE since social posts are plain text.
+
+- Native textarea with emoji picker overlay
+- Character counter showing limit based on platform(s)
+- Emoji categories: Smileys, Gestures, Objects (pirate-themed), Food
+- No rich text - social platforms use plain text anyway
+- Future: Add TinyMCE if/when we add email/SMS marketing
 
 ### Image Handling
 
@@ -280,10 +304,15 @@ Future:
 |---------|------|---------|-----|------------|
 | Connect social accounts | ❌ | ✅ | ✅ | ✅ |
 | Post to FB/IG | ❌ | ✅ | ✅ | ✅ |
-| Post history | ❌ | ✅ | ✅ | ✅ |
-| Scheduled posts | ❌ | ❌ | ✅ | ✅ |
+| Post history & calendar | ❌ | ✅ | ✅ | ✅ |
+| **Scheduled posts** | ❌ | ❌ | ✅ | ✅ |
 | Engagement stats | ❌ | ❌ | ✅ | ✅ |
 | AI content assist | ❌ | 💰 Add-on | 💰 Add-on | 💰 Add-on |
+
+**Feature Keys:**
+- `marketing:social` - Connect & post to FB/IG (Starter+)
+- `marketing:social_schedule` - Schedule posts (Pro+)
+- `ai:marketing` - AI content generation (Add-on)
 
 ---
 
@@ -503,24 +532,31 @@ Even in MVP (no AI), design for easy AI addition:
 
 ## Open Questions
 
-1. **Multi-location:** If business has multiple FB pages, let them pick which one(s)?
+1. ~~**Multi-location:** If business has multiple FB pages, let them pick which one(s)?~~
+   **RESOLVED:** Each location can have its own social integration. Posts can target specific location or all. Clone feature for duplicating posts.
 2. **Approval workflow:** For teams, should there be draft → approve → publish?
 3. **Link in bio:** Should we help manage their "link in bio" for IG?
 4. **AI model:** Which LLM for content generation? (Claude API, OpenAI, etc.)
 5. **AI pricing:** What $ amounts for each tier?
+6. ~~**Editor choice:** TinyMCE or simpler?~~
+   **RESOLVED:** Simple textarea + emoji picker + char counter. Social posts are plain text anyway.
+7. ~~**Scheduling:** Include in MVP?~~
+   **RESOLVED:** Yes, with marketing calendar view. Gated to Pro tier.
 
 ---
 
 ## Implementation Order
 
-1. Database migrations for `social_integrations` and `marketing_posts`
-2. Meta OAuth flow (backend)
-3. Integrations page (frontend)
-4. Marketing page with post list (frontend)
-5. Post builder - source picker step
-6. Post builder - editor step (integrate TinyMCE + PlainLanguagePreview)
-7. Post builder - publish step (platform selector + API calls)
-8. Post to Meta API (backend)
-9. Post history display
-10. [Future] AI usage tracking table + API
-11. [Future] AI assist integration (add-on tiers)
+1. ✅ Database migrations for `social_integrations`, `marketing_posts`, `ai_usage`
+2. ✅ Meta OAuth flow (backend) - `/api/admin/integrations/meta/*`
+3. ✅ Integrations page (frontend) - `/settings/integrations`
+4. ✅ Marketing page with post list + calendar (frontend) - `/marketing`
+5. ✅ Post builder - source picker step
+6. ✅ Post builder - editor step (textarea + emoji + PlainLanguagePreview)
+7. ✅ Post builder - publish step (platform selector + scheduling)
+8. ✅ Post to Meta API (backend) - FB + IG publishing
+9. ✅ Post history & calendar display
+10. ✅ Token encryption (AES-256-GCM) + proactive refresh
+11. ✅ Feature gating in registry
+12. [ ] Wire up AI stubs when AI feature is implemented
+13. [ ] Add engagement stats pulling (Pro tier)

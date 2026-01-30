@@ -167,6 +167,91 @@ export const api = {
   async getLocations(businessId) {
     return request(`/businesses/${businessId}`);
   },
+
+  // ==========================================
+  // Social Integrations
+  // ==========================================
+
+  async getIntegrations(locationId = null) {
+    const params = new URLSearchParams();
+    if (locationId) params.append('location_id', locationId);
+    return request(`/admin/integrations?${params}`);
+  },
+
+  async getMetaAuthUrl(locationId = null) {
+    const params = new URLSearchParams();
+    if (locationId) params.append('location_id', locationId);
+    return request(`/admin/integrations/meta/connect?${params}`);
+  },
+
+  async disconnectIntegration(integrationId) {
+    return request(`/admin/integrations/${integrationId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async refreshIntegration(integrationId) {
+    return request(`/admin/integrations/${integrationId}/refresh`, {
+      method: 'POST',
+    });
+  },
+
+  // ==========================================
+  // Marketing Posts
+  // ==========================================
+
+  async getMarketingPosts(options = {}) {
+    const params = new URLSearchParams(options);
+    return request(`/admin/marketing/posts?${params}`);
+  },
+
+  async getMarketingPost(postId) {
+    return request(`/admin/marketing/posts/${postId}`);
+  },
+
+  async createMarketingPost(postData) {
+    return request('/admin/marketing/posts', {
+      method: 'POST',
+      body: JSON.stringify(postData),
+    });
+  },
+
+  async updateMarketingPost(postId, postData) {
+    return request(`/admin/marketing/posts/${postId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(postData),
+    });
+  },
+
+  async deleteMarketingPost(postId) {
+    return request(`/admin/marketing/posts/${postId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async publishMarketingPost(postId) {
+    return request(`/admin/marketing/posts/${postId}/publish`, {
+      method: 'POST',
+    });
+  },
+
+  async cloneMarketingPost(postId, locationId = null) {
+    return request(`/admin/marketing/posts/${postId}/clone`, {
+      method: 'POST',
+      body: JSON.stringify({ location_id: locationId }),
+    });
+  },
+
+  async getMarketingPreview(sourceType, sourceId) {
+    const params = new URLSearchParams({ source_type: sourceType, source_id: sourceId });
+    return request(`/admin/marketing/preview?${params}`);
+  },
+
+  async getMarketingCalendar(startDate, endDate, locationId = null) {
+    const params = new URLSearchParams({ start_date: startDate, end_date: endDate });
+    if (locationId) params.append('location_id', locationId);
+    return request(`/admin/marketing/calendar?${params}`);
+  },
 };
 
 export { ApiError };

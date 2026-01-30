@@ -15,12 +15,16 @@ const businesses = pgTable('businesses', {
   primaryColor: text('primary_color').default('#f59e0b'),
 
   // Subscription fields
-  subscriptionTier: text('subscription_tier').default('free'), // 'free', 'pro', 'enterprise'
+  subscriptionTier: text('subscription_tier').default('free'), // 'free', 'starter', 'pro', 'enterprise'
   subscriptionStatus: text('subscription_status').default('active'), // 'active', 'past_due', 'cancelled', 'trialing'
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
   trialEndsAt: timestamp('trial_ends_at'),
   subscriptionEndsAt: timestamp('subscription_ends_at'),
+
+  // AI Add-on (for marketing content generation)
+  aiAddonTier: text('ai_addon_tier').default('none'), // 'none', 'lite', 'standard', 'pro', 'unlimited'
+  aiAddonStartedAt: timestamp('ai_addon_started_at'),
 
   settings: jsonb('settings'),
   createdAt: timestamp('created_at').defaultNow(),
@@ -494,6 +498,104 @@ const featureUsage = pgTable('feature_usage', {
 }));
 
 // ============================================
+// MARKETING & SOCIAL POSTING
+// ============================================
+
+// Social Integrations - Connected social accounts (FB, IG)
+const socialIntegrations = pgTable('social_integrations', {
+  id: text('id').primaryKey(), // sint_ prefix
+  businessId: text('business_id').notNull().references(() => businesses.id),
+  locationId: text('location_id').references(() => locations.id), // null = business-wide
+
+  // Platform info
+  platform: text('platform').notNull(), // 'facebook', 'instagram'
+  platformAccountId: text('platform_account_id').notNull(),
+  platformAccountName: text('platform_account_name'),
+  platformPageId: text('platform_page_id'), // For FB Pages / IG Business
+
+  // OAuth tokens (encrypted at rest)
+  accessToken: text('access_token').notNull(), // encrypted
+  refreshToken: text('refresh_token'), // encrypted
+  tokenExpiresAt: timestamp('token_expires_at'),
+  scopes: jsonb('scopes'), // ['pages_manage_posts', 'instagram_content_publish', ...]
+
+  // Status
+  isActive: boolean('is_active').default(true),
+  lastRefreshedAt: timestamp('last_refreshed_at'),
+  lastErrorAt: timestamp('last_error_at'),
+  lastErrorMessage: text('last_error_message'),
+
+  // Metadata
+  connectedAt: timestamp('connected_at').defaultNow(),
+  connectedBy: text('connected_by').references(() => staff.id),
+  updatedAt: timestamp('updated_at'),
+}, (table) => ({
+  businessIdx: index('idx_social_integrations_business').on(table.businessId),
+  uniqueBusinessPlatformLocation: unique().on(table.businessId, table.platform, table.locationId),
+}));
+
+// Marketing Posts - Social media posts (draft, scheduled, published)
+const marketingPosts = pgTable('marketing_posts', {
+  id: text('id').primaryKey(), // mpost_ prefix
+  businessId: text('business_id').notNull().references(() => businesses.id),
+  locationId: text('location_id').references(() => locations.id), // null = all locations
+
+  // Content source
+  sourceType: text('source_type'), // 'rule', 'voyage', 'custom'
+  sourceId: text('source_id'), // rule_id or ruleset_id if applicable
+
+  // Content
+  content: text('content').notNull(),
+  imageUrl: text('image_url'),
+
+  // Target platforms
+  platforms: jsonb('platforms').notNull().default('[]'), // ['facebook', 'instagram']
+
+  // Scheduling & Publishing
+  status: text('status').default('draft'), // 'draft', 'scheduled', 'publishing', 'published', 'failed', 'partial'
+  scheduledAt: timestamp('scheduled_at'), // null = immediate when published
+  publishedAt: timestamp('published_at'),
+
+  // Platform responses
+  platformPostIds: jsonb('platform_post_ids'), // { facebook: '123', instagram: '456' }
+  platformErrors: jsonb('platform_errors'), // { facebook: null, instagram: 'Image required' }
+  errorMessage: text('error_message'), // General error if all failed
+
+  // Metadata
+  createdBy: text('created_by').references(() => staff.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at'),
+}, (table) => ({
+  businessIdx: index('idx_marketing_posts_business').on(table.businessId),
+  statusIdx: index('idx_marketing_posts_status').on(table.status),
+  scheduledIdx: index('idx_marketing_posts_scheduled').on(table.scheduledAt),
+}));
+
+// AI Usage Tracking - For tiered AI add-on (schema only, implementation later)
+const aiUsage = pgTable('ai_usage', {
+  id: text('id').primaryKey(), // aiuse_ prefix
+  businessId: text('business_id').notNull().references(() => businesses.id),
+  staffId: text('staff_id').references(() => staff.id),
+
+  // Usage details
+  feature: text('feature').notNull(), // 'marketing', 'rule_builder', 'voyage_builder', etc.
+  action: text('action').notNull(), // 'generate', 'improve', 'shorten', etc.
+  tokensUsed: integer('tokens_used'),
+  promptHash: text('prompt_hash'), // For deduplication/caching
+
+  // Request/response metadata
+  requestContext: jsonb('request_context'), // What was sent to AI
+  responsePreview: text('response_preview'), // First 200 chars of response
+
+  // Metadata
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  businessIdx: index('idx_ai_usage_business').on(table.businessId),
+  createdIdx: index('idx_ai_usage_created').on(table.createdAt),
+  featureIdx: index('idx_ai_usage_feature').on(table.feature),
+}));
+
+// ============================================
 // LEGACY SUPPORT (for migration)
 // These mirror the old SQLite tables structure for easier migration
 // ============================================
@@ -555,6 +657,10 @@ module.exports = {
   // Feature Gating
   businessFeatures,
   featureUsage,
+  // Marketing & Social
+  socialIntegrations,
+  marketingPosts,
+  aiUsage,
   // Legacy Support
   earningRules,
   visits,

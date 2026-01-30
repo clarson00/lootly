@@ -1,17 +1,20 @@
 /**
- * Admin Routes Index
- *
- * Aggregates all admin API routes.
+ * Admin API Routes
+ * Combines all admin-specific routes (rules, integrations, marketing)
  */
-
 const express = require('express');
 const router = express.Router();
 
-const rulesRouter = require('./rules');
-const rulesetsRouter = require('./rulesets');
+// Import admin route modules
+const integrationsRoutes = require('./integrations');
+const marketingRoutes = require('./marketing');
 
-// Mount admin routes
-router.use('/rules', rulesRouter);
-router.use('/rulesets', rulesetsRouter);
+// Mount routes
+router.use('/integrations', integrationsRoutes);
+router.use('/marketing', marketingRoutes);
+
+// TODO: Add rules admin routes when migrated
+// router.use('/rules', require('./rules'));
+// router.use('/rulesets', require('./rulesets'));
 
 module.exports = router;

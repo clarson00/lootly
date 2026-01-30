@@ -7,6 +7,9 @@ import RuleBuilderPage from './pages/RuleBuilderPage';
 import VoyagesPage from './pages/VoyagesPage';
 import VoyageBuilderPage from './pages/VoyageBuilderPage';
 import SimulatorPage from './pages/SimulatorPage';
+import MarketingPage from './pages/MarketingPage';
+import PostBuilderPage from './pages/PostBuilderPage';
+import IntegrationsPage from './pages/IntegrationsPage';
 import Login from './pages/Login';
 
 function ProtectedRoute({ children }) {
@@ -49,6 +52,10 @@ function App() {
           <Route path="voyages/new" element={<VoyageBuilderPage />} />
           <Route path="voyages/:id" element={<VoyageBuilderPage />} />
           <Route path="simulator" element={<SimulatorPage />} />
+          <Route path="marketing" element={<MarketingPage />} />
+          <Route path="marketing/new" element={<PostBuilderPage />} />
+          <Route path="marketing/:id" element={<PostBuilderPage />} />
+          <Route path="settings/integrations" element={<IntegrationsPage />} />
         </Route>
       </Routes>
     </AdminAuthProvider>
