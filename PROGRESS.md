@@ -8,8 +8,8 @@
 |-----------|--------|-------|
 | Project Setup | ✅ Complete | Folder structure, docs organized |
 | Backend API | ✅ Complete | All routes working, database seeded |
-| Customer App | 🟡 In Progress | Starting now |
-| Staff App | 🔲 Not Started | |
+| Customer App | ✅ Complete | All pages built, PWA configured |
+| Staff App | 🟡 In Progress | Starting now |
 | Integration Testing | 🔲 Not Started | |
 
 **Legend:** 🔲 Not Started | 🟡 In Progress | ✅ Complete | ⚠️ Blocked
@@ -41,20 +41,20 @@
 - [x] JWT middleware
 
 ### Customer App
-- [ ] Vite + React setup
-- [ ] Tailwind CSS setup
-- [ ] PWA manifest and icons
-- [ ] API client
-- [ ] Auth context
-- [ ] Welcome page
-- [ ] Login page (phone + code)
-- [ ] Home page (points, progress)
-- [ ] My Code page (QR display)
-- [ ] Rewards page (available, unlocked)
-- [ ] Reward detail page
-- [ ] Profile page
-- [ ] Bottom navigation
-- [ ] Loot drop animation
+- [x] Vite + React setup
+- [x] Tailwind CSS setup
+- [x] PWA manifest and icons
+- [x] API client
+- [x] Auth context
+- [x] Welcome page
+- [x] Login page (phone + code)
+- [x] Home page (points, progress)
+- [x] My Code page (QR display)
+- [x] Rewards page (available, unlocked)
+- [x] Reward detail page
+- [x] Profile page
+- [x] Bottom navigation
+- [x] Loot drop animation
 
 ### Staff App
 - [ ] Vite + React setup
@@ -81,11 +81,11 @@
 
 1. ~~**Initialize project structure**~~ ✅ Done
 2. ~~**Set up backend**~~ ✅ Done
-3. **Build Customer App** (In Progress)
+3. ~~**Build Customer App**~~ ✅ Done
+4. **Build Staff App** (In Progress)
    - Set up Vite + React + Tailwind
    - Create PWA manifest
    - Build all pages
-4. **Build Staff App**
 5. **Integration Testing**
 
 ---
@@ -111,7 +111,7 @@
 ## Session Log
 
 ### Session 1 - 2026-01-29
-**Started:** Project setup and backend
+**Started:** Project setup and backend and customer app
 **Completed:**
 - Created folder structure (backend, customer-app, staff-app, docs)
 - Organized spec files into docs folder
@@ -124,8 +124,13 @@
   - Database seeded with pilot data
   - JWT authentication for customers and staff
   - Rules engine for milestones
+- Built complete customer app:
+  - React + Vite + Tailwind CSS
+  - PWA configuration
+  - All pages: Welcome, Login, Home, MyCode, Rewards, RewardDetail, Profile
+  - Components: BottomNav, ProgressBar, RewardCard, LocationBadge, LootDrop
 
-**Notes:** Backend complete and tested. Starting customer app next.
+**Notes:** Customer app complete. Starting staff app next.
 
 ---
 
