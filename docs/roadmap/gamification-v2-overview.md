@@ -17,10 +17,13 @@ This specification defines an enhanced gamification system for RewardsPirate tha
 2. **Drive network effects** through crews and social competition
 3. **Enable tenant differentiation** through customizable bounties and events
 4. **Create platform stickiness** through XP progression and collections
+5. **Reward tenant engagement** through PrintHabit merchandise program
 
 ---
 
 ## System Components
+
+### Customer Gamification
 
 | Component | Spec File | Description |
 |-----------|-----------|-------------|
@@ -30,9 +33,20 @@ This specification defines an enhanced gamification system for RewardsPirate tha
 | Predictions | [gamification-predictions.md](gamification-predictions.md) | Oracle's Challenge game |
 | Events & Raids | [gamification-events-raids.md](gamification-events-raids.md) | Watch parties, boss battles |
 | Bounties | [gamification-bounties.md](gamification-bounties.md) | Tenant-created challenges |
+| Customer App | [gamification-customer-app.md](gamification-customer-app.md) | Player UX |
+
+### Tenant Tools & Rewards
+
+| Component | Spec File | Description |
+|-----------|-----------|-------------|
 | Tenant Dashboard | [gamification-tenant-collaboration.md](gamification-tenant-collaboration.md) | Management tools |
 | Collaboration | [gamification-tenant-collaboration.md](gamification-tenant-collaboration.md) | Multi-tenant campaigns |
-| Customer App | [gamification-customer-app.md](gamification-customer-app.md) | Player UX |
+| **Tenant Rewards** | [tenant-rewards-program.md](tenant-rewards-program.md) | **PrintHabit merch for tenant XP** |
+
+### Technical
+
+| Component | Spec File | Description |
+|-----------|-----------|-------------|
 | Data Model | [gamification-data-model.md](gamification-data-model.md) | Complete schema |
 | MVP Plan | [gamification-mvp.md](gamification-mvp.md) | Implementation phases |
 
@@ -40,7 +54,37 @@ This specification defines an enhanced gamification system for RewardsPirate tha
 
 ## Architecture Overview
 
-### Dual Currency System
+### Dual-Layer Gamification
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                   TWO-LAYER GAMIFICATION                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  LAYER 1: CUSTOMERS                 LAYER 2: TENANTS            │
+│  ┌─────────────────────┐           ┌─────────────────────┐     │
+│  │ Earn XP & Points    │           │ Earn Tenant XP      │     │
+│  │ Capture creatures   │           │ for creating games  │     │
+│  │ Join crews          │───────────│ and driving         │     │
+│  │ Complete bounties   │  FLYWHEEL │ customer activity   │     │
+│  │ Win prizes          │◄──────────│                     │     │
+│  └─────────────────────┘           │ Redeem for          │     │
+│         ▲                          │ PrintHabit merch    │     │
+│         │                          │ (t-shirts, cards,   │     │
+│         │                          │  stickers, etc.)    │     │
+│         │                          └──────────┬──────────┘     │
+│         │                                     │                 │
+│         │    ┌────────────────────────────────┘                 │
+│         │    │                                                  │
+│         │    ▼                                                  │
+│         │  Tenant gives merch to customers as prizes            │
+│         │  → Customers engage more → Tenant earns more XP       │
+│         └───────────────────────────────────────────────────────│
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Dual Currency System (Customers)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -77,12 +121,49 @@ This specification defines an enhanced gamification system for RewardsPirate tha
 | Events | Raid mechanics, predictions | Watch parties, flash events |
 | Social | Crew infrastructure | - |
 | Challenges | Quest framework | Bounties, promotions |
+| **Tenant Rewards** | XP system, PrintHabit catalog | Earning XP, redeeming merch |
+
+---
+
+## Tenant Rewards Program (PrintHabit)
+
+**Tenants also earn XP** for platform engagement, redeemable for custom merchandise:
+
+### How Tenants Earn XP
+
+| Activity Type | Examples | XP Range |
+|---------------|----------|----------|
+| Content Creation | Bounties, events, voyages | 25-200 XP |
+| Engagement Quality | Completion rates, return rates | 25-100 XP/month |
+| Personal Bests | Beat their own records | 100-200 XP |
+| Milestones | Check-in counts, anniversaries | 250-1,000 XP |
+
+### PrintHabit Reward Catalog
+
+| Category | Products |
+|----------|----------|
+| Apparel | T-shirts, hoodies, hats |
+| Metal Cards | Stainless steel, black aluminum |
+| Stickers | Die-cut, vinyl, holographic |
+| Coasters | Cork, leather, metal |
+| Keychains | Metal, acrylic, leather |
+| Drinkware | Mugs, tumblers |
+
+### The Flywheel
+
+1. Tenant creates bounties/events → **Earns Tenant XP**
+2. Tenant redeems XP → **Gets PrintHabit merchandise**
+3. Tenant gives merch to customers as prizes → **Customers engage more**
+4. More customer activity → **Tenant earns more XP**
+5. Repeat (compounding effect)
+
+See [tenant-rewards-program.md](tenant-rewards-program.md) for full specification.
 
 ---
 
 ## Progression System
 
-### Pirate Ranks
+### Pirate Ranks (Customers)
 
 | Rank | XP Required | Unlocks |
 |------|-------------|----------|
@@ -102,7 +183,7 @@ This specification defines an enhanced gamification system for RewardsPirate tha
 The system is built with a **theme-agnostic engine** that currently uses pirate theming:
 
 | Generic Term | Pirate Theme | Future: Space Theme |
-|--------------|--------------|--------------------|
+|--------------|--------------|---------------------|
 | Points | Doubloons | Credits |
 | Location | Port | Station |
 | Quest | Voyage | Mission |
@@ -126,6 +207,7 @@ Instead, we achieve similar engagement through:
 - Leaderboard competition
 - Crew rivalry
 - Achievement permanence
+- **Physical merchandise rewards** (PrintHabit)
 
 ---
 
@@ -139,6 +221,7 @@ Instead, we achieve similar engagement through:
 | Collaborations | - | Join | Create | White-label |
 | Predictions | - | Join | Create | Create |
 | Analytics | Basic | Full | Full | Custom |
+| Tenant Rewards | ✓ | ✓ | ✓ | ✓ |
 
 ---
 
@@ -151,6 +234,7 @@ Instead, we achieve similar engagement through:
 | 3: Network | 4-5 weeks | Multi-location Voyages, Collaboration |
 | 4: Events | 3-4 weeks | Watch Parties, Raids, Predictions |
 | 5: Scale | Ongoing | Territories, Seasons, Championships |
+| **2.1: Tenant Rewards** | 3-4 weeks | Tenant XP, PrintHabit integration |
 
 See [gamification-mvp.md](gamification-mvp.md) for detailed implementation plan.
 
@@ -162,6 +246,7 @@ See [gamification-mvp.md](gamification-mvp.md) for detailed implementation plan.
 - [../RULES_ENGINE.md](../RULES_ENGINE.md) - Underlying rules system
 - [../ENTITLEMENTS.md](../ENTITLEMENTS.md) - Feature gating
 - [crypto-rewards.md](crypto-rewards.md) - Crypto analysis (not pursuing)
+- [tenant-rewards-program.md](tenant-rewards-program.md) - PrintHabit integration
 
 ---
 
