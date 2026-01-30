@@ -1,488 +1,403 @@
-# Lootly - Architecture & Development Guidelines
+# Lootly Architecture
 
-## System Architecture
+> **Purpose:** High-level architecture decisions and patterns.  
+> **Audience:** Claude Code, developers  
+> **Status:** Living document — update as architecture evolves
+
+---
+
+## System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         CLIENTS                                  │
-├─────────────────────┬─────────────────────┬─────────────────────┤
-│   Customer App      │     Staff App       │   Admin Dashboard   │
-│   (React PWA)       │    (React PWA)      │   (React - Future)  │
-│   Mobile-first      │   Tablet-optimized  │   Desktop           │
-│   Port 5173         │   Port 5174         │   Port 5175         │
-└─────────┬───────────┴──────────┬──────────┴─────────┬───────────┘
-          │                      │                    │
-          │              HTTPS / REST API             │
-          │                      │                    │
-          └──────────────────────┼────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      BACKEND API                                 │
-│                   (Node.js + Express)                           │
-│                      Port 3001                                   │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │ Auth        │  │ Customers   │  │ Transactions            │  │
-│  │ Middleware  │  │ Service     │  │ Service                 │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │ Business    │  │ Rewards     │  │ Rules Engine            │  │
-│  │ Service     │  │ Service     │  │ (Evaluation Logic)      │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      DATABASE                                    │
-│                  (SQLite - lootly.db)                           │
-│                                                                  │
-│   Single file, portable, no server needed                       │
-│   Location: backend/db/lootly.db                                │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Data Flow
-
-### Check-in Flow
-```
-Customer shows QR → Staff scans → Staff enters spend → Backend processes
-     │                  │               │                    │
-     │                  │               │                    ├─ Calculate points
-     │                  │               │                    ├─ Record visit
-     │                  │               │                    ├─ Evaluate all rules
-     │                  │               │                    ├─ Trigger awards
-     │                  │               │                    └─ Return result
-     │                  │               │                           │
-     │                  │               └─── Staff sees confirmation ◄─┘
-     │                  │                           │
-     └── Customer sees points update ◄──────────────┘ (via refresh or push)
-```
-
-### Redemption Flow
-```
-Customer selects reward → Shows redemption QR → Staff scans → Staff confirms
-        │                        │                  │              │
-        │                        │                  │              ├─ Verify code
-        │                        │                  │              ├─ Mark redeemed
-        │                        │                  │              └─ Return success
-        │                        │                  │                     │
-        │                        │                  └─ Staff sees reward ◄─┘
-        │                        │                     details
-        └── Customer sees reward marked as used ◄────────────────────────┘
-```
-
-## Authentication
-
-### Customer Auth
-```
-Phone Number → Request Code → (Mock: always "1234") → Verify → JWT Token
-                                                                   │
-                                                    Stored in localStorage
-                                                    Sent as Bearer token
-```
-
-### Staff Auth
-```
-Location + PIN → Verify PIN → JWT Token (includes location_id)
-                                   │
-                    Stored in sessionStorage (not persistent)
-                    Sent as Bearer token
-```
-
-### JWT Payload
-```javascript
-// Customer token
-{
-  type: "customer",
-  customer_id: "cust_xxx",
-  phone: "+15551234567",
-  exp: <timestamp>
-}
-
-// Staff token
-{
-  type: "staff",
-  staff_id: "staff_xxx",
-  location_id: "loc_xxx",
-  business_id: "biz_xxx",
-  exp: <timestamp>
-}
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              LOOTLY PLATFORM                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   │
+│   │  Customer   │   │   Staff     │   │   Admin     │   │   Owner     │   │
+│   │  PWA        │   │   Tablet    │   │   Dashboard │   │   Mobile    │   │
+│   │  (React)    │   │   (React)   │   │   (React)   │   │   (React)   │   │
+│   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘   │
+│          │                 │                 │                 │           │
+│          └────────────────┬┴─────────────────┴─────────────────┘           │
+│                           │                                                 │
+│                           ▼                                                 │
+│                    ┌──────────────┐                                        │
+│                    │   Hono API   │                                        │
+│                    │  (Workers)   │                                        │
+│                    └──────┬───────┘                                        │
+│                           │                                                 │
+│          ┌────────────────┼────────────────┐                               │
+│          │                │                │                               │
+│          ▼                ▼                ▼                               │
+│   ┌────────────┐   ┌────────────┐   ┌────────────┐                        │
+│   │ PostgreSQL │   │   Redis    │   │  External  │                        │
+│   │   (Neon)   │   │  (Upstash) │   │  Services  │                        │
+│   └────────────┘   └────────────┘   └────────────┘                        │
+│                                      • Twilio (SMS)                        │
+│                                      • Stripe (Billing)                    │
+│                                      • Claude (AI)                         │
+│                                      • FCM (Push)                          │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Development Guidelines
+## Core Principles
 
-### DO ✅
+### 1. Feature Gating First
 
-1. **Keep it simple**
-   - MVP means minimum viable — cut scope, not corners
-   - If unsure between two approaches, pick the simpler one
-   - Working > Perfect
+**Every feature must be gated.** This is non-negotiable.
 
-2. **Test as you go**
-   - Test each API endpoint with curl before moving on
-   - Test each UI component in the browser before building the next
-   - Don't build everything then test at the end
+```typescript
+// ❌ WRONG - No feature gate
+app.post('/api/journeys', createJourneyHandler);
 
-3. **Commit often**
-   - Commit after each working feature
-   - Use clear commit messages: "Add customer QR code generation"
-   - Don't commit broken code
+// ✅ RIGHT - Feature gated
+app.post('/api/journeys', 
+  requireFeature(FEATURES.PRO_JOURNEYS),
+  createJourneyHandler
+);
+```
 
-4. **Handle errors gracefully**
-   - API should return proper error messages and status codes
-   - UI should show user-friendly error messages
-   - Log errors to console for debugging
+See [ENTITLEMENTS.md](ENTITLEMENTS.md) for full details.
 
-5. **Use consistent patterns**
-   - Same folder structure in both apps
-   - Same API response format everywhere
-   - Same error handling approach
+### 2. Multi-Tenant by Default
 
-6. **Mobile-first for customer app**
-   - Design for phone screens first
-   - Touch-friendly buttons (min 44px tap targets)
-   - Fast loading, minimal dependencies
+Every query must be scoped to a business:
 
-7. **Security basics**
-   - Hash staff PINs (bcrypt)
-   - Validate all inputs
-   - Use parameterized queries (SQLite)
-   - Don't expose sensitive data in responses
+```typescript
+// ❌ WRONG - No tenant scope
+const customers = await db.query.customers.findMany();
 
-### DON'T ❌
+// ✅ RIGHT - Tenant scoped
+const customers = await db.query.customers.findMany({
+  where: eq(customers.business_id, businessId)
+});
+```
 
-1. **Don't over-engineer**
-   - No microservices — it's one Express server
-   - No complex state management — React useState/useContext is enough
-   - No GraphQL — REST is fine
-   - No TypeScript for MVP — plain JavaScript
+### 3. Prefixed IDs
 
-2. **Don't add features not in spec**
-   - No "nice to have" features
-   - No premature optimization
-   - No complex caching layers
-   - Stick to the technical spec
+All IDs are prefixed strings for debugging and safety:
 
-3. **Don't use heavy frameworks**
-   - No Redux (useContext is enough)
-   - No Styled Components (Tailwind is enough)
-   - No ORM (raw SQL is fine for MVP)
-   - No complex testing frameworks (manual testing for MVP)
+```typescript
+// ID prefixes
+biz_    // Business
+loc_    // Location
+cust_   // Customer
+txn_    // Transaction
+rwd_    // Reward
+rule_   // Rule
+jny_    // Journey
+msg_    // Message
+staff_  // Staff member
+```
 
-4. **Don't create deep nesting**
-   - Max 2-3 levels of folder nesting
-   - Flatten when possible
-   - Avoid callback hell — use async/await
+### 4. Immutable Audit Trail
 
-5. **Don't ignore errors**
-   - Always try/catch async operations
-   - Always check API response status
-   - Always show user feedback on failure
+Transactions and point changes are append-only:
 
-6. **Don't hardcode**
-   - Use environment variables for URLs, secrets
-   - Use constants file for magic numbers
-   - Use seed data for test data, not inline
+```typescript
+// ❌ WRONG - Mutating balance directly
+await db.update(customers).set({ points: newBalance });
+
+// ✅ RIGHT - Create transaction, compute balance
+await db.insert(transactions).values({
+  type: 'earn',
+  points: 50,
+  customer_id: customerId,
+});
+// Balance computed from SUM of transactions
+```
+
+### 5. Rules Engine is Central
+
+All point calculations go through the rules engine:
+
+```typescript
+// ❌ WRONG - Hard-coded points
+const points = amount * 1;
+
+// ✅ RIGHT - Rules engine decides
+const points = await rulesEngine.evaluate({
+  trigger: 'purchase',
+  context: { amount, location, dayOfWeek, customer }
+});
+```
 
 ---
 
-## Code Style
+## Tech Stack
 
-### JavaScript/React
+| Layer | Technology | Why |
+|-------|------------|-----|
+| **API** | Hono | Fast, TypeScript-native, runs on Workers |
+| **Database** | PostgreSQL (Neon) | Serverless, scales to zero, branching |
+| **ORM** | Drizzle | Type-safe, lightweight, good DX |
+| **Cache** | Redis (Upstash) | Session storage, rate limiting |
+| **Frontend** | React + Vite | PWA support, fast builds |
+| **Styling** | TailwindCSS | Utility-first, consistent |
+| **Hosting** | Cloudflare Workers | Edge deployment, cheap, fast |
+| **Frontend Host** | Vercel | Easy PWA deployment |
+| **SMS** | Twilio | Reliable, good API |
+| **Payments** | Stripe | Industry standard |
+| **AI** | Claude API | Best reasoning for marketing assistant |
+| **Push** | Firebase Cloud Messaging | Cross-platform |
 
-```javascript
-// Use async/await, not callbacks or .then chains
-async function fetchCustomer(id) {
-  try {
-    const response = await fetch(`/api/customers/${id}`);
-    if (!response.ok) throw new Error('Failed to fetch');
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching customer:', error);
-    throw error;
-  }
-}
+---
 
-// Use functional components with hooks
-function CustomerCard({ customer }) {
-  const [loading, setLoading] = useState(false);
-  
-  return (
-    <div className="p-4 bg-white rounded-lg">
-      <h2>{customer.name}</h2>
-    </div>
-  );
-}
+## API Design
 
-// Use destructuring
-const { name, phone, points_balance } = customer;
+### URL Structure
 
-// Use template literals
-const message = `Welcome back, ${name}!`;
+```
+/api/v1/{resource}[/{id}][/{sub-resource}]
 ```
 
-### File Naming
+Examples:
+- `GET /api/v1/customers` — List customers
+- `GET /api/v1/customers/cust_123` — Get customer
+- `GET /api/v1/customers/cust_123/transactions` — Customer's transactions
+- `POST /api/v1/transactions` — Create transaction
+
+### Authentication
+
 ```
-components/CustomerCard.jsx    // PascalCase for components
-pages/Home.jsx                 // PascalCase for pages
-api/client.js                  // camelCase for utilities
-routes/customers.js            // camelCase for backend
+Authorization: Bearer {jwt_token}
 ```
 
-### API Response Format
-
-```javascript
-// Success response
+JWT contains:
+```typescript
 {
-  "success": true,
-  "data": { ... }
+  sub: "cust_123" | "staff_456",  // User ID
+  type: "customer" | "staff" | "owner",
+  business_id: "biz_789",  // For staff/owner
+  location_id?: "loc_012",  // For staff
+}
+```
+
+### Response Format
+
+```typescript
+// Success
+{
+  data: { ... },
+  meta?: { page, limit, total }
 }
 
-// Error response
+// Error
 {
-  "success": false,
-  "error": {
-    "code": "INVALID_CODE",
-    "message": "The verification code is incorrect"
-  }
-}
-
-// List response
-{
-  "success": true,
-  "data": {
-    "items": [...],
-    "total": 42,
-    "page": 1,
-    "per_page": 20
+  error: {
+    code: "VALIDATION_ERROR",
+    message: "Invalid phone number",
+    details?: { field: "phone" }
   }
 }
 ```
 
-### HTTP Status Codes
-```
-200 - Success
-201 - Created
-400 - Bad Request (validation error)
-401 - Unauthorized (not logged in)
-403 - Forbidden (logged in but not allowed)
-404 - Not Found
-500 - Server Error
-```
+### Error Codes
+
+| Code | HTTP | Meaning |
+|------|------|--------|
+| `VALIDATION_ERROR` | 400 | Invalid input |
+| `UNAUTHORIZED` | 401 | Not logged in |
+| `FORBIDDEN` | 403 | No permission |
+| `NOT_FOUND` | 404 | Resource doesn't exist |
+| `FEATURE_NOT_AVAILABLE` | 403 | Upgrade required |
+| `LIMIT_EXCEEDED` | 429 | Usage limit hit |
+| `INTERNAL_ERROR` | 500 | Server error |
 
 ---
 
-## Folder Structure Rules
+## Database Patterns
 
-### Backend
+### Soft Deletes
+
+Use `deleted_at` instead of hard deletes:
+
+```sql
+SELECT * FROM customers 
+WHERE business_id = $1 
+  AND deleted_at IS NULL;
 ```
-backend/
-├── server.js           # Entry point — keep it small, just setup
-├── db/
-│   ├── database.js     # Connection and helpers
-│   ├── schema.sql      # All CREATE TABLE statements
-│   └── seed.js         # Seed data script
-├── routes/
-│   ├── auth.js         # One file per resource
-│   ├── customers.js
-│   └── ...
-├── middleware/
-│   └── auth.js         # JWT verification
-├── services/           # Business logic (optional, can be in routes for MVP)
-│   └── rules-engine.js
-└── .env                # Environment variables (not committed)
-```
-
-### Frontend Apps
-```
-customer-app/
-├── src/
-│   ├── main.jsx        # Entry point
-│   ├── App.jsx         # Router setup
-│   ├── index.css       # Tailwind imports
-│   ├── api/
-│   │   └── client.js   # Single file for all API calls
-│   ├── context/
-│   │   └── AuthContext.jsx
-│   ├── pages/          # One file per page/screen
-│   │   ├── Home.jsx
-│   │   └── ...
-│   └── components/     # Reusable components only
-│       ├── Button.jsx
-│       └── ...
-└── public/
-    ├── manifest.json
-    └── icons/
-```
-
----
-
-## Database Guidelines
-
-### IDs
-- Use prefixed string IDs: `cust_`, `biz_`, `loc_`, `txn_`, `reward_`
-- Generate with: `${prefix}${Date.now().toString(36)}${Math.random().toString(36).substr(2, 9)}`
 
 ### Timestamps
-- Always use `created_at DATETIME DEFAULT CURRENT_TIMESTAMP`
-- Store in UTC, format on client
 
-### JSON Fields
-- Use for flexible data (rule conditions)
-- Always validate before storing
-- Always parse safely when reading
+All tables have:
+```sql
+created_at TIMESTAMPTZ DEFAULT NOW(),
+updated_at TIMESTAMPTZ  -- Set on update
+```
 
-### Queries
-```javascript
-// Always use parameterized queries
-const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(id);
+### JSON Columns
 
-// Never do this
-const customer = db.prepare(`SELECT * FROM customers WHERE id = '${id}'`).get();
+Use for flexible data, but sparingly:
+
+```sql
+-- Good: Rule conditions (complex, varies by type)
+conditions JSONB NOT NULL
+
+-- Bad: Customer address (should be columns)
+address JSONB  -- ❌ Use address_line1, city, etc.
 ```
 
 ---
 
-## Environment Variables
+## Frontend Patterns
 
-### Backend (.env)
-```
-PORT=3001
-JWT_SECRET=change-this-in-production-use-long-random-string
-DATABASE_PATH=./db/lootly.db
-CORS_ORIGIN=http://localhost:5173,http://localhost:5174
-NODE_ENV=development
+### State Management
+
+- **Server state:** TanStack Query (React Query)
+- **UI state:** React useState/useReducer
+- **Form state:** React Hook Form
+
+### Feature Gating in UI
+
+```tsx
+// Always wrap gated features
+<FeatureGate feature={FEATURES.AI_ASSISTANT}>
+  <AIAssistant />
+</FeatureGate>
+
+// Or check in hooks
+const { hasFeature } = useEntitlements();
+if (!hasFeature(FEATURES.ANALYTICS)) {
+  return <UpgradePrompt feature="analytics" />;
+}
 ```
 
-### Frontend (.env)
-```
-VITE_API_URL=http://localhost:3001/api
-```
+### PWA Requirements
 
-### Production
-- Never commit .env files
-- Use platform secrets (Replit Secrets, Vercel Environment Variables)
-- Use different JWT_SECRET in production
+- Service worker for offline
+- Manifest for install prompt
+- Icons at all sizes
+- HTTPS only
 
 ---
 
-## Testing Checklist
+## Security
 
-### Before calling a feature "done":
+### Authentication Flow
 
-**API Endpoint:**
-- [ ] Returns correct data for valid input
-- [ ] Returns proper error for invalid input
-- [ ] Returns 401 when auth required but not provided
-- [ ] Doesn't expose sensitive data
+```
+1. Customer enters phone number
+2. Server sends SMS code (6 digits, 5 min expiry)
+3. Customer enters code
+4. Server verifies, issues JWT
+5. JWT stored in httpOnly cookie
+```
 
-**UI Component:**
-- [ ] Renders correctly on mobile screen size
-- [ ] Shows loading state while fetching
-- [ ] Shows error state on failure
-- [ ] Buttons/links are tappable
+### Authorization
 
-**Flow:**
-- [ ] Happy path works end-to-end
-- [ ] Errors are handled gracefully
-- [ ] User feedback is clear
+| Role | Can Access |
+|------|------------|
+| Customer | Own data, own rewards, own transactions |
+| Staff | Business customers, check-ins, redemptions |
+| Owner | Everything in their business |
+| Admin | System-wide (internal only) |
+
+### Data Isolation
+
+- All queries filtered by `business_id`
+- Middleware validates JWT business matches route
+- No cross-tenant data access possible
 
 ---
 
-## Deployment Notes
+## Scalability Considerations
 
-### Development Workflow
+### Stateless API
+
+- No server-side sessions
+- JWT contains all auth info
+- Horizontal scaling works automatically
+
+### Database
+
+- Connection pooling via Neon
+- Read replicas when needed
+- Indexes on all foreign keys
+
+### Caching Strategy
 
 ```
-Local Development → Push to GitHub → Auto-deploy to hosting
-       │                  │                    │
-       │                  │         ┌──────────┼──────────┐
-       │                  │         ▼          ▼          ▼
-       │                  └──→  Replit    Vercel    Railway
-       │
-       └── Test everything locally first!
+L1: In-memory (request scope)
+L2: Redis (cross-request)
+L3: Database
 ```
 
-### Local Development (Primary)
-```bash
-# Backend
-cd backend
-npm install
-npm run seed    # First time only
-npm run dev     # Runs on localhost:3001
-
-# Customer App (separate terminal)
-cd customer-app
-npm install
-npm run dev     # Runs on localhost:5173
-
-# Staff App (separate terminal)
-cd staff-app
-npm install
-npm run dev     # Runs on localhost:5174
-```
-
-**Testing on phone locally:**
-1. Find your computer's local IP: `ipconfig` (Windows) or `ifconfig` (Mac/Linux)
-2. Phone must be on same WiFi network
-3. Open `http://YOUR_IP:5173` on phone
-4. Note: Camera/QR scanning requires HTTPS in production, but works on localhost
-
-### GitHub (Source of Truth)
-- All code lives in GitHub repo
-- Push working code only
-- All deployments pull from GitHub
-- Never edit code directly in deployment platforms
-
-```bash
-git add .
-git commit -m "Add customer QR code screen"
-git push origin main
-```
-
-### Replit (Full Stack Option)
-- Connect to GitHub repo (Import from GitHub)
-- Set environment variables in Secrets tab
-- Can run backend + both frontends
-- Good for demos and sharing
-- Auto-deploys on GitHub push (if configured)
-
-### Vercel (Frontend Only)
-- Connect to GitHub repo
-- Set `VITE_API_URL` in environment variables
-- Build command: `npm run build`
-- Output directory: `dist`
-- Auto-deploys on GitHub push
-- Note: Backend needs separate hosting
-
-### Railway (Backend Only)
-- Connect to GitHub repo
-- Set all environment variables
-- Auto-detects Node.js
-- SQLite file persists with volume
-- Auto-deploys on GitHub push
-- Good for production backend
+Cache invalidation:
+- Feature flags: 5 min TTL
+- Business config: 1 min TTL
+- Customer data: No cache (real-time)
 
 ---
 
-## Questions to Ask Before Starting
+## Folder Structure
 
-If anything in the technical spec is unclear, ask before building:
-
-1. Is this the simplest way to do this?
-2. Is this in scope for MVP?
-3. Will this work on mobile?
-4. What happens if this fails?
+```
+lootly/
+├── CLAUDE.md              # Claude Code instructions
+├── ROADMAP.md             # Feature roadmap
+├── docs/
+│   ├── ARCHITECTURE.md    # This file
+│   ├── ENTITLEMENTS.md    # Feature gating
+│   ├── FEATURE_FLAGS.md   # Implementation guide
+│   ├── TECHNICAL_SPEC.md  # API & DB spec
+│   ├── DATABASE_SCHEMA.md # Schema reference
+│   ├── SEED_DATA.md       # Pilot data
+│   └── roadmap/           # Feature specs
+│
+├── backend/
+│   ├── src/
+│   │   ├── routes/        # API routes by resource
+│   │   ├── services/      # Business logic
+│   │   ├── lib/
+│   │   │   ├── db/        # Drizzle setup
+│   │   │   ├── features/  # Feature gating
+│   │   │   └── rules/     # Rules engine
+│   │   ├── middleware/    # Auth, feature gates
+│   │   └── index.ts       # Hono app entry
+│   ├── drizzle/           # Migrations
+│   └── package.json
+│
+├── frontend/
+│   ├── src/
+│   │   ├── pages/         # Route components
+│   │   ├── components/    # Shared components
+│   │   ├── hooks/         # Custom hooks
+│   │   ├── lib/           # Utilities
+│   │   └── App.tsx
+│   ├── public/            # PWA assets
+│   └── package.json
+│
+└── packages/              # Shared code (if monorepo)
+    └── shared/
+        └── features/      # Feature keys (shared)
+```
 
 ---
 
-## Summary
+## Decision Log
 
-**Mindset:** Build a working product fast. Polish later.
+| Date | Decision | Rationale |
+|------|----------|----------|
+| Jan 2025 | Feature gating from day 1 | Avoid painful retrofit for monetization |
+| Jan 2025 | Hono over Express | Better TypeScript, runs on edge |
+| Jan 2025 | Drizzle over Prisma | Lighter, faster, better SQL control |
+| Jan 2025 | PostgreSQL over MySQL | Better JSON support, Neon serverless |
+| Jan 2025 | PWA over native apps | Faster to build, easier updates |
+| Jan 2025 | Phone auth over email | Better for restaurant customers |
 
-**Priority:** Working > Clean > Fast > Pretty
+---
 
-**When stuck:** Pick the simpler option and move on.
+## Related Documents
+
+- [ENTITLEMENTS.md](ENTITLEMENTS.md) — Feature gating (MUST READ)
+- [FEATURE_FLAGS.md](FEATURE_FLAGS.md) — Implementation guide
+- [TECHNICAL_SPEC.md](TECHNICAL_SPEC.md) — API routes & database
+- [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) — Schema reference
+
+---
+
+*Last updated: January 2025*

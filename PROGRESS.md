@@ -7,9 +7,11 @@
 | Component | Status | Notes |
 |-----------|--------|-------|
 | Project Setup | ✅ Complete | Folder structure, docs organized |
-| Backend API | ✅ Complete | All routes working, database seeded |
+| Backend API (Express/SQLite) | ✅ Complete | Working prototype - all routes functional |
 | Customer App | ✅ Complete | All pages built, PWA configured |
 | Staff App | ✅ Complete | All pages built, PWA configured |
+| Architecture Docs | ✅ Complete | ENTITLEMENTS, FEATURE_FLAGS, FEATURE_GATING synced |
+| Backend Migration (Hono/PostgreSQL) | 🔲 Not Started | Target architecture per docs |
 | Integration Testing | 🔲 Not Started | |
 
 **Legend:** 🔲 Not Started | 🟡 In Progress | ✅ Complete | ⚠️ Blocked
@@ -80,10 +82,17 @@
 ## Next Steps
 
 1. ~~**Initialize project structure**~~ ✅ Done
-2. ~~**Set up backend**~~ ✅ Done
+2. ~~**Set up backend (Express/SQLite prototype)**~~ ✅ Done
 3. ~~**Build Customer App**~~ ✅ Done
 4. ~~**Build Staff App**~~ ✅ Done
-5. **Integration Testing** (Next)
+5. ~~**Sync architecture docs**~~ ✅ Done
+6. **Backend Migration to Target Architecture** (Next)
+   - Set up Neon PostgreSQL database
+   - Create Hono API project with Drizzle ORM
+   - Port routes from Express (same business logic)
+   - Add feature gating middleware
+   - Deploy to Cloudflare Workers
+7. **Integration Testing**
    - Test full check-in flow
    - Test full redemption flow
    - Test milestone triggers
@@ -96,6 +105,8 @@
 | Date | Decision | Reason |
 |------|----------|--------|
 | 2026-01-29 | Use sql.js instead of better-sqlite3 | better-sqlite3 requires native compilation with Visual Studio, sql.js is pure JS |
+| 2026-01-29 | Accept remote architecture docs as authoritative | Target Hono + PostgreSQL + Cloudflare Workers for production |
+| 2026-01-29 | Keep Express/SQLite MVP as working prototype | Validates business logic; frontend code transfers directly |
 
 *Record any decisions that deviate from or clarify the specs here.*
 
@@ -138,6 +149,23 @@
   - Components: Scanner (html5-qrcode), NumPad, CustomerInfo
 
 **Notes:** All three apps complete. Ready for integration testing.
+
+### Session 2 - 2026-01-29
+**Started:** Architecture sync and migration planning
+**Completed:**
+- Fetched and merged remote architecture docs
+- Synced CLAUDE.md, ROADMAP.md, docs/ARCHITECTURE.md to remote versions
+- New docs added: ENTITLEMENTS.md, FEATURE_FLAGS.md, FEATURE_GATING.md
+- New roadmap specs: ai-marketing-assistant.md, analytics-reporting.md
+- Rebased local commits on top of remote (clean linear history)
+
+**Architecture Decision:**
+- Current Express + SQLite MVP serves as working prototype
+- Target architecture: Hono + Drizzle ORM + PostgreSQL (Neon) + Cloudflare Workers
+- Frontend apps (customer-app, staff-app) transfer directly - no changes needed
+- Backend needs migration to new stack with feature gating
+
+**Notes:** Docs synced. Next step is backend migration or integration testing of current prototype.
 
 ---
 
