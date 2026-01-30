@@ -9,7 +9,7 @@
 | Project Setup | ✅ Complete | Folder structure, docs organized |
 | Backend API | ✅ Complete | All routes working, database seeded |
 | Customer App | ✅ Complete | All pages built, PWA configured |
-| Staff App | 🟡 In Progress | Starting now |
+| Staff App | ✅ Complete | All pages built, PWA configured |
 | Integration Testing | 🔲 Not Started | |
 
 **Legend:** 🔲 Not Started | 🟡 In Progress | ✅ Complete | ⚠️ Blocked
@@ -57,17 +57,17 @@
 - [x] Loot drop animation
 
 ### Staff App
-- [ ] Vite + React setup
-- [ ] Tailwind CSS setup
-- [ ] PWA manifest
-- [ ] API client
-- [ ] Staff auth context
-- [ ] Login page (location + PIN)
-- [ ] Scan page (camera)
-- [ ] Customer found page
-- [ ] Enter spend page (numpad)
-- [ ] Confirmation page
-- [ ] Redeem reward page
+- [x] Vite + React setup
+- [x] Tailwind CSS setup
+- [x] PWA manifest and icons
+- [x] API client
+- [x] Staff auth context
+- [x] Login page (location + PIN)
+- [x] Scan page (camera + manual entry)
+- [x] Customer found page
+- [x] Enter spend page (numpad)
+- [x] Confirmation page
+- [x] Redeem reward page
 
 ### Integration
 - [ ] Full check-in flow tested
@@ -82,11 +82,12 @@
 1. ~~**Initialize project structure**~~ ✅ Done
 2. ~~**Set up backend**~~ ✅ Done
 3. ~~**Build Customer App**~~ ✅ Done
-4. **Build Staff App** (In Progress)
-   - Set up Vite + React + Tailwind
-   - Create PWA manifest
-   - Build all pages
-5. **Integration Testing**
+4. ~~**Build Staff App**~~ ✅ Done
+5. **Integration Testing** (Next)
+   - Test full check-in flow
+   - Test full redemption flow
+   - Test milestone triggers
+   - Test multi-location tracking
 
 ---
 
@@ -130,7 +131,13 @@
   - All pages: Welcome, Login, Home, MyCode, Rewards, RewardDetail, Profile
   - Components: BottomNav, ProgressBar, RewardCard, LocationBadge, LootDrop
 
-**Notes:** Customer app complete. Starting staff app next.
+- Built complete staff app:
+  - React + Vite + Tailwind CSS
+  - PWA configuration (port 5174)
+  - All pages: Login, Scan, Customer, EnterSpend, Confirm, RedeemReward
+  - Components: Scanner (html5-qrcode), NumPad, CustomerInfo
+
+**Notes:** All three apps complete. Ready for integration testing.
 
 ---
 
