@@ -117,10 +117,20 @@ export default function PostBuilderPage() {
     }
   }
 
-  function handleSourceSelect(type, id) {
+  async function handleSourceSelect(type, id) {
     setSourceType(type);
     setSourceId(id);
     setStep(2);
+
+    // Generate content from the selected source
+    try {
+      const result = await api.getMarketingPreview(type, id);
+      if (result.data?.content) {
+        setContent(result.data.content);
+      }
+    } catch (err) {
+      console.error('Failed to generate content from source:', err);
+    }
   }
 
   function handleCustomSelect() {
