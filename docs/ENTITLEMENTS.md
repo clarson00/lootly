@@ -16,6 +16,95 @@ Every feature in Lootly should be "entitlement-aware" from day one. This means:
 
 ---
 
+## Core MVP Metering (CRITICAL)
+
+These limits must be enforced from day one:
+
+| Limit | Free | Starter | Pro | Enterprise |
+|-------|------|---------|-----|------------|
+| **Active rewards** | 3 | 10 | Unlimited | Unlimited |
+| **Locations** | 1 | 3 | 10 | Unlimited |
+| **Milestone rewards** | ❌ | ❌ | ✅ | ✅ |
+| **Multiplier bonuses** | ❌ | ❌ | ✅ | ✅ |
+| **Staff per location** | 3 | 10 | 50 | Unlimited |
+| **Customers** | 500 | 2,000 | 10,000 | Unlimited |
+
+### Rewards Metering Implementation
+
+```typescript
+// Before creating a reward
+async function checkRewardLimit(businessId: string): Promise<void> {
+  const business = await getBusiness(businessId);
+  const tier = business.subscription_tier;
+  
+  // Get limit from tier or override
+  const limits = {
+    free: 3,
+    starter: 10,
+    pro: Infinity,
+    enterprise: Infinity,
+  };
+  const maxRewards = business.feature_overrides?.maxRewards ?? limits[tier];
+  
+  // Count current active rewards
+  const currentCount = await db.query.rewards.count({
+    where: and(
+      eq(rewards.business_id, businessId),
+      eq(rewards.is_active, true)
+    )
+  });
+  
+  if (currentCount >= maxRewards) {
+    throw new LimitExceededError('rewards', currentCount, maxRewards);
+  }
+}
+
+// Before creating a milestone reward
+async function checkMilestoneEntitlement(businessId: string): Promise<void> {
+  const business = await getBusiness(businessId);
+  const tier = business.subscription_tier;
+  
+  const milestonesEnabled = 
+    tier === 'pro' || 
+    tier === 'enterprise' || 
+    business.feature_overrides?.milestonesEnabled === true;
+  
+  if (!milestonesEnabled) {
+    throw new FeatureNotAvailableError('milestones', tier, 'pro');
+  }
+}
+```
+
+### Location Metering Implementation
+
+```typescript
+async function checkLocationLimit(businessId: string): Promise<void> {
+  const business = await getBusiness(businessId);
+  const tier = business.subscription_tier;
+  
+  const limits = {
+    free: 1,
+    starter: 3,
+    pro: 10,
+    enterprise: Infinity,
+  };
+  const maxLocations = business.feature_overrides?.maxLocations ?? limits[tier];
+  
+  const currentCount = await db.query.locations.count({
+    where: and(
+      eq(locations.business_id, businessId),
+      eq(locations.is_active, true)
+    )
+  });
+  
+  if (currentCount >= maxLocations) {
+    throw new LimitExceededError('locations', currentCount, maxLocations);
+  }
+}
+```
+
+---
+
 ## Core Concepts
 
 ### Feature Keys
@@ -31,6 +120,10 @@ export const FEATURES = {
   CORE_CHECKIN: 'core:checkin',
   CORE_STAFF_APP: 'core:staff_app',
   CORE_CUSTOMER_APP: 'core:customer_app',
+  
+  // Rewards (metered)
+  REWARDS_MILESTONE: 'rewards:milestone',       // PRO+ only
+  REWARDS_MULTIPLIER: 'rewards:multiplier',     // PRO+ only
   
   // Rules Engine
   RULES_BASIC: 'rules:basic',           // Points per dollar, visit bonuses
@@ -69,6 +162,7 @@ export const FEATURES = {
   
   // Limits (special - these have numeric values)
   LIMIT_LOCATIONS: 'limit:locations',
+  LIMIT_REWARDS: 'limit:rewards',
   LIMIT_STAFF: 'limit:staff',
   LIMIT_CUSTOMERS: 'limit:customers',
   LIMIT_MESSAGES_MONTH: 'limit:messages_month',
@@ -114,6 +208,8 @@ export const TIER_FEATURES: Record<Tier, FeatureKey[]> = {
   
   pro: [
     // Everything in starter, plus:
+    FEATURES.REWARDS_MILESTONE,      // Milestone rewards
+    FEATURES.REWARDS_MULTIPLIER,     // Multiplier bonuses
     FEATURES.RULES_PRODUCT,
     FEATURES.JOURNEYS_UNLIMITED,
     FEATURES.MARKETING_CAMPAIGNS,
@@ -139,6 +235,7 @@ export const TIER_FEATURES: Record<Tier, FeatureKey[]> = {
 export const TIER_LIMITS: Record<Tier, Record<string, number>> = {
   free: {
     [FEATURES.LIMIT_LOCATIONS]: 1,
+    [FEATURES.LIMIT_REWARDS]: 3,
     [FEATURES.LIMIT_STAFF]: 3,
     [FEATURES.LIMIT_CUSTOMERS]: 500,
     [FEATURES.LIMIT_MESSAGES_MONTH]: 0,
@@ -146,6 +243,7 @@ export const TIER_LIMITS: Record<Tier, Record<string, number>> = {
   },
   starter: {
     [FEATURES.LIMIT_LOCATIONS]: 3,
+    [FEATURES.LIMIT_REWARDS]: 10,
     [FEATURES.LIMIT_STAFF]: 10,
     [FEATURES.LIMIT_CUSTOMERS]: 2000,
     [FEATURES.LIMIT_MESSAGES_MONTH]: 1000,
@@ -153,6 +251,7 @@ export const TIER_LIMITS: Record<Tier, Record<string, number>> = {
   },
   pro: {
     [FEATURES.LIMIT_LOCATIONS]: 10,
+    [FEATURES.LIMIT_REWARDS]: -1,  // -1 = unlimited
     [FEATURES.LIMIT_STAFF]: 50,
     [FEATURES.LIMIT_CUSTOMERS]: 10000,
     [FEATURES.LIMIT_MESSAGES_MONTH]: 10000,
@@ -160,6 +259,7 @@ export const TIER_LIMITS: Record<Tier, Record<string, number>> = {
   },
   enterprise: {
     [FEATURES.LIMIT_LOCATIONS]: -1,  // -1 = unlimited
+    [FEATURES.LIMIT_REWARDS]: -1,
     [FEATURES.LIMIT_STAFF]: -1,
     [FEATURES.LIMIT_CUSTOMERS]: -1,
     [FEATURES.LIMIT_MESSAGES_MONTH]: -1,
@@ -508,47 +608,56 @@ router.post('/api/campaigns',
 );
 ```
 
-### Backend: Usage Limits
+### Backend: Rewards Limit Check
 
 ```typescript
-// middleware/checkUsageLimit.ts
-export function checkUsageLimit(limitKey: FeatureKey) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const businessId = req.business.id;
-    
-    const { allowed, used, limit } = await entitlements.checkUsageLimit(
-      businessId, 
-      limitKey
+// routes/rewards.ts
+router.post('/api/rewards', async (req, res) => {
+  const { businessId } = req.auth;
+  const { is_milestone, milestone_bonus_multiplier, ...rewardData } = req.body;
+  
+  // Check reward count limit
+  const { allowed, used, limit } = await entitlements.checkUsageLimit(
+    businessId,
+    FEATURES.LIMIT_REWARDS
+  );
+  
+  if (!allowed) {
+    return res.status(403).json({
+      error: 'LIMIT_REACHED',
+      message: `You've reached your reward limit (${used}/${limit})`,
+      used,
+      limit,
+      upgrade_url: '/settings/billing',
+    });
+  }
+  
+  // Check milestone entitlement if trying to create milestone reward
+  if (is_milestone || milestone_bonus_multiplier) {
+    const canUseMilestones = await entitlements.hasFeature(
+      businessId,
+      FEATURES.REWARDS_MILESTONE
     );
     
-    if (!allowed) {
-      return res.status(429).json({
-        error: 'limit_exceeded',
-        feature: limitKey,
-        used,
-        limit,
-        message: `You've reached your monthly limit (${used}/${limit})`,
-        upgrade_url: `/settings/billing?limit=${limitKey}`,
+    if (!canUseMilestones) {
+      return res.status(403).json({
+        error: 'FEATURE_NOT_AVAILABLE',
+        feature: 'milestones',
+        message: 'Milestone rewards require Pro plan',
+        upgrade_url: '/settings/billing?feature=milestones',
       });
     }
-    
-    // Increment after successful request (call in controller)
-    req.incrementUsage = () => entitlements.incrementUsage(businessId, limitKey);
-    
-    next();
-  };
-}
-
-// Usage
-router.post('/api/ai/query',
-  requireFeature(FEATURES.AI_ASSISTANT),
-  checkUsageLimit(FEATURES.LIMIT_AI_QUERIES_MONTH),
-  async (req, res) => {
-    const result = await ai.query(req.body);
-    await req.incrementUsage(); // Only count if successful
-    res.json(result);
   }
-);
+  
+  // Create the reward
+  const reward = await createReward(businessId, {
+    ...rewardData,
+    is_milestone,
+    milestone_bonus_multiplier,
+  });
+  
+  res.json({ reward });
+});
 ```
 
 ### Frontend: Conditional Rendering
@@ -591,53 +700,20 @@ export function FeatureGate({
 }
 
 // Usage in components
-function Dashboard() {
-  return (
-    <div>
-      <BasicMetrics />
-      
-      <FeatureGate feature={FEATURES.ANALYTICS_ADVANCED}>
-        <AdvancedAnalytics />
-      </FeatureGate>
-      
-      <FeatureGate feature={FEATURES.AI_INSIGHTS}>
-        <AIInsightsPanel />
-      </FeatureGate>
-    </div>
-  );
-}
-```
-
-### Frontend: Upgrade Prompts
-
-```tsx
-// components/UpgradePrompt.tsx
-const FEATURE_INFO: Record<FeatureKey, { name: string; description: string; tier: Tier }> = {
-  [FEATURES.AI_ASSISTANT]: {
-    name: 'AI Marketing Assistant',
-    description: 'Get AI-powered suggestions for campaigns and rewards',
-    tier: 'pro',
-  },
-  [FEATURES.ANALYTICS_ADVANCED]: {
-    name: 'Advanced Analytics',
-    description: 'Deep insights into your loyalty program performance',
-    tier: 'pro',
-  },
-  // ... etc
-};
-
-export function UpgradePrompt({ feature }: { feature: FeatureKey }) {
-  const info = FEATURE_INFO[feature];
+function RewardsPage() {
+  const { getLimit } = useEntitlements();
+  const { limit, used } = getLimit(FEATURES.LIMIT_REWARDS);
   
   return (
-    <div className="upgrade-prompt">
-      <Lock className="icon" />
-      <h3>{info.name}</h3>
-      <p>{info.description}</p>
-      <p>Available on {info.tier} plan and above</p>
-      <Button href={`/settings/billing?feature=${feature}`}>
-        Upgrade to Unlock
-      </Button>
+    <div>
+      <h1>Rewards</h1>
+      <p>Using {used} of {limit === -1 ? 'unlimited' : limit} rewards</p>
+      
+      <RewardsList />
+      
+      <FeatureGate feature={FEATURES.REWARDS_MILESTONE}>
+        <MilestoneRewardsSection />
+      </FeatureGate>
     </div>
   );
 }
@@ -657,7 +733,7 @@ export const PRICING = {
     highlights: [
       '1 location',
       'Up to 500 customers',
-      'Basic points & rewards',
+      '3 rewards',
       'QR check-in',
     ],
   },
@@ -668,9 +744,9 @@ export const PRICING = {
     highlights: [
       'Up to 3 locations',
       'Up to 2,000 customers',
+      '10 rewards',
       'Advanced rules',
       'Push notifications',
-      '1 customer journey',
     ],
   },
   pro: {
@@ -681,10 +757,11 @@ export const PRICING = {
     highlights: [
       'Up to 10 locations',
       'Up to 10,000 customers',
-      'Unlimited journeys',
+      'Unlimited rewards',
+      'Milestone rewards',
+      'Point multipliers',
       'AI marketing assistant',
       'Advanced analytics',
-      'Priority support',
     ],
   },
   enterprise: {
@@ -697,7 +774,6 @@ export const PRICING = {
       'API access',
       'SSO integration',
       'Dedicated support',
-      'Custom features',
     ],
   },
 };
@@ -724,19 +800,21 @@ When writing feature specs, include entitlement info:
 
 ### MVP (Do Now)
 - [ ] Create `features.ts` with all feature keys
-- [ ] Create `tiers.ts` with tier definitions (can be mostly empty)
-- [ ] Create `subscriptions` table (even if everyone is "free")
-- [ ] Create `EntitlementsService` with basic `hasFeature()`
+- [ ] Create `tiers.ts` with tier definitions
+- [ ] Add `subscription_tier` and `feature_overrides` columns to businesses table
+- [ ] Create `EntitlementsService` with `hasFeature()` and `getLimit()`
 - [ ] Create `requireFeature()` middleware
+- [ ] Add reward count limit check to `POST /api/rewards`
+- [ ] Add milestone/multiplier entitlement check
+- [ ] Add location count limit check
 - [ ] Create `<FeatureGate>` component
 
 ### Post-MVP
 - [ ] Stripe integration for billing
 - [ ] Add-ons support
-- [ ] Usage tracking and limits
-- [ ] Feature overrides for special deals
+- [ ] Usage tracking for metered features
+- [ ] Feature overrides UI for platform admin
 - [ ] Upgrade prompts and flows
-- [ ] Admin tools for managing subscriptions
 
 ---
 
@@ -753,3 +831,4 @@ When writing feature specs, include entitlement info:
 ---
 
 *This document should be referenced when building any new feature.*
+*See also: [CORE_FEATURES.md](CORE_FEATURES.md) for MVP feature definitions.*

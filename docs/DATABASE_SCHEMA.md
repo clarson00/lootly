@@ -25,6 +25,11 @@ DATABASE_URL=postgres://user:pass@ep-xxx.us-east-1.aws.neon.tech/lootly?sslmode=
 ## Entity Relationship Overview
 
 ```
+┌─────────────────┐
+│ platform_admins │  (Platform-level, no tenant)
+└─────────────────┘
+         │
+         ▼
 ┌─────────────┐       ┌─────────────┐       ┌─────────────┐
 │  businesses │──────<│  locations  │──────<│    staff    │
 └─────────────┘       └─────────────┘       └─────────────┘
@@ -43,6 +48,7 @@ DATABASE_URL=postgres://user:pass@ep-xxx.us-east-1.aws.neon.tech/lootly?sslmode=
 ```
 
 **Key Relationships:**
+- Platform Admin → manages all Businesses
 - Business → many Locations (one owner, multiple restaurants)
 - Location → many Staff
 - Business → many Rules
@@ -53,6 +59,54 @@ DATABASE_URL=postgres://user:pass@ep-xxx.us-east-1.aws.neon.tech/lootly?sslmode=
 ---
 
 ## Tables
+
+### platform_admins
+
+Platform-level administrators who manage tenants, subscriptions, and platform config. Separate from tenant staff.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `padmin_` prefix |
+| email | TEXT | UNIQUE, NOT NULL | Login email |
+| name | TEXT | NOT NULL | Display name |
+| password_hash | TEXT | NOT NULL | bcrypt hash |
+| role | TEXT | DEFAULT 'admin' | 'admin', 'superadmin' |
+| is_active | BOOLEAN | DEFAULT true | |
+| last_login_at | TIMESTAMPTZ | | |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | | |
+
+**Roles:**
+- `admin` — Can manage businesses, view metrics
+- `superadmin` — Can manage other admins, platform config
+
+---
+
+### admin_audit_log
+
+Audit trail for all platform admin actions.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | `audit_` prefix |
+| admin_id | TEXT | FK → platform_admins, NOT NULL | Who did it |
+| action | TEXT | NOT NULL | 'create_business', 'update_subscription', etc. |
+| target_type | TEXT | | 'business', 'subscription', 'feature_override' |
+| target_id | TEXT | | ID of affected entity |
+| details | JSONB | | Action-specific data |
+| ip_address | TEXT | | Request IP |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | |
+
+**Common actions:**
+- `create_business`
+- `update_business`
+- `suspend_business`
+- `activate_business`
+- `update_subscription`
+- `set_feature_override`
+- `impersonate_business`
+
+---
 
 ### businesses
 
@@ -67,11 +121,29 @@ Top-level entity representing a business owner or organization. One business can
 | owner_email | TEXT | | Contact email |
 | owner_phone | TEXT | | Contact phone |
 | logo_url | TEXT | | Business logo |
-| subscription_tier | TEXT | DEFAULT 'free' | 'free', 'pro', 'enterprise' |
-| subscription_status | TEXT | DEFAULT 'active' | 'active', 'past_due', 'cancelled' |
+| subscription_tier | TEXT | DEFAULT 'free' | 'free', 'starter', 'pro', 'enterprise' |
+| subscription_status | TEXT | DEFAULT 'active' | 'active', 'suspended', 'cancelled', 'trialing' |
+| trial_ends_at | TIMESTAMPTZ | | When trial expires |
+| feature_overrides | JSONB | DEFAULT '{}' | Per-tenant feature exceptions |
 | settings | JSONB | | Business-wide settings |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 | updated_at | TIMESTAMPTZ | | |
+
+**Subscription tiers:**
+- `free` — 3 rewards, 1 location, no milestones/multipliers
+- `starter` — 10 rewards, 3 locations, no milestones/multipliers
+- `pro` — Unlimited rewards, 10 locations, milestones + multipliers
+- `enterprise` — Unlimited everything
+
+**feature_overrides JSONB structure:**
+```json
+{
+  "maxRewards": 10,
+  "maxLocations": 5,
+  "milestonesEnabled": true,
+  "multipliersEnabled": true
+}
+```
 
 **Settings JSONB structure:**
 ```json
@@ -302,12 +374,19 @@ Redeemable rewards.
 | value_amount | TEXT | | Dollar amount, percent, or item name |
 | valid_locations | JSONB | | Array of location_ids (NULL = all) |
 | terms | TEXT | | Fine print |
+| is_milestone | BOOLEAN | DEFAULT false | **Gated: PRO+ only** |
+| milestone_bonus_multiplier | DOUBLE PRECISION | | **Gated: PRO+ only** |
 | is_active | BOOLEAN | DEFAULT true | |
 | is_hidden | BOOLEAN | DEFAULT false | Don't show until unlocked |
 | sort_order | INTEGER | DEFAULT 0 | Display order |
 | expires_days | INTEGER | | Days until reward expires after earning |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
 | updated_at | TIMESTAMPTZ | | |
+
+**Gating notes:**
+- `is_milestone` and `milestone_bonus_multiplier` require PRO tier or `feature_overrides.milestonesEnabled`
+- Backend must reject creating milestone rewards for FREE/STARTER tiers
+- Total active rewards per business limited by tier (see ENTITLEMENTS.md)
 
 ---
 
@@ -368,15 +447,16 @@ SMS verification codes for phone auth.
 
 ### sessions
 
-Auth sessions for customers and staff.
+Auth sessions for customers, staff, and platform admins.
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | TEXT | PK | |
 | token | TEXT | UNIQUE, NOT NULL | Session token |
-| type | TEXT | NOT NULL | 'customer', 'staff' |
+| type | TEXT | NOT NULL | 'customer', 'staff', 'platform_admin' |
 | customer_id | TEXT | FK → customers | |
 | staff_id | TEXT | FK → staff | |
+| platform_admin_id | TEXT | FK → platform_admins | |
 | device_info | JSONB | | User agent, etc. |
 | expires_at | TIMESTAMPTZ | NOT NULL | |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | |
@@ -402,8 +482,15 @@ CREATE INDEX idx_qr_codes_customer ON qr_codes(customer_id);
 CREATE INDEX idx_verification_phone ON verification_codes(phone);
 CREATE INDEX idx_sessions_token ON sessions(token);
 
+-- Platform admin indexes
+CREATE INDEX idx_platform_admins_email ON platform_admins(email);
+CREATE INDEX idx_admin_audit_log_admin ON admin_audit_log(admin_id);
+CREATE INDEX idx_admin_audit_log_target ON admin_audit_log(target_type, target_id);
+CREATE INDEX idx_admin_audit_log_created ON admin_audit_log(created_at);
+
 -- JSONB indexes for rules engine
 CREATE INDEX idx_rules_conditions ON rules USING GIN(conditions);
+CREATE INDEX idx_businesses_feature_overrides ON businesses USING GIN(feature_overrides);
 ```
 
 ---
@@ -436,12 +523,15 @@ backend/
 
 ## Notes for Implementation
 
-1. **ID Generation:** Use nanoid or cuid2 with prefixes (`biz_`, `loc_`, etc.)
+1. **ID Generation:** Use nanoid or cuid2 with prefixes (`biz_`, `loc_`, `padmin_`, etc.)
 2. **Timestamps:** Use `TIMESTAMPTZ` for all datetime columns
 3. **JSON columns:** Use `JSONB` for indexable JSON data
 4. **Soft deletes:** Use `is_active` flags, don't delete records
-5. **Audit trail:** Consider adding `created_by` and `updated_by` columns
+5. **Audit trail:** Platform admin actions logged to `admin_audit_log`
+6. **Feature gating:** Check `subscription_tier` and `feature_overrides` before allowing gated features
 
 ---
 
 *See [SEED_DATA.md](SEED_DATA.md) for pilot customer data.*
+*See [CORE_FEATURES.md](CORE_FEATURES.md) for feature gating details.*
+*See [ENTITLEMENTS.md](ENTITLEMENTS.md) for full entitlements system.*
