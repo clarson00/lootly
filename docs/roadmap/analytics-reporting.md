@@ -1,252 +1,324 @@
 # Analytics & Reporting
 
 > **Status:** 💡 Idea  
-> **Target Release:** v1.1 (basic) → v2.0 (advanced)  
-> **Roadmap:** [ROADMAP.md](../../ROADMAP.md) — Section: NEXT  
+> **Target Release:** v1.1 (basic) → v2.0 (full)  
+> **Roadmap:** [ROADMAP.md](../../ROADMAP.md) — Section: NEXT / LATER  
 > **Location:** `docs/roadmap/analytics-reporting.md`  
 
 ## Overview
 
-Provide business owners with insights into their loyalty program performance. Track what's working, what's not, and enable data-driven decisions. This data also feeds the [AI Marketing Assistant](ai-marketing-assistant.md).
+Comprehensive analytics and reporting to help business owners understand what's working in their loyalty program. Essential for making data-driven decisions and for feeding the AI Marketing Assistant.
 
 ## Why This Matters
 
-Business owners need to answer:
-- Is my loyalty program worth it?
-- Which rewards drive the most visits?
-- Which promotions actually work?
-- Are customers completing journeys?
-- What's my ROI on points given away?
+> "What gets measured gets managed."
 
-## Core Metrics
+Without analytics, owners are flying blind:
+- Which promotions actually drove visits?
+- Are rewards too easy or too hard to earn?
+- Which locations are underperforming?
+- Is the loyalty program profitable?
 
-### Program Health
-| Metric | Description |
-|--------|-------------|
-| Active members | Visited in last 30 days |
-| Total enrolled | All-time signups |
-| Churn rate | Members gone inactive |
-| Avg visits/member | Engagement depth |
-| Avg points balance | Liability indicator |
-| Points redemption rate | Are rewards compelling? |
+## Dashboard Overview
 
-### Financial Impact
-| Metric | Description |
-|--------|-------------|
-| Revenue from members | Tracked spend |
-| Avg transaction value | Members vs non-members |
-| Points liability | Outstanding points value |
-| Reward cost | Value of redeemed rewards |
-| Program ROI | Revenue lift vs costs |
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ 📊 Freddie's Restaurant Group - Analytics                     🔄    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐  │
+│  │   1,247     │ │    342      │ │   $12,450   │ │    68%      │  │
+│  │  Customers  │ │ Active (30d)│ │ Monthly Rev │ │  Retention  │  │
+│  │   +12% ↑    │ │   +8% ↑     │ │   +15% ↑    │ │   +5% ↑     │  │
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘  │
+│                                                                     │
+│  📈 Visits Over Time                     🏆 Top Performing          │
+│  ┌────────────────────────────┐         ┌────────────────────────┐ │
+│  │    ╭─╮                     │         │ 1. Taco Tuesday 2x     │ │
+│  │   ╭╯ ╰╮  ╭─╮              │         │    +34% visits         │ │
+│  │  ╭╯   ╰──╯ ╰╮   ╭──╮     │         │ 2. Grand Tour Journey  │ │
+│  │ ─╯          ╰───╯  ╰──   │         │    72% completion      │ │
+│  │ Jan  Feb  Mar  Apr  May   │         │ 3. Free Appetizer      │ │
+│  └────────────────────────────┘         │    Most redeemed       │ │
+│                                         └────────────────────────┘ │
+│  📍 By Location                          ⚠️ Needs Attention        │
+│  ┌────────────────────────────┐         ┌────────────────────────┐ │
+│  │ Honey Brook   ████████ 35%│         │ • 45 at-risk customers │ │
+│  │ La Cocina     ██████   28%│         │ • El Rancho low visits │ │
+│  │ El Rancho     ████     18%│         │ • 12 expiring rewards  │ │
+│  │ Antonio's     █████    19%│         └────────────────────────┘ │
+│  └────────────────────────────┘                                    │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
-### Campaign Performance
-| Metric | Description |
-|--------|-------------|
-| Promo participation | Who engaged with time-bound promos |
-| Promo lift | Visits/spend during vs before |
-| Message open rate | Push notification engagement |
-| Message conversion | Visits after receiving message |
+## Report Categories
 
-### Journey Analytics
-| Metric | Description |
-|--------|-------------|
-| Journey starts | How many began |
-| Completion rate | Started → Finished |
-| Drop-off points | Where people quit |
-| Time to complete | Speed through journey |
-| Revenue per journey | Value of completing customers |
+### 1. Program Overview
 
-### Reward Effectiveness
-| Metric | Description |
-|--------|-------------|
-| Redemption rate | % of earned rewards used |
-| Time to redeem | Days from earn to use |
-| Expiration rate | Rewards that expire unused |
-| Repeat after redeem | Do they come back? |
-| Most popular rewards | What people want |
+**Key Metrics:**
+| Metric | Description | Why It Matters |
+|--------|-------------|----------------|
+| Total enrolled | All-time signups | Program reach |
+| Active customers | Visited in last 30 days | Engagement health |
+| Visit frequency | Avg visits per customer per month | Loyalty strength |
+| Average spend | Per visit and per customer | Revenue impact |
+| Points liability | Outstanding unredeemed points | Financial planning |
 
-## Dashboard Views
+### 2. Campaign Performance
 
-### Overview Dashboard
+Track effectiveness of every promotion:
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ 📊 Program Overview                          Last 30 days ▼    │
+│ Campaign: "Taco Tuesday Double Points"                          │
+│ Running: Every Tuesday since Jan 15                             │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
-│  │   847    │  │  2,341   │  │  $45.20  │  │   78%    │       │
-│  │ Active   │  │  Total   │  │ Avg Txn  │  │ Redeem   │       │
-│  │ Members  │  │ Enrolled │  │  Value   │  │  Rate    │       │
-│  │  ↑ 12%   │  │  ↑ 8%    │  │  ↑ 5%    │  │  ↑ 3%    │       │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘       │
+│ Performance vs. Non-Promo Days:                                 │
 │                                                                 │
-│  Visits Over Time                                              │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │     ╭─╮                                    ╭──╮         │   │
-│  │  ╭──╯ ╰──╮    ╭──╮         ╭──╮      ╭───╯  ╰──╮      │   │
-│  │──╯       ╰────╯  ╰─────────╯  ╰──────╯         ╰──    │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│  Jan 1                                              Jan 30     │
+│ Visits:        +34% ████████████████░░░░                       │
+│ Revenue:       +28% ██████████████░░░░░░                       │
+│ New customers: +45% ██████████████████░░                       │
+│ Avg spend:     -5%  ██████████░░░░░░░░░░  (expected w/ promo)  │
+│                                                                 │
+│ Cost Analysis:                                                  │
+│ • Extra points issued: 4,500 pts ($45 value)                   │
+│ • Extra revenue generated: $620                                 │
+│ • ROI: 13.8x                                                    │
+│                                                                 │
+│ Verdict: ✅ HIGHLY EFFECTIVE - Keep running                     │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Campaign Performance
+### 3. Journey Analytics
+
+Track user journey performance:
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ 📣 Campaign Performance                                         │
+│ Journey: "Grand Tour" (Visit all 4 locations)                   │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  Recent Campaigns                                               │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │ Campaign              │ Sent  │ Opened │ Visits │ ROI   │   │
-│  ├───────────────────────┼───────┼────────┼────────┼───────┤   │
-│  │ 🔥 Double Points Wknd │ 834   │ 72%    │ 156    │ +$2.3k│   │
-│  │ 🌮 Taco Tuesday       │ 834   │ 68%    │ 142    │ +$1.8k│   │
-│  │ 🎂 Birthday Club      │ 45    │ 89%    │ 38     │ +$890 │   │
-│  │ 🗺️ Grand Tour Reminder│ 312   │ 54%    │ 67     │ +$1.2k│   │
-│  └─────────────────────────────────────────────────────────┘   │
+│ Funnel:                                                         │
+│ Started     ██████████████████████████████  247 customers       │
+│ Step 2      █████████████████████           168 (68%)           │
+│ Step 3      ████████████████                134 (54%)           │
+│ Step 4      ████████████                    112 (45%)           │
+│ Completed   ██████████                       89 (36%)           │
 │                                                                 │
-│  💡 AI Insight: "Double Points promotions drive 2.3x more      │
-│     visits than product-specific offers. Consider running      │
-│     them bi-weekly instead of monthly."                        │
+│ Drop-off Analysis:                                              │
+│ • Biggest drop: Step 1→2 (32% drop)                            │
+│ • Hardest step: El Rancho (lowest conversion)                  │
+│ • Avg completion time: 23 days                                  │
+│                                                                 │
+│ Revenue Impact:                                                 │
+│ • Completers spend 2.3x more than non-participants             │
+│ • Cross-location visits up 156% for participants               │
+│                                                                 │
+│ 💡 Suggestion: Add bonus incentive for El Rancho step          │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Journey Analytics
+### 4. Reward Economics
+
+Understand the cost/benefit of rewards:
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ 🗺️ Journey: Grand Tour                                          │
+│ Reward Analysis - Last 90 Days                                  │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  Funnel                                                         │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │ Started      ████████████████████████████████████  234  │   │
-│  │ Step 1 ✓    ████████████████████████████          198  │   │
-│  │ Step 2 ✓    ██████████████████                    145  │   │
-│  │ Step 3 ✓    ████████████                          102  │   │
-│  │ Completed   ████████                               78  │   │
-│  └─────────────────────────────────────────────────────────┘   │
+│ Reward           │ Redeemed │ Cost    │ Redemption Rate │ ROI  │
+│ ─────────────────┼──────────┼─────────┼─────────────────┼───── │
+│ Free Drink       │ 234      │ $702    │ 78%             │ 4.2x │
+│ Free Appetizer   │ 89       │ $890    │ 45%             │ 3.1x │
+│ $10 Off          │ 45       │ $450    │ 23%             │ 5.8x │
+│ Grand Tour Prize │ 12       │ $300    │ 36%             │ 8.2x │
 │                                                                 │
-│  Completion Rate: 33%    Avg Time: 18 days    Revenue: $4,200  │
+│ Total Points Outstanding: 45,670 pts                            │
+│ Estimated Liability: $2,280 (at current redemption rates)       │
 │                                                                 │
-│  💡 AI Insight: "Step 2→3 has highest drop-off (30%). This is  │
-│     the El Rancho visit. Consider adding a bonus incentive     │
-│     for this step or featuring El Rancho in your next push."   │
+│ 💡 Insight: $10 Off has best ROI but lowest redemption.        │
+│    Consider lowering points required to increase usage.         │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Data Model
+### 5. Customer Segments
 
-### Aggregated Stats (for fast dashboard loads)
+Understand different customer groups:
+
+| Segment | Definition | Count | Avg Spend | Action |
+|---------|------------|-------|-----------|--------|
+| Champions | 4+ visits/month, high spend | 45 | $85/mo | Recognize & reward |
+| Loyal | 2-3 visits/month | 156 | $52/mo | Maintain engagement |
+| Promising | Recent signup, 2+ visits | 89 | $35/mo | Nurture to loyal |
+| At Risk | No visit in 45-60 days | 67 | $28/mo | Win-back campaign |
+| Lost | No visit in 60+ days | 134 | $0/mo | Re-engagement needed |
+
+### 6. Location Comparison
+
+Compare performance across locations:
+
+```
+                    │ Honey Brook │ La Cocina │ El Rancho │ Antonio's
+────────────────────┼─────────────┼───────────┼───────────┼──────────
+Visits/month        │    423      │    312    │    198    │   267
+Unique customers    │    287      │    198    │    145    │   189
+Repeat rate         │    34%      │    28%    │    18%    │   24%
+Avg spend           │   $24.50    │  $31.20   │  $28.40   │  $35.80
+Redemption rate     │    12%      │    15%    │     8%    │   11%
+Points per visit    │    28       │    35     │    32     │    40
+
+💡 El Rancho has lowest repeat rate. Consider location-specific promo.
+```
+
+## Data Model Additions
 
 ```sql
-CREATE TABLE daily_stats (
+-- Pre-aggregated metrics for fast dashboards
+CREATE TABLE daily_metrics (
   id TEXT PRIMARY KEY,
-  business_id TEXT NOT NULL REFERENCES businesses(id),
-  location_id TEXT REFERENCES locations(id),  -- NULL = all locations
+  business_id TEXT NOT NULL,
+  location_id TEXT,  -- NULL for business-wide
   date DATE NOT NULL,
   
   -- Counts
   visits INTEGER DEFAULT 0,
+  unique_customers INTEGER DEFAULT 0,
   new_enrollments INTEGER DEFAULT 0,
-  unique_visitors INTEGER DEFAULT 0,
   
-  -- Financial
-  total_spend_cents INTEGER DEFAULT 0,
+  -- Revenue
+  total_revenue_cents INTEGER DEFAULT 0,
   avg_transaction_cents INTEGER DEFAULT 0,
   
   -- Points
   points_earned INTEGER DEFAULT 0,
   points_redeemed INTEGER DEFAULT 0,
-  rewards_claimed INTEGER DEFAULT 0,
   
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  UNIQUE(business_id, location_id, date)
-);
-
-CREATE TABLE campaign_stats (
-  id TEXT PRIMARY KEY,
-  campaign_id TEXT NOT NULL,  -- rule_id or message_id
-  campaign_type TEXT NOT NULL,  -- 'promo', 'message', 'journey'
-  business_id TEXT NOT NULL REFERENCES businesses(id),
-  
-  -- Reach
-  audience_size INTEGER DEFAULT 0,
-  sent_count INTEGER DEFAULT 0,
-  delivered_count INTEGER DEFAULT 0,
-  opened_count INTEGER DEFAULT 0,
-  clicked_count INTEGER DEFAULT 0,
-  
-  -- Conversion
-  visits_attributed INTEGER DEFAULT 0,
-  revenue_attributed_cents INTEGER DEFAULT 0,
-  
-  -- Timing
-  started_at TIMESTAMPTZ,
-  ended_at TIMESTAMPTZ,
+  -- Rewards
+  rewards_earned INTEGER DEFAULT 0,
+  rewards_redeemed INTEGER DEFAULT 0,
   
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE journey_stats (
+-- Campaign/rule performance tracking
+CREATE TABLE rule_performance (
+  id TEXT PRIMARY KEY,
+  rule_id TEXT NOT NULL REFERENCES rules(id),
+  date DATE NOT NULL,
+  
+  times_triggered INTEGER DEFAULT 0,
+  unique_customers INTEGER DEFAULT 0,
+  points_awarded INTEGER DEFAULT 0,
+  associated_revenue_cents INTEGER DEFAULT 0,
+  
+  -- Comparison to baseline
+  baseline_visits INTEGER,
+  actual_visits INTEGER,
+  lift_percentage DOUBLE PRECISION,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Journey funnel tracking
+CREATE TABLE journey_analytics (
   id TEXT PRIMARY KEY,
   journey_id TEXT NOT NULL REFERENCES journeys(id),
+  date DATE NOT NULL,
   
-  started_count INTEGER DEFAULT 0,
-  completed_count INTEGER DEFAULT 0,
-  expired_count INTEGER DEFAULT 0,
-  abandoned_count INTEGER DEFAULT 0,
+  started INTEGER DEFAULT 0,
+  step_1_completed INTEGER DEFAULT 0,
+  step_2_completed INTEGER DEFAULT 0,
+  step_3_completed INTEGER DEFAULT 0,
+  step_4_completed INTEGER DEFAULT 0,
+  -- ... more steps as needed
+  fully_completed INTEGER DEFAULT 0,
+  expired INTEGER DEFAULT 0,
   
-  avg_completion_hours DOUBLE PRECISION,
-  revenue_attributed_cents INTEGER DEFAULT 0,
+  avg_completion_days DOUBLE PRECISION,
   
-  -- Per-step drop-off
-  step_completions JSONB,  -- { "step_1": 198, "step_2": 145, ... }
-  
-  last_updated TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+```
+
+## Export & Sharing
+
+### Export Formats
+- PDF reports (scheduled or on-demand)
+- CSV data export
+- Email digests (daily/weekly/monthly)
+
+### Scheduled Reports
+```
+┌─────────────────────────────────────────────┐
+│ Scheduled Reports                           │
+├─────────────────────────────────────────────┤
+│ ✅ Weekly Summary      Every Monday 8am    │
+│ ✅ Monthly Deep Dive   1st of month        │
+│ ○  Daily Snapshot      (enable)            │
+│                                             │
+│ Recipients: freddie@email.com              │
+│ [+ Add recipient]                           │
+└─────────────────────────────────────────────┘
 ```
 
 ## Implementation Phases
 
-### MVP (v1.1)
-- Basic dashboard with core metrics
-- Simple date range filtering
-- Per-location breakdown
-- Export to CSV
+### Phase 1: Basic (v1.1)
+- Dashboard with key metrics
+- Simple charts (visits over time)
+- Basic campaign performance
+- CSV export
 
-### v1.5
-- Campaign performance tracking
-- Journey funnel visualization
-- Comparative periods (this month vs last)
+### Phase 2: Intermediate (v1.2)
+- Journey funnel analytics
+- Customer segmentation
+- Location comparison
 - Scheduled email reports
 
-### v2.0
-- AI-powered insights (see [AI Marketing Assistant](ai-marketing-assistant.md))
-- Predictive analytics (churn risk, lifetime value)
-- Custom report builder
-- Real-time dashboard updates
+### Phase 3: Advanced (v2.0)
+- Predictive analytics
+- AI-powered insights
 - Cohort analysis
+- Revenue attribution
+- A/B test analysis
+- Custom report builder
 
-## Attribution Model
+## Integration with AI Assistant
 
-How we attribute visits/revenue to campaigns:
+Analytics data feeds the [AI Marketing Assistant](ai-marketing-assistant.md):
 
-1. **Direct attribution:** Customer clicked push notification → visited within 24h
-2. **Time-window attribution:** Customer received message → visited within 7 days
-3. **Journey attribution:** Visit completes a journey step
-4. **Promo attribution:** Visit during active promotion period
+```typescript
+// AI uses analytics to make recommendations
+const insights = await analytics.getInsights(businessId);
+const recommendations = await ai.generateRecommendations(insights);
+
+// Example insight → recommendation flow:
+// Insight: "El Rancho has 18% repeat rate vs 28% average"
+// AI Recommendation: "Try 'El Rancho Explorer' bonus - 
+//                     50 extra points for El Rancho visits"
+```
+
+## Success Metrics
+
+| Metric | Target |
+|--------|--------|
+| Dashboard daily active usage | 40% of owners |
+| Report email open rate | 60% |
+| Data-driven decisions | Owners cite data in 50% of changes |
+| Time to insight | < 30 seconds for key questions |
 
 ## Related Features
 
-- [AI Marketing Assistant](ai-marketing-assistant.md) — Uses this data for recommendations
-- [Marketing Messages](marketing-messages.md) — Campaign tracking
-- [Time-Bound Promos](time-bound-promos.md) — Promo performance
-- [User Journeys](user-journeys.md) — Journey analytics
+- [AI Marketing Assistant](ai-marketing-assistant.md) — Uses analytics for recommendations
+- [Marketing Messages](marketing-messages.md) — Campaign performance tracking
+- [User Journeys](user-journeys.md) — Journey funnel analytics
+- [Admin Dashboard](admin-dashboard.md) — Where analytics live
 
 ---
 
