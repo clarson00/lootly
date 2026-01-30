@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../api/client';
+import { useAdminAuth } from '../../context/AdminAuthContext';
 
 const CONDITION_TYPES = [
   { value: 'location_visit', label: 'Location Visit', icon: '📍' },
@@ -31,7 +34,7 @@ const DAYS = [
   { value: 'weekends', label: 'Weekends' },
 ];
 
-function SingleConditionEditor({ condition, onChange, onRemove }) {
+function SingleConditionEditor({ condition, onChange, onRemove, locations = [] }) {
   const updateParams = (key, value) => {
     onChange({
       ...condition,
@@ -43,36 +46,63 @@ function SingleConditionEditor({ condition, onChange, onRemove }) {
     switch (condition.type) {
       case 'location_visit':
         return (
-          <div className="grid grid-cols-3 gap-3">
-            <select
-              value={condition.params?.scope || 'any'}
-              onChange={(e) => updateParams('scope', e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="any">Any location</option>
-              <option value="specific">Specific location</option>
-              <option value="group">Location group</option>
-              <option value="all">All locations</option>
-            </select>
-            {condition.params?.scope !== 'all' && (
-              <>
-                <select
-                  value={condition.params?.comparison || '>='}
-                  onChange={(e) => updateParams('comparison', e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                >
-                  {COMPARISONS.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  value={condition.params?.value || 1}
-                  onChange={(e) => updateParams('value', parseInt(e.target.value) || 1)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  min="1"
-                />
-              </>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <select
+                value={condition.params?.scope || 'any'}
+                onChange={(e) => updateParams('scope', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="any">Any location</option>
+                <option value="specific">Specific location</option>
+                <option value="group">Location group</option>
+                <option value="all">All locations</option>
+              </select>
+              {condition.params?.scope !== 'all' && (
+                <>
+                  <select
+                    value={condition.params?.comparison || '>='}
+                    onChange={(e) => updateParams('comparison', e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    {COMPARISONS.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    value={condition.params?.value || 1}
+                    onChange={(e) => updateParams('value', parseInt(e.target.value) || 1)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    min="1"
+                  />
+                </>
+              )}
+            </div>
+            {/* Location picker for specific location */}
+            {condition.params?.scope === 'specific' && (
+              <select
+                value={condition.params?.locationId || ''}
+                onChange={(e) => updateParams('locationId', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Select a location...</option>
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.icon} {loc.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {/* Group picker for location group */}
+            {condition.params?.scope === 'group' && (
+              <input
+                type="text"
+                value={condition.params?.groupId || ''}
+                onChange={(e) => updateParams('groupId', e.target.value)}
+                placeholder="Location group ID (e.g., grp_all)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
             )}
           </div>
         );
@@ -275,7 +305,17 @@ function SingleConditionEditor({ condition, onChange, onRemove }) {
 }
 
 export default function ConditionBuilder({ conditions, onChange }) {
+  const { businessId } = useAdminAuth();
   const isCompound = conditions?.operator;
+
+  // Fetch locations for location picker
+  const { data: businessData } = useQuery({
+    queryKey: ['business', businessId],
+    queryFn: () => api.getLocations(businessId),
+    enabled: !!businessId,
+  });
+
+  const locations = businessData?.data?.locations || [];
 
   const addCondition = () => {
     if (isCompound) {
@@ -345,6 +385,7 @@ export default function ConditionBuilder({ conditions, onChange }) {
                 condition={item}
                 onChange={(c) => updateCondition(index, c)}
                 onRemove={conditions.items.length > 1 ? () => removeCondition(index) : null}
+                locations={locations}
               />
             </div>
           ))}
@@ -353,6 +394,7 @@ export default function ConditionBuilder({ conditions, onChange }) {
         <SingleConditionEditor
           condition={conditions}
           onChange={(c) => updateCondition(0, c)}
+          locations={locations}
         />
       )}
 
