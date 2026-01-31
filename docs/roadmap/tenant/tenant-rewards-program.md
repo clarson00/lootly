@@ -1,9 +1,23 @@
 # Tenant Rewards Program (PrintHabit Integration)
 
-> **Status:** 🔷 Specified  
-> **Priority:** High  
-> **Target:** v2.1 (post-gamification foundation)  
-> **Last Updated:** January 30, 2026
+> **Status:** 🔷 Specified
+> **Priority:** High
+> **Target:** v2.1 (post-gamification foundation)
+> **Last Updated:** January 2025
+
+## Dependencies
+
+- **Requires:** Tenant Analytics, Attribution tracking, Multi-Tenant Support
+- **Enables:** Physical Rewards (customer merch), Creator Points economy
+
+## Roadmap Position
+
+- **Tier:** 4 | **Phase:** v2.1 | **Category:** Tenant
+
+## Cross-References
+
+- Related: [creator-points.md](creator-points.md) (concept origin)
+- PrintHabit: Sister company for merchandise fulfillment
 
 ---
 

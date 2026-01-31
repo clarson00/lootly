@@ -1,8 +1,17 @@
 # Gamification: Tenant Dashboard & Collaboration
 
-> **Status:** 🔷 Specified  
-> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)  
-> **Last Updated:** January 30, 2026
+> **Status:** 🔷 Specified
+> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)
+> **Last Updated:** January 2025
+
+## Dependencies
+
+- **Requires:** Multi-Tenant Support, Bounties, Analytics
+- **Enables:** Cross-tenant campaigns, joint voyages
+
+## Roadmap Position
+
+- **Tier:** 4 | **Phase:** v2.0 | **Category:** Tenant
 
 ---
 

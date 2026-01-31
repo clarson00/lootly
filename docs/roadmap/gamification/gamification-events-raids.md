@@ -1,8 +1,17 @@
 # Gamification: Events & Raids
 
-> **Status:** 🔷 Specified  
-> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)  
-> **Last Updated:** January 30, 2026
+> **Status:** 🔷 Specified
+> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)
+> **Last Updated:** January 2025
+
+## Dependencies
+
+- **Requires:** Crews, Bounties, Currency Model, Notification Infrastructure
+- **Enables:** Watch parties, boss battles, flash events
+
+## Roadmap Position
+
+- **Tier:** 4 | **Phase:** v2.0 | **Category:** Platform
 
 ---
 

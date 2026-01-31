@@ -1,8 +1,17 @@
 # Gamification: Crews & Social Features
 
-> **Status:** 🔷 Specified  
-> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)  
-> **Last Updated:** January 30, 2026
+> **Status:** 🔷 Specified
+> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)
+> **Last Updated:** January 2025
+
+## Dependencies
+
+- **Requires:** Currency Model (XP, Ranks), Friend System, Multi-Tenant
+- **Enables:** Leaderboards, Events/Raids, social competition
+
+## Roadmap Position
+
+- **Tier:** 4 | **Phase:** v2.0 | **Category:** Customer
 
 ---
 

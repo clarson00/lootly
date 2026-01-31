@@ -1,8 +1,17 @@
 # Gamification: Currency Model
 
-> **Status:** 🔷 Specified  
-> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)  
-> **Last Updated:** January 30, 2026
+> **Status:** 🔷 Specified
+> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)
+> **Last Updated:** January 2025
+
+## Dependencies
+
+- **Requires:** Tier 0 (Check-ins, Rules Engine), Tier 1 (Multi-Tenant)
+- **Enables:** Ranks, Collectibles, Bounties, Leaderboards, all gamification features
+
+## Roadmap Position
+
+- **Tier:** 4 | **Phase:** v2.0 | **Category:** Platform
 
 ---
 

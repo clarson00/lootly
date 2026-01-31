@@ -1,8 +1,19 @@
 # Gamification: Predictions (Oracle's Challenge)
 
-> **Status:** 🔷 Specified  
-> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)  
-> **Last Updated:** January 30, 2026
+> **Status:** 🔷 Specified
+> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)
+> **Last Updated:** January 2025
+
+## Dependencies
+
+- **Requires:** Currency Model (XP staking), Events system
+- **Enables:** Prediction competitions, streak mechanics
+
+## Roadmap Position
+
+- **Tier:** 4 | **Phase:** v2.0 | **Category:** Customer
+
+**Note:** This is NOT gambling - no real money is staked, only XP.
 
 ---
 

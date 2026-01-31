@@ -313,8 +313,21 @@ Quick reference for finding specs by topic:
 - Analytics: [tenant/analytics-reporting.md](tenant/analytics-reporting.md), [tenant/budget-tracking.md](tenant/budget-tracking.md)
 - AI: [tenant/ai-marketing-assistant.md](tenant/ai-marketing-assistant.md)
 - Onboarding: [tenant/tenant-onboarding.md](tenant/tenant-onboarding.md), [tenant/vertical-templates.md](tenant/vertical-templates.md)
-- Gamification: [tenant/creator-points.md](tenant/creator-points.md)
+- Gamification: [tenant/creator-points.md](tenant/creator-points.md), [tenant/tenant-rewards-program.md](tenant/tenant-rewards-program.md)
 - Integrations: [tenant/pos-integrations.md](tenant/pos-integrations.md)
+
+### Gamification v2 (Tier 4 - Future)
+- Overview: [gamification/gamification-v2-overview.md](gamification/gamification-v2-overview.md)
+- Currency: [gamification/gamification-currency.md](gamification/gamification-currency.md)
+- Collectibles: [gamification/gamification-collectibles.md](gamification/gamification-collectibles.md)
+- Crews: [gamification/gamification-crews.md](gamification/gamification-crews.md)
+- Bounties: [gamification/gamification-bounties.md](gamification/gamification-bounties.md)
+- Events: [gamification/gamification-events-raids.md](gamification/gamification-events-raids.md)
+- Predictions: [gamification/gamification-predictions.md](gamification/gamification-predictions.md)
+- Data Model: [gamification/gamification-data-model.md](gamification/gamification-data-model.md)
+- Tenant Tools: [gamification/gamification-tenant-collaboration.md](gamification/gamification-tenant-collaboration.md)
+- Customer App: [gamification/gamification-customer-app.md](gamification/gamification-customer-app.md)
+- MVP Phases: [gamification/gamification-mvp.md](gamification/gamification-mvp.md)
 
 ### Platform Infrastructure
 - Multi-Tenant: [platform/multi-tenant-support.md](platform/multi-tenant-support.md)

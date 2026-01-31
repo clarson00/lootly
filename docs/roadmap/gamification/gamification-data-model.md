@@ -1,8 +1,17 @@
 # Gamification: Data Model
 
-> **Status:** 🔷 Specified  
-> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)  
-> **Last Updated:** January 30, 2026
+> **Status:** 🔷 Specified
+> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)
+> **Last Updated:** January 2025
+
+## Dependencies
+
+- **Requires:** Core Database Schema (DATABASE_SCHEMA.md)
+- **Enables:** All gamification features (currency, collectibles, crews, etc.)
+
+## Roadmap Position
+
+- **Tier:** 4 | **Phase:** v2.0 | **Category:** Platform (Technical)
 
 ---
 

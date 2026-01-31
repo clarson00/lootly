@@ -1,9 +1,34 @@
 # Gamification v2: Enhanced System Overview
 
-> **Status:** 🔷 Specified  
-> **Priority:** High  
-> **Target:** v2.0  
-> **Last Updated:** January 30, 2026
+> **Status:** 🔷 Specified
+> **Priority:** High
+> **Target:** v2.0
+> **Last Updated:** January 2025
+
+---
+
+## Dependencies
+
+- **Requires:**
+  - Tier 0: Foundation (Check-in Model, Rules Engine, Database Schema)
+  - Tier 1: Multi-Tenant Support
+  - Tier 2: Analytics Data Model, Notification Infrastructure
+- **Enables:**
+  - Advanced customer engagement
+  - Tenant differentiation through custom bounties
+  - Platform-wide leaderboards and social features
+
+## Roadmap Position
+
+- **Tier:** 4 (Gamification)
+- **Phase:** v2.0
+- **Category:** Platform (spans customer + tenant)
+
+## Cross-References
+
+- Parent: [IMPLEMENTATION_ORDER.md](../IMPLEMENTATION_ORDER.md)
+- Related: [../GAMIFICATION.md](../../GAMIFICATION.md) (pirate theme)
+- Tenant Rewards: [../tenant/tenant-rewards-program.md](../tenant/tenant-rewards-program.md)
 
 ---
 

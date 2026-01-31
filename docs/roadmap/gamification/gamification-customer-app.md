@@ -1,8 +1,21 @@
 # Gamification: Customer App UX
 
-> **Status:** 🔷 Specified  
-> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)  
-> **Last Updated:** January 30, 2026
+> **Status:** 🔷 Specified
+> **Parent Spec:** [gamification-v2-overview.md](gamification-v2-overview.md)
+> **Last Updated:** January 2025
+
+## Dependencies
+
+- **Requires:** All gamification features (Currency, Collectibles, Crews, etc.)
+- **Enables:** Complete customer gamification experience
+
+## Roadmap Position
+
+- **Tier:** 5 | **Phase:** v2.0+ | **Category:** Customer
+
+## Cross-References
+
+- Theme: [../../GAMIFICATION.md](../../GAMIFICATION.md) (pirate theme spec)
 
 ---
 
