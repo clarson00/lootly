@@ -1,9 +1,8 @@
-# Implementation Order
+# Implementation Order & Dependency Map
 
-> **Purpose:** Single source of truth for feature sequencing
+> **Purpose:** Single source of truth for feature sequencing - preventing rework by building features in the right order
+> **Philosophy:** Foundations first. Features that depend on other features come later.
 > **Last Updated:** January 2025
-
-This document defines the correct order for implementing features, ensuring we build "walls before roofs" - foundational infrastructure before features that depend on it.
 
 ---
 
@@ -13,6 +12,61 @@ This document defines the correct order for implementing features, ensuring we b
 2. **Infrastructure Before Features:** Build the plumbing before the fixtures
 3. **Vertical Slices:** Complete features end-to-end before starting new ones
 4. **User Value:** Each tier should deliver standalone value to users
+
+---
+
+## Dependency Graph (Visual)
+
+```
+                         ┌─────────────────────────────────────────┐
+                         │         TIER 5: WEB EXPERIENCE          │
+                         │   Customer Web Dashboard, Advanced      │
+                         │   Analytics                             │
+                         └────────────────────┬────────────────────┘
+                                              │ requires
+                         ┌────────────────────┴────────────────────┐
+                         │         TIER 4: GAMIFICATION            │
+                         │   Friend System, Discovery, Leaderboards│
+                         │   Referrals, AI Assistant, Creator Pts  │
+                         └────────────────────┬────────────────────┘
+                                              │ requires
+                         ┌────────────────────┴────────────────────┐
+                         │         TIER 3: ENGAGEMENT              │
+                         │   Marketing Messages, Notifications,    │
+                         │   Basic Analytics, Budget Tracking      │
+                         └────────────────────┬────────────────────┘
+                                              │ requires
+                         ┌────────────────────┴────────────────────┐
+                         │         TIER 2: INFRASTRUCTURE          │
+                         │   Push Notifications, Analytics Model,  │
+                         │   Time-Bound Promos, Vertical Templates │
+                         └────────────────────┬────────────────────┘
+                                              │ requires
+                         ┌────────────────────┴────────────────────┐
+                         │         TIER 1: MVP COMPLETION          │
+                         │   Check-in Methods, Marketing Social,   │
+                         │   Multi-Tenant, Tenant Onboarding       │
+                         └────────────────────┬────────────────────┘
+                                              │ requires
+                         ┌────────────────────┴────────────────────┐
+                         │         TIER 0: FOUNDATION ✅           │
+                         │   Database, Auth, Rules Engine, Rewards │
+                         │   Voyages, Entitlements                 │
+                         └─────────────────────────────────────────┘
+
+    ═══════════════════════════════════════════════════════════════════
+                         PARALLEL TRACKS (Independent)
+    ═══════════════════════════════════════════════════════════════════
+
+    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+    │   MARKETING     │  │  INTEGRATIONS   │  │   ARCHIVED      │
+    │                 │  │                 │  │   (Dropped)     │
+    │ - Messages      │  │ - POS           │  │                 │
+    │ - Social Posts  │  │ - Payments      │  │ - Yield Points  │
+    │ - Email         │  │ - Webhooks      │  │ - Yield Engine  │
+    └─────────────────┘  └─────────────────┘  │ - Tokenomics    │
+                                              └─────────────────┘
+```
 
 ---
 
@@ -199,6 +253,20 @@ Features removed from the roadmap. Kept for reference only.
 
 ---
 
+## Critical Dependencies (Don't Skip!)
+
+### If You Skip This... → You'll Have to Rework This
+
+| Skip | Rework Required |
+|------|-----------------|
+| Rules Engine | Every bounty, promo, voyage, event |
+| XP/Currency tables | All gamification features |
+| Attribution tracking | Tenant rewards, analytics |
+| Notification infrastructure | All messaging features |
+| Analytics aggregation | AI assistant, reports |
+
+---
+
 ## Implementation Checklist Template
 
 When starting a new feature:
@@ -237,7 +305,7 @@ Quick reference for finding specs by topic:
 - Notifications: [customer/notifications-digest.md](customer/notifications-digest.md)
 - Rewards: [customer/physical-rewards.md](customer/physical-rewards.md), [customer/referrals.md](customer/referrals.md), [customer/gift-card-redemption.md](customer/gift-card-redemption.md)
 - Web: [customer/customer-web-dashboard.md](customer/customer-web-dashboard.md)
-- Journeys: [customer/user-journeys.md](customer/user-journeys.md), [customer/customer-journeys-first-run.md](customer/customer-journeys-first-run.md), [customer/customer-journeys-morning-open.md](customer/customer-journeys-morning-open.md), [customer/customer-journeys-first-visit.md](customer/customer-journeys-first-visit.md), [customer/customer-journeys-check-capture.md](customer/customer-journeys-check-capture.md), [customer/customer-journeys-reward-redemption.md](customer/customer-journeys-reward-redemption.md), [customer/customer-journeys-voyage-completion.md](customer/customer-journeys-voyage-completion.md), [customer/customer-journeys-discovery.md](customer/customer-journeys-discovery.md), [customer/customer-journeys-reward-detail.md](customer/customer-journeys-reward-detail.md), [customer/customer-journeys-quest-management.md](customer/customer-journeys-quest-management.md)
+- Journeys: [customer/user-journeys.md](customer/user-journeys.md) and related journey specs
 - Engagement: [customer/platform-streaks-rewards.md](customer/platform-streaks-rewards.md)
 
 ### Tenant (Business Owner)
@@ -258,12 +326,8 @@ Quick reference for finding specs by topic:
 - Theming: [platform/configurable-themes.md](platform/configurable-themes.md)
 - Growth: [platform/growth-branding.md](platform/growth-branding.md)
 - Acquisition: [platform/tenant-acquisition-incentives.md](platform/tenant-acquisition-incentives.md)
-- Early Adopters: [platform/early-adopter-rewards.md](platform/early-adopter-rewards.md)
-- Game Integrations: [platform/game-integrations.md](platform/game-integrations.md)
-- Feedback & Testimonials: [platform/feedback-testimonials.md](platform/feedback-testimonials.md)
-- Visual Experience Engine: [platform/visual-experience-engine.md](platform/visual-experience-engine.md)
-- Visual Generation Brief: [platform/VISUAL_GENERATION_BRIEF.md](platform/VISUAL_GENERATION_BRIEF.md) (prompts for image AI)
-- CI/CD Pipeline: [platform/ci-cd-pipeline.md](platform/ci-cd-pipeline.md) (development & deployment)
+- Visual Experience: [platform/visual-experience-engine.md](platform/visual-experience-engine.md)
+- CI/CD: [platform/ci-cd-pipeline.md](platform/ci-cd-pipeline.md)
 
 ### Core Documentation
 - Architecture: [../ARCHITECTURE.md](../ARCHITECTURE.md)
