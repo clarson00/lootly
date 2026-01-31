@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Welcome from './pages/Welcome';
 import Login from './pages/Login';
+import Discover from './pages/Discover';
+import MyQuests from './pages/MyQuests';
 import Home from './pages/Home';
 import MyCode from './pages/MyCode';
 import Rewards from './pages/Rewards';
@@ -37,7 +39,7 @@ function PublicRoute({ children }) {
     );
   }
 
-  return isAuthenticated ? <Navigate to="/home" /> : children;
+  return isAuthenticated ? <Navigate to="/discover" /> : children;
 }
 
 export default function App() {
@@ -55,6 +57,16 @@ export default function App() {
           <PublicRoute>
             <Login />
           </PublicRoute>
+        } />
+        <Route path="/discover" element={
+          <PrivateRoute>
+            <Discover />
+          </PrivateRoute>
+        } />
+        <Route path="/quests" element={
+          <PrivateRoute>
+            <MyQuests />
+          </PrivateRoute>
         } />
         <Route path="/home" element={
           <PrivateRoute>
@@ -96,6 +108,8 @@ export default function App() {
 
       {/* Bottom navigation for authenticated pages */}
       <Routes>
+        <Route path="/discover" element={<BottomNav />} />
+        <Route path="/quests" element={<BottomNav />} />
         <Route path="/home" element={<BottomNav />} />
         <Route path="/code" element={<BottomNav />} />
         <Route path="/rewards" element={<BottomNav />} />

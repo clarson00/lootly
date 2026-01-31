@@ -37,12 +37,31 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-dark pb-24 pt-6 px-4">
       {/* Header */}
-      <h1 className="text-2xl font-bold text-white mb-6">Profile</h1>
+      <h1 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+        <span>👤</span> Captain's Profile
+      </h1>
+
+      {/* Show My Code Button */}
+      <button
+        onClick={() => navigate('/code')}
+        className="w-full bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30 rounded-2xl p-4 mb-6 flex items-center justify-between hover:border-primary/50 active:scale-[0.98] transition-all"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center text-2xl">
+            📱
+          </div>
+          <div className="text-left">
+            <p className="font-semibold text-white">Show My Code</p>
+            <p className="text-xs text-gray-400">Scan to earn doubloons</p>
+          </div>
+        </div>
+        <span className="text-primary text-xl">→</span>
+      </button>
 
       {/* Profile Picture Placeholder */}
-      <div className="flex justify-center mb-8">
-        <div className="w-24 h-24 bg-dark-light rounded-full flex items-center justify-center text-4xl">
-          {customer?.name ? customer.name.charAt(0).toUpperCase() : '👤'}
+      <div className="flex justify-center mb-6">
+        <div className="w-20 h-20 bg-dark-light rounded-full flex items-center justify-center text-3xl border-2 border-gray-700">
+          {customer?.name ? customer.name.charAt(0).toUpperCase() : '🏴‍☠️'}
         </div>
       </div>
 

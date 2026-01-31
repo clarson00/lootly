@@ -87,18 +87,18 @@ export default function Login() {
       <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
         {/* Icon */}
         <div className="text-5xl text-center mb-6">
-          {step === 'phone' ? '📱' : '🔐'}
+          {step === 'phone' ? '🏴‍☠️' : '🔐'}
         </div>
 
         {/* Title */}
         <h1 className="text-2xl font-bold text-center mb-2">
-          {step === 'phone' ? 'Enter your phone' : 'Enter code'}
+          {step === 'phone' ? 'Your Pirate ID' : 'Enter code'}
         </h1>
 
         {/* Subtitle */}
         <p className="text-gray-400 text-center mb-8">
           {step === 'phone'
-            ? "We'll send you a verification code"
+            ? "Your phone number is your ID for all treasure and game events"
             : `Code sent to ${phone}`}
         </p>
 
@@ -116,6 +116,11 @@ export default function Login() {
                 autoFocus
               />
             </div>
+            {/* Notification reassurance */}
+            <p className="text-gray-500 text-xs text-center mt-3 flex items-center justify-center gap-2">
+              <span>🔔</span>
+              Next, you'll choose notification preferences. We don't spam.
+            </p>
           </div>
         ) : (
           <div className="mb-6">
