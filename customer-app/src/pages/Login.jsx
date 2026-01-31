@@ -80,24 +80,34 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-dark flex flex-col p-6">
+    <div className="min-h-screen bg-dark flex flex-col p-6 relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-secondary/5 rounded-full blur-3xl" />
+      </div>
+
       {/* Back button */}
       <button
         onClick={() => step === 'code' ? setStep('phone') : navigate('/')}
-        className="text-gray-400 mb-8"
+        className="text-gray-400 mb-8 flex items-center gap-2 hover:text-white transition-colors relative z-10"
       >
-        ← Back
+        <span>←</span> Back
       </button>
 
-      <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
+      <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full relative z-10">
         {/* Icon */}
-        <div className="text-5xl text-center mb-6">
-          {step === 'phone' ? '🏴‍☠️' : '🔐'}
+        <div className="text-6xl text-center mb-6">
+          {step === 'phone' ? (
+            <span className="float inline-block">🏴‍☠️</span>
+          ) : (
+            <span className="treasure-bounce inline-block">🔐</span>
+          )}
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl font-bold text-center mb-2">
-          {step === 'phone' ? 'Your Pirate ID' : 'Enter code'}
+        <h1 className="text-2xl font-bold text-center mb-2 text-white">
+          {step === 'phone' ? 'Your Pirate ID' : 'Enter Code'}
         </h1>
 
         {/* Subtitle */}
@@ -110,55 +120,94 @@ export default function Login() {
         {/* Input */}
         {step === 'phone' ? (
           <div className="mb-6">
-            <div className="flex items-center bg-dark-light rounded-xl p-4">
-              <span className="text-gray-400 mr-2">+1</span>
+            <div className="flex items-center bg-dark-light rounded-2xl p-4 border border-gray-700 focus-within:border-primary/50 transition-colors">
+              <span className="text-gray-400 mr-3 text-lg">🇺🇸 +1</span>
               <input
                 type="tel"
                 value={phone}
                 onChange={handlePhoneChange}
                 placeholder="(555) 123-4567"
-                className="flex-1 bg-transparent text-white text-lg outline-none"
+                className="flex-1 bg-transparent text-white text-xl outline-none"
                 autoFocus
               />
             </div>
             {/* Notification reassurance */}
-            <p className="text-gray-500 text-xs text-center mt-3 flex items-center justify-center gap-2">
-              <span>🔔</span>
-              Next, you'll choose notification preferences. We don't spam.
-            </p>
+            <div className="mt-4 p-3 rounded-xl bg-secondary/10 border border-secondary/20">
+              <p className="text-secondary text-xs text-center flex items-center justify-center gap-2">
+                <span>🔔</span>
+                Next, you'll choose notification preferences. We don't spam.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="mb-6">
+            {/* Code input boxes */}
+            <div className="flex justify-center gap-3 mb-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className={`w-14 h-16 rounded-xl flex items-center justify-center text-3xl font-bold
+                    ${code[i] ? 'bg-primary/20 border-primary text-white' : 'bg-dark-light border-gray-700'}
+                    border-2 transition-all`}
+                >
+                  {code[i] || ''}
+                </div>
+              ))}
+            </div>
             <input
               type="text"
               inputMode="numeric"
               value={code}
               onChange={handleCodeChange}
-              placeholder="1234"
-              className="w-full bg-dark-light rounded-xl p-4 text-white text-3xl text-center tracking-widest outline-none"
+              className="sr-only"
               autoFocus
             />
-            <p className="text-gray-500 text-sm text-center mt-3">
-              Hint: Use code 1234
-            </p>
+            {/* Hidden input for actual typing */}
+            <div
+              className="text-center cursor-text"
+              onClick={() => document.querySelector('input[inputMode="numeric"]')?.focus()}
+            >
+              <p className="text-gray-500 text-sm">
+                Tap to enter code • Hint: <span className="text-primary">1234</span>
+              </p>
+            </div>
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <p className="text-red-500 text-center mb-4">{error}</p>
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30">
+            <p className="text-red-400 text-center text-sm">{error}</p>
+          </div>
         )}
 
         {/* Button */}
         <button
           onClick={step === 'phone' ? handleSendCode : handleVerifyCode}
           disabled={loading}
-          className="w-full bg-primary text-dark font-bold py-4 rounded-xl text-lg
-                     hover:bg-yellow-400 active:scale-95 transition-all
-                     disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-gradient-to-r from-primary to-yellow-400 text-dark font-bold py-4 rounded-2xl text-lg
+                     hover:from-yellow-400 hover:to-primary active:scale-95 transition-all
+                     disabled:opacity-50 disabled:cursor-not-allowed
+                     shadow-lg shadow-primary/20"
         >
-          {loading ? 'Loading...' : (step === 'phone' ? 'Send Code' : 'Verify')}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="animate-spin">⏳</span> Loading...
+            </span>
+          ) : (
+            step === 'phone' ? 'Send Code' : 'Verify & Continue'
+          )}
         </button>
+
+        {/* Resend code */}
+        {step === 'code' && (
+          <button
+            onClick={() => setStep('phone')}
+            className="text-gray-500 text-sm mt-4 hover:text-primary transition-colors text-center"
+          >
+            Didn't get a code? <span className="underline">Try again</span>
+          </button>
+        )}
       </div>
     </div>
   );

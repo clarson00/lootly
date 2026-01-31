@@ -88,59 +88,67 @@ function OpportunityCard({ opportunity, onAddToQuests }) {
   };
 
   return (
-    <div className="bg-dark-light rounded-2xl p-4 border border-gray-800 hover:border-primary/30 transition-all">
+    <div className="bg-dark-light rounded-2xl p-4 border border-gray-800 hover:border-primary/30 transition-all card-glow tap-scale">
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gray-800 rounded-xl flex items-center justify-center text-2xl">
+          <div className="w-14 h-14 bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl flex items-center justify-center text-2xl shadow-lg">
             {opportunity.businessIcon}
           </div>
           <div>
-            <h3 className="font-bold text-white">{opportunity.businessName}</h3>
-            <p className="text-gray-500 text-sm">{opportunity.category} • {opportunity.distance}</p>
+            <h3 className="font-bold text-white text-lg">{opportunity.businessName}</h3>
+            <p className="text-gray-500 text-sm flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              {opportunity.category} • {opportunity.distance}
+            </p>
           </div>
         </div>
-        <span className="text-xs text-gray-500">{opportunity.memberCount} crew</span>
+        <div className="text-right">
+          <span className="text-xs text-gray-500">{opportunity.memberCount}</span>
+          <p className="text-xs text-gray-600">crew</p>
+        </div>
       </div>
 
       {/* Featured Reward */}
-      <div className="bg-gradient-to-r from-primary/10 to-transparent rounded-xl p-3 mb-3">
+      <div className="bg-gradient-to-r from-primary/15 via-primary/5 to-transparent rounded-xl p-3 mb-3 border border-primary/10">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-gray-400 mb-1">Featured Treasure</p>
-            <p className="font-semibold text-white">{opportunity.featuredReward.name}</p>
-            <p className="text-xs text-gray-400">
-              {opportunity.featuredReward.pointsRequired} 🪙 • ~{opportunity.featuredReward.estimatedValue} value
+            <p className="text-xs text-primary/70 mb-1 font-medium">🎯 Featured Treasure</p>
+            <p className="font-bold text-white text-lg">{opportunity.featuredReward.name}</p>
+            <p className="text-sm text-gray-400 flex items-center gap-2">
+              <span className="text-primary font-semibold">{opportunity.featuredReward.pointsRequired} 🪙</span>
+              <span>•</span>
+              <span className="text-green-400">~{opportunity.featuredReward.estimatedValue} value</span>
             </p>
           </div>
-          <div className="text-3xl">💎</div>
+          <div className="text-4xl treasure-bounce">💎</div>
         </div>
       </div>
 
       {/* Active Voyage */}
       {opportunity.activeVoyage && (
-        <div className="bg-secondary/10 rounded-xl p-3 mb-3 border border-secondary/20">
+        <div className="bg-gradient-to-r from-secondary/15 to-transparent rounded-xl p-3 mb-3 border border-secondary/20">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm">🗺️</span>
-            <p className="text-xs text-secondary font-semibold">Active Voyage</p>
+            <span className="text-lg">🗺️</span>
+            <p className="text-xs text-secondary font-bold uppercase tracking-wide">Active Voyage</p>
           </div>
-          <p className="text-sm text-white">{opportunity.activeVoyage.name}</p>
+          <p className="text-sm text-white font-semibold">{opportunity.activeVoyage.name}</p>
           <p className="text-xs text-gray-400">{opportunity.activeVoyage.description}</p>
         </div>
       )}
 
       {/* Points rate + Add button */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-400">
-          Earn {opportunity.pointsPerDollar} 🪙 per $1 spent
+      <div className="flex items-center justify-between pt-2 border-t border-gray-800">
+        <p className="text-sm text-gray-400 flex items-center gap-1">
+          Earn <span className="text-primary font-semibold">{opportunity.pointsPerDollar}x</span> 🪙 per $1
         </p>
         <button
           onClick={handleAdd}
           disabled={added}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all
+          className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all
             ${added
-              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-              : 'bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 active:scale-95'
+              ? 'bg-green-500/20 text-green-400 border border-green-500/30 scale-105'
+              : 'bg-gradient-to-r from-primary to-yellow-400 text-dark hover:from-yellow-400 hover:to-primary active:scale-95 shadow-lg shadow-primary/20'
             }`}
         >
           {added ? '✓ Added!' : '+ Add to Quests'}
@@ -167,17 +175,23 @@ export default function Discover() {
     : opportunities.filter(o => o.category.toLowerCase() === filter);
 
   return (
-    <div className="min-h-screen bg-dark pb-24 pt-6 px-4">
+    <div className="min-h-screen bg-dark pb-24 pt-6 px-4 relative">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 relative z-10">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <span>🔍</span> Discover Treasure
+            <span className="text-3xl">🔍</span>
+            <span className="text-gold-gradient">Discover Treasure</span>
           </h1>
-          <p className="text-gray-400 text-sm">Find rewards near you</p>
+          <p className="text-gray-400 text-sm mt-1">Find rewards near you</p>
         </div>
         <button
-          className="w-10 h-10 bg-dark-light rounded-xl flex items-center justify-center text-xl"
+          className="w-12 h-12 bg-dark-light rounded-xl flex items-center justify-center text-2xl border border-gray-700 hover:border-primary/50 transition-colors"
           onClick={() => {/* TODO: Map view */}}
         >
           🗺️
@@ -186,35 +200,36 @@ export default function Discover() {
 
       {/* First-time hint */}
       {showFirstTimeHint && (
-        <div className="bg-gradient-to-r from-primary/20 to-secondary/20 rounded-2xl p-4 mb-6 border border-primary/30 relative">
+        <div className="bg-gradient-to-r from-primary/20 via-secondary/10 to-primary/20 rounded-2xl p-4 mb-6 border border-primary/30 relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 text-6xl opacity-20">🏴‍☠️</div>
           <button
             onClick={() => setShowFirstTimeHint(false)}
-            className="absolute top-2 right-2 text-gray-400 hover:text-white"
+            className="absolute top-2 right-2 w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors text-sm"
           >
             ✕
           </button>
-          <p className="text-sm text-white mb-1">
-            <span className="font-bold">💡 Welcome aboard, pirate!</span>
+          <p className="text-base text-white mb-1 font-bold flex items-center gap-2">
+            <span>💡</span> Welcome aboard, pirate!
           </p>
-          <p className="text-xs text-gray-300">
-            Browse rewards below. Tap "+ Add to Quests" to start chasing treasure!
+          <p className="text-sm text-gray-300">
+            Browse rewards below. Tap <span className="text-primary font-semibold">"+ Add to Quests"</span> to start chasing treasure!
           </p>
         </div>
       )}
 
       {/* Filter chips */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 -mx-4 px-4">
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 -mx-4 px-4 relative z-10">
         {['all', 'restaurant', 'coffee shop', 'brewery', 'salon'].map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all
+            className={`px-4 py-2.5 rounded-full text-sm whitespace-nowrap transition-all font-medium
               ${filter === f
-                ? 'bg-primary text-dark font-semibold'
-                : 'bg-dark-light text-gray-400 hover:text-white'
+                ? 'bg-gradient-to-r from-primary to-yellow-400 text-dark shadow-lg shadow-primary/20'
+                : 'bg-dark-light text-gray-400 hover:text-white border border-gray-700'
               }`}
           >
-            {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+            {f === 'all' ? '✨ All' : f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
         ))}
       </div>
