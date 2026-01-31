@@ -9,12 +9,12 @@
 
 ## Executive Summary
 
-A gamification layer for **tenants** (not just customers) where businesses earn XP for platform engagement and redeem rewards through PrintHabit—RewardsPirate's sister company that produces custom merchandise. This creates a powerful flywheel: tenants earn merchandise, give it to customers as prizes, customers engage more, tenants earn more XP.
+A gamification layer for **tenants** (not just customers) where businesses earn **Creator Points (CP)** for platform engagement and redeem rewards through PrintHabit—RewardsPirate's sister company that produces custom merchandise. This creates a powerful flywheel: tenants earn merchandise, give it to customers as prizes, customers engage more, tenants earn more CP.
 
 ### The Flywheel Effect
 
 ```
-Tenant creates engagement → Earns Tenant XP → Redeems for PrintHabit merch
+Tenant creates engagement → Earns Creator Points → Redeems for PrintHabit merch
          ↑                                              ↓
          │                                              │
          │                                              ▼
@@ -26,6 +26,273 @@ Tenant creates engagement → Earns Tenant XP → Redeems for PrintHabit merch
 1. **Tenants** get free/discounted marketing materials
 2. **Customers** get tangible, desirable physical rewards
 3. **Platform** gets increased engagement and tenant stickiness
+
+---
+
+## Currency: Creator Points (CP)
+
+### Why "Creator Points"?
+
+Tenants are **creators** on the platform:
+- They CREATE bounties, events, games
+- They CREATE customer experiences
+- They CREATE engagement that drives the ecosystem
+
+**Creator Points (CP)** distinguishes tenant currency from customer XP and emphasizes their role as content creators.
+
+| Audience | Currency | Purpose |
+|----------|----------|---------|
+| Customers | XP | Platform progression, ranks |
+| Tenants | Creator Points (CP) | Platform engagement, merch rewards |
+
+---
+
+## Tenant Ranks (Business Theme)
+
+Just like customers have pirate ranks, tenants have **business-themed ranks**:
+
+| Rank | CP Required | Total CP | Unlocks |
+|------|-------------|----------|---------|
+| **Shopkeep** | 0 | 0 | Basic features, catalog access |
+| **Merchant** | 500 | 500 | Leaderboard visibility |
+| **Proprietor** | 1,000 | 1,500 | Custom merch options |
+| **Director** | 2,500 | 4,000 | Priority fulfillment |
+| **Mogul** | 3,000 | 7,000 | Exclusive catalog items |
+| **Tycoon** | 8,000 | 15,000 | Bulk order discounts |
+| **Baron** | 15,000 | 30,000 | White-label options |
+| **Titan** | 30,000 | 60,000 | Advisory board invitation, legacy status |
+
+### Rank Badges
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  TENANT RANK BADGES                                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   🏪 Shopkeep    🛒 Merchant    🏬 Proprietor   📊 Director    │
+│                                                                 │
+│   💰 Mogul       🏭 Tycoon      👑 Baron        🌟 Titan       │
+│                                                                 │
+│  Badges displayed on:                                           │
+│  • Tenant dashboard                                             │
+│  • Collaboration invites                                        │
+│  • Platform directory (if public)                               │
+│  • PrintHabit order history                                     │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Attribution Tracking
+
+### Why Track Attribution?
+
+Every point of customer XP should trace back to **which tenant activity generated it**. This provides:
+
+1. **Tenant ROI visibility** - "Your Summer Bounty generated 5,000 customer XP"
+2. **Platform analytics** - "Bounties generate 40% of platform XP"
+3. **CP reward calculation** - Tenants earn CP based on customer XP they generate
+
+### Attribution Chain
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ATTRIBUTION TRACKING                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Customer Action          Attribution                           │
+│  ─────────────────────────────────────────────────────────────  │
+│                                                                 │
+│  Check-in at Joe's    →   tenant: Joe's Coffee                  │
+│       +10 XP              location: Main St                     │
+│                           source: check_in                      │
+│                                                                 │
+│  Complete bounty      →   tenant: Joe's Coffee                  │
+│       +50 XP              bounty: "Summer Special"              │
+│                           source: bounty                        │
+│                                                                 │
+│  Capture at Joe's     →   tenant: Joe's Coffee                  │
+│       +25 XP              location: Main St                     │
+│                           source: capture                       │
+│                           collectible: Rare Shark               │
+│                                                                 │
+│  Voyage waypoint      →   tenant: Joe's Coffee (waypoint)       │
+│       +15 XP              voyage: "Downtown Coffee Trail"       │
+│                           organizer: Coffee Alliance            │
+│                           source: voyage                        │
+│                                                                 │
+│  Raid participation   →   tenant: Joe's Coffee (host)           │
+│       +100 XP             event: "Super Bowl Kraken"            │
+│                           source: raid                          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Attribution Data Model
+
+```sql
+-- Enhanced XP transaction with full attribution
+CREATE TABLE xp_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    amount INTEGER NOT NULL,
+    
+    -- Attribution fields
+    source_type VARCHAR(50) NOT NULL,     -- check_in, bounty, capture, voyage, raid, prediction
+    source_id UUID,                        -- ID of the specific bounty/event/etc
+    
+    tenant_id UUID REFERENCES tenants(id), -- Primary tenant credited
+    location_id UUID REFERENCES locations(id),
+    
+    -- For multi-tenant activities (voyages, collaborations)
+    attribution_split JSONB,               -- {"tenant_a": 0.5, "tenant_b": 0.5}
+    
+    -- Context
+    description TEXT,
+    metadata JSONB DEFAULT '{}',
+    
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Aggregated attribution stats (materialized for performance)
+CREATE TABLE tenant_attribution_stats (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    period_type VARCHAR(20) NOT NULL,      -- daily, weekly, monthly
+    period_start DATE NOT NULL,
+    
+    -- XP generated by source
+    xp_from_checkins INTEGER DEFAULT 0,
+    xp_from_bounties INTEGER DEFAULT 0,
+    xp_from_captures INTEGER DEFAULT 0,
+    xp_from_events INTEGER DEFAULT 0,
+    xp_from_voyages INTEGER DEFAULT 0,
+    xp_from_predictions INTEGER DEFAULT 0,
+    xp_total INTEGER DEFAULT 0,
+    
+    -- Activity counts
+    checkin_count INTEGER DEFAULT 0,
+    bounty_completions INTEGER DEFAULT 0,
+    capture_count INTEGER DEFAULT 0,
+    event_participations INTEGER DEFAULT 0,
+    
+    -- Unique customers
+    unique_customers INTEGER DEFAULT 0,
+    new_customers INTEGER DEFAULT 0,
+    returning_customers INTEGER DEFAULT 0,
+    
+    calculated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    UNIQUE(tenant_id, period_type, period_start)
+);
+
+-- Index for fast lookups
+CREATE INDEX idx_xp_transactions_tenant ON xp_transactions(tenant_id, created_at DESC);
+CREATE INDEX idx_xp_transactions_source ON xp_transactions(source_type, source_id);
+CREATE INDEX idx_attribution_stats_tenant ON tenant_attribution_stats(tenant_id, period_type, period_start DESC);
+```
+
+### Tenant Analytics Dashboard
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ANALYTICS: XP GENERATION                     This Month        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  TOTAL CUSTOMER XP GENERATED: 12,450 XP                         │
+│  ═══════════════════════════════════════                        │
+│                                                                 │
+│  BY SOURCE                          BY TOP ACTIVITIES           │
+│  ┌─────────────────────────┐        ┌─────────────────────────┐ │
+│  │ Bounties      ████████░ 45%  │   │ "Summer Special"  3,200 │ │
+│  │ Check-ins     █████░░░░ 28%  │   │ "Happy Hour"      2,100 │ │
+│  │ Captures      ███░░░░░░ 15%  │   │ Basic check-ins   1,800 │ │
+│  │ Events        ██░░░░░░░ 10%  │   │ "Trivia Night"    1,500 │ │
+│  │ Voyages       █░░░░░░░░  2%  │   │ Shark captures      850 │ │
+│  └─────────────────────────┘        └─────────────────────────┘ │
+│                                                                 │
+│  ENGAGEMENT FUNNEL                                              │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  Unique Visitors    │████████████████████████│  1,250       ││
+│  │  Check-ins          │██████████████████░░░░░░│    890 (71%) ││
+│  │  Bounty Attempts    │████████████░░░░░░░░░░░░│    520 (58%) ││
+│  │  Bounty Completions │██████████░░░░░░░░░░░░░░│    445 (86%) ││
+│  │  Return Visits      │████████░░░░░░░░░░░░░░░░│    356 (40%) ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                 │
+│  YOUR CREATOR POINTS EARNED FROM THIS: +623 CP                  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## CP Earning Activities
+
+### Content Creation (Action-Based)
+
+| Activity | CP Earned | Notes |
+|----------|-----------|-------|
+| Create first bounty | 100 CP | One-time bonus |
+| Create bounty | 25 CP | Per bounty |
+| Create event | 50 CP | Per event |
+| Create voyage waypoint | 25 CP | Contributing to network |
+| Organize collaboration | 100 CP | Multi-tenant campaigns |
+| Set up capture bonuses | 25 CP | Engaging with gamification |
+| Complete profile | 50 CP | Hours, photos, description |
+| Connect POS integration | 200 CP | One-time |
+| Enable new feature | 25 CP | Per feature adoption |
+
+### Customer XP Generation (Attribution-Based)
+
+Tenants earn CP based on customer XP they generate:
+
+| Customer XP Generated | CP Earned | Notes |
+|----------------------|-----------|-------|
+| Every 100 customer XP | 1 CP | Base rate |
+| Bounty with >50% completion | +50 CP bonus | Quality bonus |
+| Event with >30% attendance | +25 CP bonus | Quality bonus |
+
+**Example:**
+- Summer Bounty generates 3,200 customer XP → 32 CP base
+- Bounty had 65% completion rate → +50 CP bonus
+- **Total: 82 CP from one bounty**
+
+### Engagement Quality (Rate-Based)
+
+| Metric | Threshold | CP Earned |
+|--------|-----------|----------|
+| Bounty completion rate | >50% | 50 CP/bounty/month |
+| Event attendance rate | >30% | 25 CP/event |
+| Customer return rate | >40% within 30 days | 100 CP/month |
+| Capture engagement | >60% of check-ins | 25 CP/month |
+| Referral program active | Any referrals | 10 CP per referral |
+
+### Personal Best Bonuses
+
+| Achievement | CP Bonus |
+|-------------|----------|
+| Best month for check-ins (vs own average) | 200 CP |
+| Best bounty completion rate ever | 100 CP |
+| Best customer return rate ever | 150 CP |
+| Most events hosted in a month | 100 CP |
+| Most customer XP generated in a month | 250 CP |
+
+### Milestone Bonuses
+
+| Milestone | CP Bonus |
+|-----------|----------|
+| First 100 customer check-ins | 250 CP |
+| First 1,000 customer check-ins | 500 CP |
+| First 10,000 customer check-ins | 1,000 CP |
+| Generate 10,000 total customer XP | 500 CP |
+| Generate 100,000 total customer XP | 2,000 CP |
+| 1 year on platform | 500 CP |
+| 2 years on platform | 1,000 CP |
+| First collaboration completed | 200 CP |
+| 10 bounties created | 200 CP |
+| 50 bounties created | 500 CP |
 
 ---
 
@@ -45,77 +312,13 @@ Tenant creates engagement → Earns Tenant XP → Redeems for PrintHabit merch
 
 ### Reward Tiers
 
-| Tier | Tenant XP Cost | Example Rewards |
-|------|----------------|------------------|
-| Bronze | 500-1,000 XP | 50 stickers, 25 coasters |
-| Silver | 1,000-2,500 XP | 100 stickers, 10 keychains, 50 coasters |
-| Gold | 2,500-5,000 XP | 10-pack t-shirts, 25 metal cards, 100 coasters |
-| Platinum | 5,000-10,000 XP | 25-pack t-shirts, custom signage, premium bundle |
-| Diamond | 10,000+ XP | Full merch kit, exclusive items, bulk orders |
-
----
-
-## Tenant XP System
-
-### Design Principles
-
-1. **Reward action, not just size** - Small businesses can compete
-2. **Reward quality, not just quantity** - Engagement rates matter
-3. **Reward improvement** - "Personal best" bonuses
-4. **Reward platform adoption** - Using new features
-
-### XP Earning Activities
-
-#### Content Creation (Action-Based)
-
-| Activity | XP Earned | Notes |
-|----------|-----------|-------|
-| Create first bounty | 100 XP | One-time bonus |
-| Create bounty | 25 XP | Per bounty |
-| Create event | 50 XP | Per event |
-| Create voyage waypoint | 25 XP | Contributing to network |
-| Organize collaboration | 100 XP | Multi-tenant campaigns |
-| Set up capture bonuses | 25 XP | Engaging with gamification |
-| Complete profile | 50 XP | Hours, photos, description |
-| Connect POS integration | 200 XP | One-time |
-| Enable new feature | 25 XP | Per feature adoption |
-
-#### Engagement Quality (Rate-Based)
-
-To keep it **fair across business sizes**, these are based on rates/percentages:
-
-| Metric | Calculation | XP Earned |
-|--------|-------------|----------|
-| Bounty completion rate | >50% of eligible customers complete | 50 XP/bounty/month |
-| Event attendance rate | >30% of RSVPs attend | 25 XP/event |
-| Customer return rate | >40% of customers return within 30 days | 100 XP/month |
-| Capture engagement | >60% of check-ins result in captures | 25 XP/month |
-| Referral program active | Any customer referrals | 10 XP per referral |
-
-#### Personal Best Bonuses
-
-Reward improvement over their own baseline:
-
-| Achievement | XP Bonus |
-|-------------|----------|
-| Best month for check-ins (vs own average) | 200 XP |
-| Best bounty completion rate ever | 100 XP |
-| Best customer return rate ever | 150 XP |
-| Most events hosted in a month | 100 XP |
-| Longest streak of daily check-ins | 50 XP/week |
-
-#### Milestone Bonuses
-
-| Milestone | XP Bonus |
-|-----------|----------|
-| First 100 customer check-ins | 250 XP |
-| First 1,000 customer check-ins | 500 XP |
-| First 10,000 customer check-ins | 1,000 XP |
-| 1 year on platform | 500 XP |
-| 2 years on platform | 1,000 XP |
-| First collaboration completed | 200 XP |
-| 10 bounties created | 200 XP |
-| 50 bounties created | 500 XP |
+| Tier | CP Cost | Example Rewards |
+|------|---------|-----------------|
+| Bronze | 500-1,000 CP | 50 stickers, 25 coasters |
+| Silver | 1,000-2,500 CP | 100 stickers, 10 keychains, 50 coasters |
+| Gold | 2,500-5,000 CP | 10-pack t-shirts, 25 metal cards, 100 coasters |
+| Platinum | 5,000-10,000 CP | 25-pack t-shirts, custom signage, premium bundle |
+| Diamond | 10,000+ CP | Full merch kit, exclusive items, bulk orders |
 
 ---
 
@@ -130,7 +333,7 @@ A Starbucks with 1,000 daily customers would crush a local coffee shop with 50. 
 Tenants compete within their size tier:
 
 | Tier | Monthly Check-ins | Compete Against |
-|------|-------------------|------------------|
+|------|-------------------|-----------------|
 | Seedling | 0-500 | Other seedlings |
 | Sprout | 501-2,000 | Other sprouts |
 | Growth | 2,001-10,000 | Other growth |
@@ -142,169 +345,44 @@ Tenants compete within their size tier:
 Leaderboards show **percentages**, not absolutes:
 
 - "Highest customer return rate" (not "most returning customers")
-- "Best bounty completion rate" (not "most bounties completed")
-- "Highest engagement per check-in" (not "most check-ins")
+- "Best bounty completion rate" (not "most bounties completed")  
+- "Highest XP per check-in" (not "most XP generated")
 
 ### Improvement Bonuses
 
-Bonus XP for beating your own records encourages continuous improvement regardless of size.
-
----
-
-## Redemption Flow
-
-### Step 1: Browse Catalog
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  🏆 TENANT REWARDS                         Your XP: 3,250 ⚡    │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  FEATURED REWARDS                                               │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
-│  │  👕         │  │  🏷️         │  │  🎫         │              │
-│  │  T-SHIRTS   │  │  STICKERS   │  │  METAL      │              │
-│  │  10-pack    │  │  100-pack   │  │  CARDS      │              │
-│  │             │  │             │  │  25-pack    │              │
-│  │  2,500 XP   │  │  500 XP     │  │  3,000 XP   │              │
-│  │  [REDEEM]   │  │  [REDEEM]   │  │  [REDEEM]   │              │
-│  └─────────────┘  └─────────────┘  └─────────────┘              │
-│                                                                 │
-│  🎨 All items fully customizable with your branding!           │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Step 2: Customize
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  CUSTOMIZE YOUR T-SHIRTS                                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────────┐    DESIGN OPTIONS                      │
-│  │                     │                                        │
-│  │    [T-SHIRT         │    Logo: [Upload] ✓ joe-coffee.png     │
-│  │     PREVIEW]        │                                        │
-│  │                     │    Color: ● Black ○ Navy ○ White       │
-│  │     ☕ JOE'S        │                                        │
-│  │     COFFEE          │    Sizes:                              │
-│  │                     │    S[2] M[3] L[3] XL[2]                │
-│  │                     │                                        │
-│  └─────────────────────┘    Back print: ○ None ● Logo small     │
-│                                                                 │
-│  ─────────────────────────────────────────────────────────────  │
-│  Cost: 2,500 XP          Your Balance: 3,250 XP                 │
-│                          Remaining: 750 XP                      │
-│                                                                 │
-│                    [ CONFIRM ORDER ]                            │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Step 3: Fulfillment
-
-1. Order submitted to PrintHabit
-2. Production (3-5 business days)
-3. Shipping to tenant's address
-4. Tenant receives and distributes to customers/staff
-
----
-
-## Suggested Use Cases for Tenants
-
-### Customer Prizes
-
-| Item | Use Case |
-|------|----------|
-| T-shirts | "Capture a Legendary creature, win a shirt!" |
-| Metal cards | "VIP status card for top 10 customers" |
-| Stickers | "Free sticker with every 10th visit" |
-| Keychains | "Refer a friend, get a keychain" |
-
-### Staff Incentives
-
-| Item | Use Case |
-|------|----------|
-| T-shirts | Uniforms / team wear |
-| Hats | Staff identification |
-| Tumblers | Employee appreciation |
-
-### Marketing
-
-| Item | Use Case |
-|------|----------|
-| Stickers | Hand out to every customer |
-| Coasters | Branded table presence |
-| Signage | "We're on RewardsPirate!" display |
-
----
-
-## The Compounding Effect
-
-### Why This Gets Better Over Time
-
-```
-Month 1:
-- Tenant creates 3 bounties → Earns 75 XP
-- 100 customers complete them → Earns 150 XP (rate bonus)
-- Total: 225 XP
-
-Month 3:
-- Tenant has learned what works
-- Creates better bounties → Higher completion rate → More XP
-- Redeems for stickers → Gives to customers
-- Customers show stickers to friends → More customers
-- More customers → More check-ins → More tenant XP
-- Total: 800 XP
-
-Month 6:
-- Tenant is a power user
-- Running events, collaborations, voyages
-- Customers competing for t-shirts
-- Organic word-of-mouth from branded merch
-- Total: 2,500 XP → Redeems for t-shirt pack
-
-Month 12:
-- Tenant is platform advocate
-- Customers wearing branded shirts
-- Featured in case studies
-- Diamond tier → Premium merch
-- Refers other businesses
-```
-
-### Platform Network Effects
-
-When customers wear tenant merch:
-- Other people see the brand
-- "Where'd you get that shirt?" → "Joe's Coffee, they have this rewards app..."
-- New customer signs up → More platform growth
-- More tenants → More voyages → More customer engagement
+Bonus CP for beating your own records encourages continuous improvement regardless of size.
 
 ---
 
 ## Database Schema
 
 ```sql
--- Tenant XP tracking
-CREATE TABLE tenant_xp (
+-- Tenant Creator Points tracking
+CREATE TABLE tenant_creator_points (
     tenant_id UUID PRIMARY KEY REFERENCES tenants(id),
-    total_xp INTEGER NOT NULL DEFAULT 0,
-    lifetime_xp INTEGER NOT NULL DEFAULT 0,
-    current_tier VARCHAR(50) DEFAULT 'seedling',
-    tier_updated_at TIMESTAMPTZ,
+    total_cp INTEGER NOT NULL DEFAULT 0,
+    lifetime_cp INTEGER NOT NULL DEFAULT 0,
+    current_rank VARCHAR(50) DEFAULT 'shopkeep',
+    rank_updated_at TIMESTAMPTZ,
+    size_tier VARCHAR(50) DEFAULT 'seedling',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tenant XP transaction log
-CREATE TABLE tenant_xp_transactions (
+-- Tenant CP transaction log
+CREATE TABLE tenant_cp_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id),
     amount INTEGER NOT NULL,
     source_type VARCHAR(100) NOT NULL,
     source_id UUID,
     description TEXT,
+    
+    -- For XP-generation rewards, link to attribution
+    customer_xp_generated INTEGER,
+    attribution_period_start DATE,
+    attribution_period_end DATE,
+    
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -318,7 +396,18 @@ CREATE TABLE tenant_personal_bests (
     achieved_at TIMESTAMPTZ NOT NULL,
     period_start DATE,
     period_end DATE,
+    cp_awarded INTEGER,
     UNIQUE(tenant_id, metric_type)
+);
+
+-- Tenant rank history
+CREATE TABLE tenant_rank_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    old_rank VARCHAR(50),
+    new_rank VARCHAR(50) NOT NULL,
+    cp_at_change INTEGER NOT NULL,
+    changed_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- PrintHabit reward catalog
@@ -327,12 +416,12 @@ CREATE TABLE printhabit_rewards (
     name VARCHAR(200) NOT NULL,
     description TEXT,
     category VARCHAR(100) NOT NULL,
-    xp_cost INTEGER NOT NULL,
+    cp_cost INTEGER NOT NULL,
     quantity INTEGER NOT NULL,
     customization_options JSONB DEFAULT '{}',
     image_url TEXT,
     is_active BOOLEAN DEFAULT true,
-    tier_required VARCHAR(50),
+    rank_required VARCHAR(50),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -341,7 +430,7 @@ CREATE TABLE tenant_reward_redemptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id),
     reward_id UUID NOT NULL REFERENCES printhabit_rewards(id),
-    xp_spent INTEGER NOT NULL,
+    cp_spent INTEGER NOT NULL,
     customization_data JSONB NOT NULL,
     shipping_address JSONB NOT NULL,
     status VARCHAR(50) DEFAULT 'pending',
@@ -359,118 +448,54 @@ CREATE TABLE tenant_milestones (
     tenant_id UUID NOT NULL REFERENCES tenants(id),
     milestone_type VARCHAR(100) NOT NULL,
     achieved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    xp_awarded INTEGER NOT NULL,
+    cp_awarded INTEGER NOT NULL,
     metadata JSONB DEFAULT '{}',
     UNIQUE(tenant_id, milestone_type)
 );
 
 -- Indexes
-CREATE INDEX idx_tenant_xp_total ON tenant_xp(total_xp DESC);
-CREATE INDEX idx_tenant_xp_tier ON tenant_xp(current_tier);
-CREATE INDEX idx_tenant_xp_transactions_tenant ON tenant_xp_transactions(tenant_id, created_at DESC);
+CREATE INDEX idx_tenant_cp_total ON tenant_creator_points(total_cp DESC);
+CREATE INDEX idx_tenant_cp_rank ON tenant_creator_points(current_rank);
+CREATE INDEX idx_tenant_cp_transactions_tenant ON tenant_cp_transactions(tenant_id, created_at DESC);
 CREATE INDEX idx_redemptions_tenant ON tenant_reward_redemptions(tenant_id, created_at DESC);
 CREATE INDEX idx_redemptions_status ON tenant_reward_redemptions(status);
 ```
 
 ---
 
-## API Endpoints
+## Integration with Rules Engine
 
-### Get Tenant XP Status
-
-```
-GET /api/v1/tenants/me/rewards
-```
-
-Response:
-```json
-{
-  "xp": {
-    "current": 3250,
-    "lifetime": 8750,
-    "tier": "growth",
-    "next_tier": "established",
-    "xp_to_next_tier": 6750
-  },
-  "recent_earnings": [
-    {
-      "amount": 50,
-      "source": "bounty_completion_rate",
-      "description": "Summer Special bounty achieved 65% completion",
-      "earned_at": "2026-01-30T..."
-    }
-  ],
-  "available_rewards": 12,
-  "pending_orders": 1
-}
-```
-
-### Get Reward Catalog
+The attribution tracking feeds directly into the existing rules engine analytics:
 
 ```
-GET /api/v1/tenants/me/rewards/catalog
-```
-
-### Redeem Reward
-
-```
-POST /api/v1/tenants/me/rewards/redeem
-```
-
-Body:
-```json
-{
-  "reward_id": "uuid",
-  "customization": {
-    "logo_url": "https://...",
-    "color": "black",
-    "sizes": { "S": 2, "M": 3, "L": 3, "XL": 2 }
-  },
-  "shipping_address": {
-    "name": "Joe's Coffee",
-    "street": "123 Main St",
-    "city": "Pittsburgh",
-    "state": "PA",
-    "zip": "15213"
-  }
-}
+┌─────────────────────────────────────────────────────────────────┐
+│                    RULES ENGINE INTEGRATION                     │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  RULE EXECUTION                 ATTRIBUTION                     │
+│  ┌─────────────────────┐       ┌─────────────────────┐         │
+│  │ Bounty: "Summer"    │───────│ Track customer XP   │         │
+│  │ Condition: $10 spent│       │ Credit to tenant    │         │
+│  │ Reward: 50 XP       │       │ Award tenant CP     │         │
+│  └─────────────────────┘       └─────────────────────┘         │
+│            │                             │                      │
+│            ▼                             ▼                      │
+│  ┌─────────────────────┐       ┌─────────────────────┐         │
+│  │ ANALYTICS ROLLUP    │       │ TENANT ANALYTICS    │         │
+│  │ • Revenue by rule   │       │ • XP generated      │         │
+│  │ • Participation     │       │ • CP earned         │         │
+│  │ • Completion rate   │       │ • ROI per activity  │         │
+│  └─────────────────────┘       └─────────────────────┘         │
+│                                                                 │
+│  This data already exists in rules engine—we're adding         │
+│  the attribution layer to credit tenants and award CP.          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## PrintHabit Integration
-
-### Order Flow
-
-```
-1. Tenant redeems in RewardsPirate dashboard
-2. RewardsPirate creates order via PrintHabit API
-3. PrintHabit produces item
-4. PrintHabit ships with tracking
-5. Tracking updated in RewardsPirate
-6. Tenant receives merch
-```
-
-### Webhook Events
-
-| Event | Action |
-|-------|--------|
-| `order.confirmed` | Update status to "in_production" |
-| `order.shipped` | Update status, add tracking |
-| `order.delivered` | Update status, trigger satisfaction survey |
-
-### Cost Structure (Internal)
-
-PrintHabit provides items at cost to RewardsPirate platform:
-- Margin absorbed as customer acquisition cost
-- Volume discounts apply
-- Tracking as platform marketing expense
-
----
-
-## Tenant Dashboard Additions
-
-### New "Rewards" Tab
+## Tenant Dashboard: Rewards Tab
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -481,24 +506,103 @@ PrintHabit provides items at cost to RewardsPirate platform:
 │                                                                 │
 │  ═══════════════════════════════════════════════════════════    │
 │                                                                 │
-│  YOUR REWARDS STATUS                                            │
+│  YOUR STATUS                                                    │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │  ⚡ 3,250 XP                    🏅 Growth Tier           │    │
-│  │  ████████████████░░░░░░ 48% to Established              │    │
+│  │  💰 MOGUL                           4,250 CP Available   │    │
+│  │  ████████████████████░░░░ 61% to Tycoon (7,000 CP)      │    │
+│  │                                                          │    │
+│  │  Lifetime: 12,750 CP earned | Size: Growth tier          │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │                                                                 │
-│  THIS MONTH'S EARNINGS                                          │
-│  +50 XP   Bounty completion rate bonus                          │
-│  +100 XP  Personal best: customer return rate                   │
-│  +25 XP   Created new bounty                                    │
-│  +200 XP  First collaboration completed                         │
-│  ──────                                                         │
-│  +375 XP  Total this month                                      │
+│  THIS MONTH'S EARNINGS                    +823 CP              │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  +320 CP  Customer XP generation (32,000 XP × 1%)       │    │
+│  │  +150 CP  "Summer Special" completion bonus (65%)        │    │
+│  │  +100 CP  Personal best: return rate (42%)               │    │
+│  │  +75 CP   Created 3 bounties                             │    │
+│  │  +50 CP   "Trivia Night" attendance bonus                │    │
+│  │  +128 CP  Other activities                               │    │
+│  └─────────────────────────────────────────────────────────┘    │
 │                                                                 │
-│  [Browse Rewards Catalog] [View XP History]                     │
+│  [Browse Rewards Catalog] [View CP History] [See Analytics]     │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## API Endpoints
+
+### Get Tenant CP Status
+
+```
+GET /api/v1/tenants/me/creator-points
+```
+
+Response:
+```json
+{
+  "creator_points": {
+    "current": 4250,
+    "lifetime": 12750,
+    "rank": "mogul",
+    "next_rank": "tycoon",
+    "cp_to_next_rank": 2750,
+    "progress_percent": 61
+  },
+  "size_tier": "growth",
+  "recent_earnings": [
+    {
+      "amount": 320,
+      "source": "customer_xp_generation",
+      "description": "Generated 32,000 customer XP this month",
+      "earned_at": "2026-01-30T..."
+    }
+  ],
+  "available_rewards": 12,
+  "pending_orders": 1
+}
+```
+
+### Get Attribution Analytics
+
+```
+GET /api/v1/tenants/me/analytics/attribution?period=month
+```
+
+Response:
+```json
+{
+  "period": "2026-01",
+  "customer_xp_generated": {
+    "total": 32000,
+    "by_source": {
+      "bounties": 14400,
+      "check_ins": 8960,
+      "captures": 4800,
+      "events": 3200,
+      "voyages": 640
+    }
+  },
+  "top_activities": [
+    {
+      "type": "bounty",
+      "name": "Summer Special",
+      "xp_generated": 5200,
+      "completions": 104,
+      "completion_rate": 0.65
+    }
+  ],
+  "cp_earned_from_attribution": 320,
+  "funnel": {
+    "unique_visitors": 1250,
+    "check_ins": 890,
+    "bounty_attempts": 520,
+    "bounty_completions": 445,
+    "return_visits": 356
+  }
+}
 ```
 
 ---
@@ -512,27 +616,34 @@ PrintHabit provides items at cost to RewardsPirate platform:
 | Tenant retention | +20% for tenants who've redeemed vs those who haven't |
 | Feature adoption | +40% increase in bounty/event creation |
 | Customer engagement | +15% check-ins at tenants using merch prizes |
+| Attribution visibility | 100% of customer XP traced to source |
 
 ---
 
 ## Implementation Phases
 
 ### Phase 1: Foundation (3-4 weeks)
-- Tenant XP system (earning, tracking)
+- Creator Points system (earning, tracking)
+- Tenant ranks (8 levels)
 - Basic catalog (3-5 items)
 - Manual fulfillment via PrintHabit
 
-### Phase 2: Automation (2-3 weeks)
+### Phase 2: Attribution (2-3 weeks)
+- Attribution tracking on all XP transactions
+- Attribution analytics dashboard
+- CP rewards from XP generation
+
+### Phase 3: Automation (2-3 weeks)
 - PrintHabit API integration
 - Order tracking
 - Customization flow
 
-### Phase 3: Gamification (2-3 weeks)
+### Phase 4: Gamification (2-3 weeks)
 - Leaderboards (within tiers)
 - Personal best tracking
 - Milestone achievements
 
-### Phase 4: Expansion (Ongoing)
+### Phase 5: Expansion (Ongoing)
 - Expanded catalog
 - Seasonal/limited items
 - Tenant referral bonuses
@@ -542,9 +653,12 @@ PrintHabit provides items at cost to RewardsPirate platform:
 ## Related Documentation
 
 - [gamification-v2-overview.md](gamification-v2-overview.md) - Customer gamification
+- [gamification-currency.md](gamification-currency.md) - Customer XP system
 - [gamification-bounties.md](gamification-bounties.md) - Tenant bounty creation
 - [gamification-events-raids.md](gamification-events-raids.md) - Tenant events
+- [gamification-data-model.md](gamification-data-model.md) - Full schema
 - [physical-rewards.md](physical-rewards.md) - Customer physical rewards
+- [../RULES_ENGINE.md](../RULES_ENGINE.md) - Rules engine integration
 
 ---
 
