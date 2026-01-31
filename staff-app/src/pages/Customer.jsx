@@ -12,15 +12,27 @@ export default function Customer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Support both QR code lookup (existing) and direct customer data (from phone lookup)
   const qrCode = location.state?.qrCode;
+  const customerData = location.state?.customerData;
 
   useEffect(() => {
+    // If we have direct customer data from phone lookup, use it immediately
+    if (customerData) {
+      setCustomer(customerData.customer);
+      setEnrollment(customerData.enrollment);
+      setPendingRewards(customerData.pending_rewards || []);
+      setLoading(false);
+      return;
+    }
+
+    // Otherwise, look up by QR code
     if (!qrCode) {
       navigate('/scan');
       return;
     }
     loadCustomer();
-  }, [qrCode]);
+  }, [qrCode, customerData]);
 
   async function loadCustomer() {
     try {
@@ -36,7 +48,9 @@ export default function Customer() {
   }
 
   const handleRecordPurchase = () => {
-    navigate('/spend', { state: { qrCode, customer, enrollment } });
+    // Pass customer ID as the identifier (works for both phone and QR flows)
+    const customerIdentifier = qrCode || customer?.id;
+    navigate('/spend', { state: { qrCode: customerIdentifier, customer, enrollment } });
   };
 
   if (loading) {

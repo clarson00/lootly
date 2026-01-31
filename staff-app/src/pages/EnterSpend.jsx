@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/client';
 import NumPad from '../components/NumPad';
+import ReceiptScanner from '../components/ReceiptScanner';
 
 export default function EnterSpend() {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ export default function EnterSpend() {
   const [amount, setAmount] = useState('0');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   const { qrCode, customer, enrollment } = location.state || {};
 
@@ -41,6 +43,12 @@ export default function EnterSpend() {
       if (prev.length <= 1) return '0';
       return prev.slice(0, -1);
     });
+  };
+
+  const handleReceiptScan = (scannedAmount) => {
+    setAmount(scannedAmount.toFixed(2));
+    setShowScanner(false);
+    setError('');
   };
 
   const handleConfirm = async () => {
@@ -116,6 +124,22 @@ export default function EnterSpend() {
           onClear={handleClear}
           onBackspace={handleBackspace}
         />
+
+        {/* Scan Receipt Option */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <button
+            onClick={() => setShowScanner(true)}
+            className="w-full flex items-center justify-center gap-3 py-3
+                       bg-dark-light text-gray-300 rounded-xl border border-gray-700
+                       hover:border-primary hover:text-white transition-all"
+          >
+            <span className="text-xl">📷</span>
+            <span>Scan Receipt Instead</span>
+          </button>
+          <p className="text-gray-500 text-xs text-center mt-2">
+            Auto-read total from receipt
+          </p>
+        </div>
       </div>
 
       {/* Confirm Button */}
@@ -130,6 +154,14 @@ export default function EnterSpend() {
           {loading ? 'Recording...' : `Confirm $${numAmount.toFixed(2)}`}
         </button>
       </div>
+
+      {/* Receipt Scanner Modal */}
+      {showScanner && (
+        <ReceiptScanner
+          onResult={handleReceiptScan}
+          onCancel={() => setShowScanner(false)}
+        />
+      )}
     </div>
   );
 }

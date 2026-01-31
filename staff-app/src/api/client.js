@@ -69,6 +69,18 @@ class StaffApiClient {
     return this.request(`/staff/customer/${encodeURIComponent(qrCode)}`);
   }
 
+  // Look up customer by phone number (PRIMARY lookup method)
+  async getCustomerByPhone(phone) {
+    // Strip formatting and send just digits
+    const digits = phone.replace(/\D/g, '');
+    return this.request(`/staff/customer/phone/${encodeURIComponent(digits)}`);
+  }
+
+  // Get recent customers at this location
+  async getRecentCustomers(limit = 10) {
+    return this.request(`/staff/recent-customers?limit=${limit}`);
+  }
+
   // Record visit/spend
   async recordVisit(customerQr, spendAmount) {
     return this.request('/staff/record-visit', {

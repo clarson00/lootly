@@ -7,6 +7,110 @@ const { generateToken, authenticateStaff } = require('../middleware/auth');
 
 const { businesses, locations, staff, customers, enrollments, visits, earningRules, rules, ruleTriggers, rewards, customerRewards, qrCodes } = schema;
 
+// Helper: Normalize phone number to E.164-ish format (digits only)
+function normalizePhone(phone) {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  // Handle US numbers: if 10 digits, assume US
+  if (digits.length === 10) {
+    return '+1' + digits;
+  }
+  // If 11 digits starting with 1, add +
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return '+' + digits;
+  }
+  // Otherwise return with + if not present
+  return digits.startsWith('+') ? digits : '+' + digits;
+}
+
+// Helper: Get customer details for staff view (shared by QR and phone lookup)
+async function getCustomerDetailsForStaff(customer, businessId) {
+  // Get enrollment for this business
+  let [enrollment] = await db.select().from(enrollments)
+    .where(and(eq(enrollments.customerId, customer.id), eq(enrollments.businessId, businessId)));
+
+  // Auto-enroll if not enrolled
+  if (!enrollment) {
+    const enrollmentId = generateId('enroll');
+    await db.insert(enrollments).values({
+      id: enrollmentId,
+      customerId: customer.id,
+      businessId: businessId
+    });
+    [enrollment] = await db.select().from(enrollments).where(eq(enrollments.id, enrollmentId));
+  }
+
+  // Get pending rewards (unlocked but not redeemed)
+  const pendingRewards = await db.select({
+    id: customerRewards.id,
+    rewardId: customerRewards.rewardId,
+    status: customerRewards.status,
+    redemptionCode: customerRewards.redemptionCode,
+    earnedAt: customerRewards.earnedAt,
+    rewardName: rewards.name,
+    rewardDescription: rewards.description,
+    rewardIcon: rewards.icon,
+    valueAmount: rewards.valueAmount,
+    rewardType: rewards.rewardType
+  })
+  .from(customerRewards)
+  .innerJoin(rewards, eq(customerRewards.rewardId, rewards.id))
+  .where(and(
+    eq(customerRewards.enrollmentId, enrollment.id),
+    eq(rewards.businessId, businessId),
+    eq(customerRewards.status, 'available')
+  ));
+
+  // Get visit history at this business
+  const recentVisits = await db.select({
+    id: visits.id,
+    locationId: visits.locationId,
+    spendAmount: visits.spendAmount,
+    pointsEarned: visits.pointsEarned,
+    createdAt: visits.createdAt,
+    locationName: locations.name,
+    locationIcon: locations.icon
+  })
+  .from(visits)
+  .innerJoin(locations, eq(visits.locationId, locations.id))
+  .where(and(eq(visits.customerId, customer.id), eq(locations.businessId, businessId)))
+  .orderBy(desc(visits.createdAt))
+  .limit(5);
+
+  return {
+    customer: {
+      id: customer.id,
+      name: customer.name,
+      phone: customer.phone
+    },
+    enrollment: {
+      points_balance: enrollment.pointsBalance,
+      total_points_earned: enrollment.lifetimePoints,
+      total_spend: enrollment.lifetimeSpend,
+      points_multiplier: enrollment.pointsMultiplier
+    },
+    pending_rewards: pendingRewards.map(r => ({
+      id: r.id,
+      reward_id: r.rewardId,
+      name: r.rewardName,
+      description: r.rewardDescription,
+      icon: r.rewardIcon,
+      dollar_value: r.valueAmount,
+      reward_type: r.rewardType,
+      redemption_code: r.redemptionCode
+    })),
+    recent_visits: recentVisits.map(v => ({
+      id: v.id,
+      location_id: v.locationId,
+      location_name: v.locationName,
+      location_icon: v.locationIcon,
+      spend_amount: v.spendAmount,
+      points_earned: v.pointsEarned,
+      created_at: v.createdAt
+    }))
+  };
+}
+
 // POST /api/staff/login - Staff authentication
 router.post('/login', async (req, res) => {
   const { location_id, pin } = req.body;
@@ -134,98 +238,115 @@ router.get('/customer/:qr_code', authenticateStaff, async (req, res) => {
       });
     }
 
-    // Get enrollment for this business
-    let [enrollment] = await db.select().from(enrollments)
-      .where(and(eq(enrollments.customerId, customer.id), eq(enrollments.businessId, businessId)));
-
-    // Auto-enroll if not enrolled
-    if (!enrollment) {
-      const enrollmentId = generateId('enroll');
-      await db.insert(enrollments).values({
-        id: enrollmentId,
-        customerId: customer.id,
-        businessId: businessId
-      });
-      [enrollment] = await db.select().from(enrollments).where(eq(enrollments.id, enrollmentId));
-    }
-
-    // Get pending rewards (unlocked but not redeemed)
-    const pendingRewards = await db.select({
-      id: customerRewards.id,
-      rewardId: customerRewards.rewardId,
-      status: customerRewards.status,
-      redemptionCode: customerRewards.redemptionCode,
-      earnedAt: customerRewards.earnedAt,
-      rewardName: rewards.name,
-      rewardDescription: rewards.description,
-      rewardIcon: rewards.icon,
-      valueAmount: rewards.valueAmount,
-      rewardType: rewards.rewardType
-    })
-    .from(customerRewards)
-    .innerJoin(rewards, eq(customerRewards.rewardId, rewards.id))
-    .where(and(
-      eq(customerRewards.enrollmentId, enrollment.id),
-      eq(rewards.businessId, businessId),
-      eq(customerRewards.status, 'available')
-    ));
-
-    // Get visit history at this business
-    const recentVisits = await db.select({
-      id: visits.id,
-      locationId: visits.locationId,
-      spendAmount: visits.spendAmount,
-      pointsEarned: visits.pointsEarned,
-      createdAt: visits.createdAt,
-      locationName: locations.name,
-      locationIcon: locations.icon
-    })
-    .from(visits)
-    .innerJoin(locations, eq(visits.locationId, locations.id))
-    .where(and(eq(visits.customerId, customer.id), eq(locations.businessId, businessId)))
-    .orderBy(desc(visits.createdAt))
-    .limit(5);
-
-    res.json({
-      success: true,
-      data: {
-        customer: {
-          id: customer.id,
-          name: customer.name,
-          phone: customer.phone
-        },
-        enrollment: {
-          points_balance: enrollment.pointsBalance,
-          total_points_earned: enrollment.lifetimePoints,
-          total_spend: enrollment.lifetimeSpend,
-          points_multiplier: enrollment.pointsMultiplier
-        },
-        pending_rewards: pendingRewards.map(r => ({
-          id: r.id,
-          reward_id: r.rewardId,
-          name: r.rewardName,
-          description: r.rewardDescription,
-          icon: r.rewardIcon,
-          dollar_value: r.valueAmount,
-          reward_type: r.rewardType,
-          redemption_code: r.redemptionCode
-        })),
-        recent_visits: recentVisits.map(v => ({
-          id: v.id,
-          location_id: v.locationId,
-          location_name: v.locationName,
-          location_icon: v.locationIcon,
-          spend_amount: v.spendAmount,
-          points_earned: v.pointsEarned,
-          created_at: v.createdAt
-        }))
-      }
-    });
+    const data = await getCustomerDetailsForStaff(customer, businessId);
+    res.json({ success: true, data });
   } catch (error) {
     console.error('Error looking up customer:', error);
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to look up customer' }
+    });
+  }
+});
+
+// GET /api/staff/customer/phone/:phone - Look up customer by phone number (PRIMARY lookup method)
+router.get('/customer/phone/:phone', authenticateStaff, async (req, res) => {
+  const { phone } = req.params;
+  const businessId = req.staff.business_id;
+
+  try {
+    const normalizedPhone = normalizePhone(phone);
+
+    if (!normalizedPhone || normalizedPhone.length < 10) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_PHONE', message: 'Please enter a valid phone number' }
+      });
+    }
+
+    // Find customer by phone number
+    let [customer] = await db.select().from(customers).where(eq(customers.phone, normalizedPhone));
+
+    // If not found with normalized phone, try matching last 10 digits
+    if (!customer) {
+      const digits = phone.replace(/\D/g, '');
+      const last10 = digits.slice(-10);
+      if (last10.length === 10) {
+        // Search for phone ending with these 10 digits
+        const [foundCustomer] = await db.select()
+          .from(customers)
+          .where(sql`${customers.phone} LIKE ${'%' + last10}`);
+        customer = foundCustomer;
+      }
+    }
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'CUSTOMER_NOT_FOUND',
+          message: 'No customer found with this phone number',
+          phone: normalizedPhone
+        }
+      });
+    }
+
+    const data = await getCustomerDetailsForStaff(customer, businessId);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error looking up customer by phone:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'Failed to look up customer' }
+    });
+  }
+});
+
+// GET /api/staff/recent-customers - Get recent customers at this location
+router.get('/recent-customers', authenticateStaff, async (req, res) => {
+  const locationId = req.staff.location_id;
+  const businessId = req.staff.business_id;
+  const limit = Math.min(parseInt(req.query.limit) || 10, 20);
+
+  try {
+    // Get recent visits at this location, grouped by customer
+    const recentCustomers = await db.select({
+      customerId: customers.id,
+      customerName: customers.name,
+      customerPhone: customers.phone,
+      pointsBalance: enrollments.pointsBalance,
+      lastVisit: sql`MAX(${visits.createdAt})`.as('last_visit')
+    })
+    .from(visits)
+    .innerJoin(customers, eq(visits.customerId, customers.id))
+    .innerJoin(enrollments, and(
+      eq(enrollments.customerId, customers.id),
+      eq(enrollments.businessId, businessId)
+    ))
+    .where(eq(visits.locationId, locationId))
+    .groupBy(customers.id, customers.name, customers.phone, enrollments.pointsBalance)
+    .orderBy(desc(sql`MAX(${visits.createdAt})`))
+    .limit(limit);
+
+    // Mask phone numbers for privacy (show last 4 digits)
+    const maskedCustomers = recentCustomers.map(c => ({
+      id: c.customerId,
+      name: c.customerName,
+      phone_masked: c.customerPhone ? `***-***-${c.customerPhone.slice(-4)}` : null,
+      phone_full: c.customerPhone, // Staff can see full phone for lookup
+      points_balance: c.pointsBalance,
+      last_visit: c.lastVisit
+    }));
+
+    res.json({
+      success: true,
+      data: { customers: maskedCustomers }
+    });
+  } catch (error) {
+    console.error('Error getting recent customers:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'Failed to get recent customers' }
     });
   }
 });

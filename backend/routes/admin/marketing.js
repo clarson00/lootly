@@ -614,7 +614,7 @@ router.get('/preview', extractBusinessId, async (req, res) => {
         });
       }
 
-      // Look up reward name if awardType is 'reward'
+      // Look up reward name if awardType is 'reward' (legacy format)
       let rewardName = null;
       if (rule.awardType === 'reward' && rule.awardValue) {
         const [reward] = await db
@@ -624,8 +624,48 @@ router.get('/preview', extractBusinessId, async (req, res) => {
         rewardName = reward?.name;
       }
 
-      // Add rewardName to rule object for plain language generation
-      const ruleWithReward = { ...rule, rewardName };
+      // Enrich composable awards with reward names
+      let enrichedAwards = rule.awards;
+      if (rule.awards?.groups) {
+        // Collect all reward IDs from composable awards
+        const rewardIds = [];
+        rule.awards.groups.forEach(group => {
+          (group.awards || []).forEach(award => {
+            if ((award.type === 'reward' || award.type === 'unlock_reward') && award.rewardId) {
+              rewardIds.push(award.rewardId);
+            }
+          });
+        });
+
+        // Look up all reward names
+        const rewardLookup = {};
+        if (rewardIds.length > 0) {
+          const rewardsList = await db
+            .select()
+            .from(rewards)
+            .where(or(...rewardIds.map(id => eq(rewards.id, id))));
+          rewardsList.forEach(r => {
+            rewardLookup[r.id] = r.name;
+          });
+        }
+
+        // Enrich awards with names
+        enrichedAwards = {
+          ...rule.awards,
+          groups: rule.awards.groups.map(group => ({
+            ...group,
+            awards: (group.awards || []).map(award => {
+              if ((award.type === 'reward' || award.type === 'unlock_reward') && award.rewardId) {
+                return { ...award, rewardName: rewardLookup[award.rewardId] || award.rewardId };
+              }
+              return award;
+            })
+          }))
+        };
+      }
+
+      // Add enriched data to rule object for plain language generation
+      const ruleWithReward = { ...rule, rewardName, awards: enrichedAwards };
 
       summary = describeRule(ruleWithReward, businessLocations);
       content = generateMarketingSummary('rule', ruleWithReward, businessLocations, [], business?.name);
@@ -653,8 +693,60 @@ router.get('/preview', extractBusinessId, async (req, res) => {
         .where(eq(rules.rulesetId, source_id))
         .orderBy(rules.sequenceOrder);
 
-      summary = describeVoyage(voyage, steps, businessLocations);
-      content = generateMarketingSummary('voyage', { ...voyage, steps }, businessLocations, [], business?.name);
+      // Collect all reward IDs from all steps
+      const allRewardIds = [];
+      steps.forEach(step => {
+        if (step.awards?.groups) {
+          step.awards.groups.forEach(group => {
+            (group.awards || []).forEach(award => {
+              if ((award.type === 'reward' || award.type === 'unlock_reward') && award.rewardId) {
+                allRewardIds.push(award.rewardId);
+              }
+            });
+          });
+        }
+        // Also check legacy format
+        if (step.awardType === 'reward' && step.awardValue) {
+          allRewardIds.push(step.awardValue);
+        }
+      });
+
+      // Look up all reward names
+      const rewardLookup = {};
+      if (allRewardIds.length > 0) {
+        const uniqueRewardIds = [...new Set(allRewardIds)];
+        const rewardsList = await db
+          .select()
+          .from(rewards)
+          .where(or(...uniqueRewardIds.map(id => eq(rewards.id, id))));
+        rewardsList.forEach(r => {
+          rewardLookup[r.id] = r.name;
+        });
+      }
+
+      // Enrich steps with reward names
+      const enrichedSteps = steps.map(step => {
+        let enrichedAwards = step.awards;
+        if (step.awards?.groups) {
+          enrichedAwards = {
+            ...step.awards,
+            groups: step.awards.groups.map(group => ({
+              ...group,
+              awards: (group.awards || []).map(award => {
+                if ((award.type === 'reward' || award.type === 'unlock_reward') && award.rewardId) {
+                  return { ...award, rewardName: rewardLookup[award.rewardId] || award.rewardId };
+                }
+                return award;
+              })
+            }))
+          };
+        }
+        const rewardName = step.awardType === 'reward' ? rewardLookup[step.awardValue] : null;
+        return { ...step, awards: enrichedAwards, rewardName };
+      });
+
+      summary = describeVoyage(voyage, enrichedSteps, businessLocations);
+      content = generateMarketingSummary('voyage', { ...voyage, steps: enrichedSteps }, businessLocations, [], business?.name);
     } else {
       return res.status(400).json({
         success: false,

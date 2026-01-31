@@ -732,7 +732,7 @@ function describeAwardsForMarketing(awards, locations = [], legacyAwardType = nu
 function describeAwardMarketing(award) {
   if (!award) return null;
 
-  const { type, value, rewardId } = award;
+  const { type, value, rewardId, rewardName } = award;
 
   // Skip if no type defined
   if (!type) return null;
@@ -748,8 +748,10 @@ function describeAwardMarketing(award) {
       return `${value || 2}x points multiplier`;
     case 'reward':
     case 'unlock_reward':
-      // rewardId might be the reward name directly in some cases
-      return rewardId ? `🎁 ${rewardId}` : 'a special reward';
+      // Use rewardName if available (enriched from DB lookup), otherwise fall back to rewardId
+      if (rewardName) return `🎁 ${rewardName}`;
+      if (rewardId) return `🎁 ${rewardId}`;
+      return 'a special reward';
     case 'tag':
     case 'add_tag':
       return 'VIP status';
