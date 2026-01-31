@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Welcome from './pages/Welcome';
 import Login from './pages/Login';
+import NotificationPreferences from './pages/NotificationPreferences';
 import Discover from './pages/Discover';
 import MyQuests from './pages/MyQuests';
 import Home from './pages/Home';
@@ -57,6 +58,11 @@ export default function App() {
           <PublicRoute>
             <Login />
           </PublicRoute>
+        } />
+        <Route path="/notifications" element={
+          <PrivateRoute>
+            <NotificationPreferences />
+          </PrivateRoute>
         } />
         <Route path="/discover" element={
           <PrivateRoute>

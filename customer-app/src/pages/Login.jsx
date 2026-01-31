@@ -65,8 +65,13 @@ export default function Login() {
 
     try {
       const digits = phone.replace(/\D/g, '');
-      await login(`+1${digits}`, code);
-      navigate('/home');
+      const result = await login(`+1${digits}`, code);
+      // New users go to notification preferences, returning users to discover
+      if (result?.isNewUser) {
+        navigate('/notifications');
+      } else {
+        navigate('/discover');
+      }
     } catch (err) {
       setError(err.error?.message || 'Invalid code');
     } finally {

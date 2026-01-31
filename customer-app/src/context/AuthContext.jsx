@@ -33,7 +33,19 @@ export function AuthProvider({ children }) {
   async function login(phone, code) {
     const result = await api.verifyCode(phone, code);
     setCustomer(result.data.customer);
-    return result;
+    // Return isNewUser flag for routing
+    return { isNewUser: result.data.isNewUser ?? true }; // Default to new for demo
+  }
+
+  async function updateNotificationPreferences(prefs) {
+    // Would call API in production
+    console.log('Saving notification preferences:', prefs);
+    setCustomer(prev => ({
+      ...prev,
+      notifyRewards: prefs.rewards,
+      notifyQuests: prefs.quests,
+      notifyPromotions: prefs.promotions
+    }));
   }
 
   function logout() {
@@ -60,6 +72,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     updateCustomer,
+    updateNotificationPreferences,
     lootDrop,
     triggerLootDrop,
     clearLootDrop
