@@ -104,14 +104,14 @@ function QuestCard({ quest, onRemove, onToggleNotify }) {
 
       {/* Header */}
       <div className="flex items-start gap-3 mb-4 pr-8">
-        <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-xl flex items-center justify-center text-2xl">
-          {quest.targetIcon}
+        <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl flex items-center justify-center text-2xl">
+          {quest.businessIcon}
         </div>
         <div className="flex-1">
-          <h3 className="font-bold text-white">{quest.targetName}</h3>
-          <p className="text-gray-400 text-sm flex items-center gap-1">
-            <span>{quest.businessIcon}</span>
-            {quest.businessName}
+          <h3 className="font-bold text-white">{quest.businessName}</h3>
+          <p className="text-primary text-sm flex items-center gap-1">
+            <span>{quest.targetIcon}</span>
+            {quest.targetName}
           </p>
         </div>
       </div>
@@ -166,11 +166,26 @@ function QuestCard({ quest, onRemove, onToggleNotify }) {
 
 export default function MyQuests() {
   const navigate = useNavigate();
-  const [quests, setQuests] = useState(MOCK_QUESTS);
   const [filter, setFilter] = useState('active');
+
+  // Load quests from localStorage (added from Discover) + mock data
+  const [quests, setQuests] = useState(() => {
+    const savedQuests = JSON.parse(localStorage.getItem('lootly_quests') || '[]');
+    // Combine saved quests with mock data, avoiding duplicates
+    const mockIds = MOCK_QUESTS.map(q => q.id);
+    const uniqueSaved = savedQuests.filter(q => !mockIds.includes(q.id));
+    return [...MOCK_QUESTS, ...uniqueSaved];
+  });
 
   const handleRemove = (questId) => {
     setQuests(quests.filter(q => q.id !== questId));
+
+    // Also remove from localStorage so it reappears in Discover
+    const savedQuests = JSON.parse(localStorage.getItem('lootly_quests') || '[]');
+    localStorage.setItem('lootly_quests', JSON.stringify(savedQuests.filter(q => q.id !== questId)));
+
+    const addedIds = JSON.parse(localStorage.getItem('lootly_added_quests') || '[]');
+    localStorage.setItem('lootly_added_quests', JSON.stringify(addedIds.filter(id => id !== questId)));
   };
 
   const handleToggleNotify = (questId, type) => {

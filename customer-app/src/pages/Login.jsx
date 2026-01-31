@@ -34,24 +34,9 @@ export default function Login() {
     setError('');
   };
 
-  const handleSendCode = async () => {
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length < 10) {
-      setError('Please enter a valid phone number');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      await api.requestCode(`+1${digits}`);
-      setStep('code');
-    } catch (err) {
-      setError(err.error?.message || 'Failed to send code');
-    } finally {
-      setLoading(false);
-    }
+  const handleSendCode = () => {
+    // Demo mode: skip validation, go straight to notifications
+    navigate('/notifications');
   };
 
   const handleVerifyCode = async () => {
@@ -60,23 +45,9 @@ export default function Login() {
       return;
     }
 
-    setLoading(true);
-    setError('');
-
-    try {
-      const digits = phone.replace(/\D/g, '');
-      const result = await login(`+1${digits}`, code);
-      // New users go to notification preferences, returning users to discover
-      if (result?.isNewUser) {
-        navigate('/notifications');
-      } else {
-        navigate('/discover');
-      }
-    } catch (err) {
-      setError(err.error?.message || 'Invalid code');
-    } finally {
-      setLoading(false);
-    }
+    // Demo mode: accept any 4-digit code
+    // New users go to notification preferences
+    navigate('/notifications');
   };
 
   return (
@@ -141,36 +112,22 @@ export default function Login() {
           </div>
         ) : (
           <div className="mb-6">
-            {/* Code input boxes */}
-            <div className="flex justify-center gap-3 mb-4">
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className={`w-14 h-16 rounded-xl flex items-center justify-center text-3xl font-bold
-                    ${code[i] ? 'bg-primary/20 border-primary text-white' : 'bg-dark-light border-gray-700'}
-                    border-2 transition-all`}
-                >
-                  {code[i] || ''}
-                </div>
-              ))}
+            {/* Simple code input for demo */}
+            <div className="flex items-center justify-center bg-dark-light rounded-2xl p-4 border border-gray-700 focus-within:border-primary/50 transition-colors">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={code}
+                onChange={handleCodeChange}
+                placeholder="1234"
+                maxLength={4}
+                className="bg-transparent text-white text-3xl text-center outline-none w-32 tracking-widest font-bold"
+                autoFocus
+              />
             </div>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={code}
-              onChange={handleCodeChange}
-              className="sr-only"
-              autoFocus
-            />
-            {/* Hidden input for actual typing */}
-            <div
-              className="text-center cursor-text"
-              onClick={() => document.querySelector('input[inputMode="numeric"]')?.focus()}
-            >
-              <p className="text-gray-500 text-sm">
-                Tap to enter code • Hint: <span className="text-primary">1234</span>
-              </p>
-            </div>
+            <p className="text-gray-500 text-sm text-center mt-3">
+              Enter any 4-digit code
+            </p>
           </div>
         )}
 

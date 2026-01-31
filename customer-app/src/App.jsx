@@ -59,21 +59,10 @@ export default function App() {
             <Login />
           </PublicRoute>
         } />
-        <Route path="/notifications" element={
-          <PrivateRoute>
-            <NotificationPreferences />
-          </PrivateRoute>
-        } />
-        <Route path="/discover" element={
-          <PrivateRoute>
-            <Discover />
-          </PrivateRoute>
-        } />
-        <Route path="/quests" element={
-          <PrivateRoute>
-            <MyQuests />
-          </PrivateRoute>
-        } />
+        {/* Demo mode: these routes don't require auth */}
+        <Route path="/notifications" element={<NotificationPreferences />} />
+        <Route path="/discover" element={<Discover />} />
+        <Route path="/quests" element={<MyQuests />} />
         <Route path="/home" element={
           <PrivateRoute>
             <Home />
@@ -84,16 +73,9 @@ export default function App() {
             <MyCode />
           </PrivateRoute>
         } />
-        <Route path="/rewards" element={
-          <PrivateRoute>
-            <Rewards />
-          </PrivateRoute>
-        } />
-        <Route path="/rewards/:id" element={
-          <PrivateRoute>
-            <RewardDetail />
-          </PrivateRoute>
-        } />
+        {/* Demo mode: rewards routes don't require auth */}
+        <Route path="/rewards" element={<Rewards />} />
+        <Route path="/rewards/:id" element={<RewardDetail />} />
         <Route path="/voyages" element={
           <PrivateRoute>
             <TreasureMap />
@@ -104,11 +86,8 @@ export default function App() {
             <VoyageDetail />
           </PrivateRoute>
         } />
-        <Route path="/profile" element={
-          <PrivateRoute>
-            <Profile />
-          </PrivateRoute>
-        } />
+        {/* Demo mode: profile doesn't require auth */}
+        <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
 

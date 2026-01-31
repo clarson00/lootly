@@ -161,13 +161,41 @@ function OpportunityCard({ opportunity, onAddToQuests }) {
 export default function Discover() {
   const navigate = useNavigate();
   const { customer } = useAuth();
-  const [opportunities, setOpportunities] = useState(MOCK_OPPORTUNITIES);
   const [filter, setFilter] = useState('all');
   const [showFirstTimeHint, setShowFirstTimeHint] = useState(true);
 
+  // Load added quest IDs from localStorage
+  const [addedIds, setAddedIds] = useState(() => {
+    const saved = localStorage.getItem('lootly_added_quests');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Filter out already-added opportunities
+  const opportunities = MOCK_OPPORTUNITIES.filter(o => !addedIds.includes(o.id));
+
   const handleAddToQuests = (opportunity) => {
-    // TODO: API call to add to customer quests
-    console.log('Adding to quests:', opportunity);
+    // Save to localStorage for MyQuests to pick up
+    const savedQuests = JSON.parse(localStorage.getItem('lootly_quests') || '[]');
+    const newQuest = {
+      id: opportunity.id,
+      type: 'reward',
+      businessName: opportunity.businessName,
+      businessIcon: opportunity.businessIcon,
+      targetName: opportunity.featuredReward.name,
+      targetIcon: '💎',
+      currentPoints: 0,
+      requiredPoints: opportunity.featuredReward.pointsRequired,
+      estimatedValue: opportunity.featuredReward.estimatedValue,
+      notifyNearby: true,
+      notifyProgress: true,
+      lastActivity: 'Just added'
+    };
+    localStorage.setItem('lootly_quests', JSON.stringify([...savedQuests, newQuest]));
+
+    // Track this ID as added
+    const newAddedIds = [...addedIds, opportunity.id];
+    localStorage.setItem('lootly_added_quests', JSON.stringify(newAddedIds));
+    setAddedIds(newAddedIds);
   };
 
   const filteredOpportunities = filter === 'all'
